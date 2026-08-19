@@ -224,6 +224,8 @@ local ok, failure = pcall(function()
     end, 6)
     add_zones("P2B_OUTLINE_SIX_ZONES", 1, function(p)
         p.outlineEnabled = 1; p.outlineWidth = 0.003
+        p.outlineColorRed = 1.0; p.outlineColorGreen = 0.0
+        p.outlineColorBlue = 0.0; p.outlineColorAlpha = 1.0
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
         p.tlText = "TL OUT"; p.tcText = "TC OUT"; p.trText = "TR OUT"
