@@ -15,6 +15,8 @@ using wipreview::probe::BlankingOptions;
 using wipreview::probe::PlacementMode;
 using wipreview::probe::RectI;
 using wipreview::probe::RenderOptions;
+using wipreview::probe::TextAnchor;
+using wipreview::probe::TextOverlayOptions;
 
 namespace {
 
@@ -270,6 +272,55 @@ void testBlankingStraightAlphaAndRenderWindow() {
   assert(red(pixels.data(), 4, 3, 0) == 1.0F);  // outside renderWindow
 }
 
+void testTextAnchorsAndGrowth() {
+  TextOverlayOptions options;
+  options.paddingLeft = 0.10;
+  options.paddingRight = 0.20;
+  options.paddingTop = 0.10;
+  options.paddingBottom = 0.05;
+
+  options.anchor = TextAnchor::TopLeft;
+  auto origin = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 10, options);
+  assert(origin.x == 10 && origin.y == 80);
+  const auto taller = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 20, options);
+  assert(taller.x == 10 && taller.y == 70);
+  assert(origin.y + 10 == taller.y + 20);  // fixed visible top edge
+
+  options.anchor = TextAnchor::TopCenter;
+  origin = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 10, options);
+  assert(origin.x == 40 && origin.y == 80);
+
+  options.anchor = TextAnchor::TopRight;
+  origin = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 10, options);
+  assert(origin.x == 60 && origin.y == 80);
+
+  options.anchor = TextAnchor::BottomLeft;
+  origin = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 10, options);
+  assert(origin.x == 10 && origin.y == 5);
+  const auto bottomTaller = wipreview::probe::computeTextOrigin(
+      {0, 0, 100, 100}, 20, 20, options);
+  assert(bottomTaller.x == 10 && bottomTaller.y == 5);  // grows upward
+}
+
+void testTextMaskComposition() {
+  std::array<float, 4 * 4 * 4> pixels{};
+  fillOpaqueWhite(pixels);
+  const ImageView dst = rgbaFloatView(pixels.data(), {0, 0, 4, 4}, 4 * 4 * sizeof(float));
+  const std::array<std::uint8_t, 4> mask{255, 128, 0, 255};
+  const wipreview::probe::GlyphMaskView maskView{mask.data(), 2, 2, 2};
+  TextOverlayOptions options;
+  options.enabled = true;
+  options.anchor = TextAnchor::BottomLeft;
+  options.paddingLeft = options.paddingBottom = 0.0;
+  options.colour[0] = options.colour[1] = options.colour[2] = 0.0F;
+  wipreview::probe::compositeTextMask(dst, {0, 0, 4, 4}, maskView, options);
+  assert(red(pixels.data(), 4, 0, 0) == 0.0F);
+  assert(std::abs(red(pixels.data(), 4, 1, 0) - (127.0F / 255.0F)) < 1.0e-6F);
+  assert(red(pixels.data(), 4, 0, 1) == 1.0F);
+  assert(red(pixels.data(), 4, 1, 1) == 0.0F);
+  assert(red(pixels.data(), 4, 3, 3) == 1.0F);
+}
+
 }  // namespace
 
 int main() {
@@ -285,5 +336,7 @@ int main() {
   testBlankingLetterboxAndOpacity();
   testBlankingPillarboxPARAndFractionalEdge();
   testBlankingStraightAlphaAndRenderWindow();
+  testTextAnchorsAndGrowth();
+  testTextMaskComposition();
   return 0;
 }

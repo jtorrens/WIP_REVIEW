@@ -77,6 +77,39 @@ struct BlankingOptions {
   float opacity = 1.0F;
 };
 
+enum class TextAnchor {
+  TopLeft,
+  TopCenter,
+  TopRight,
+  BottomLeft,
+  BottomCenter,
+  BottomRight,
+};
+
+struct GlyphMaskView {
+  const std::uint8_t* data = nullptr;
+  int width = 0;
+  int height = 0;
+  std::ptrdiff_t rowBytes = 0;
+};
+
+struct TextOverlayOptions {
+  bool enabled = false;
+  TextAnchor anchor = TextAnchor::TopLeft;
+  double paddingLeft = 0.015;
+  double paddingRight = 0.015;
+  double paddingTop = 0.020;
+  double paddingBottom = 0.020;
+  bool outputPremultiplied = true;
+  float colour[4] = {1.0F, 1.0F, 1.0F, 1.0F};
+  float opacity = 1.0F;
+};
+
+struct PointI {
+  int x = 0;
+  int y = 0;
+};
+
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
 
@@ -110,5 +143,16 @@ void renderStaticFrame(const ImageView& source,
 void applyBlanking(const ImageView& destination,
                    RectI renderWindow,
                    const BlankingOptions& options) noexcept;
+
+[[nodiscard]] PointI computeTextOrigin(
+    RectI outputBounds,
+    int maskWidth,
+    int maskHeight,
+    const TextOverlayOptions& options) noexcept;
+
+void compositeTextMask(const ImageView& destination,
+                       RectI renderWindow,
+                       const GlyphMaskView& mask,
+                       const TextOverlayOptions& options) noexcept;
 
 }  // namespace wipreview::probe

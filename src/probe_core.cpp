@@ -378,4 +378,79 @@ void applyBlanking(const ImageView& destination, RectI renderWindow,
   }
 }
 
+PointI computeTextOrigin(RectI outputBounds, int maskWidth, int maskHeight,
+                         const TextOverlayOptions& options) noexcept {
+  const int width = std::max(0, outputBounds.x2 - outputBounds.x1);
+  const int height = std::max(0, outputBounds.y2 - outputBounds.y1);
+  const int left = outputBounds.x1 + static_cast<int>(std::lround(options.paddingLeft * width));
+  const int right = outputBounds.x2 - static_cast<int>(std::lround(options.paddingRight * width));
+  const int bottom = outputBounds.y1 + static_cast<int>(std::lround(options.paddingBottom * height));
+  const int top = outputBounds.y2 - static_cast<int>(std::lround(options.paddingTop * height));
+
+  PointI origin;
+  switch (options.anchor) {
+    case TextAnchor::TopLeft:
+    case TextAnchor::BottomLeft:
+      origin.x = left;
+      break;
+    case TextAnchor::TopCenter:
+    case TextAnchor::BottomCenter:
+      origin.x = outputBounds.x1 + (width - maskWidth) / 2;
+      break;
+    case TextAnchor::TopRight:
+    case TextAnchor::BottomRight:
+      origin.x = right - maskWidth;
+      break;
+  }
+  switch (options.anchor) {
+    case TextAnchor::TopLeft:
+    case TextAnchor::TopCenter:
+    case TextAnchor::TopRight:
+      origin.y = top - maskHeight;
+      break;
+    case TextAnchor::BottomLeft:
+    case TextAnchor::BottomCenter:
+    case TextAnchor::BottomRight:
+      origin.y = bottom;
+      break;
+  }
+  return origin;
+}
+
+void compositeTextMask(const ImageView& destination, RectI renderWindow,
+                       const GlyphMaskView& mask,
+                       const TextOverlayOptions& options) noexcept {
+  if (!options.enabled || !destination.data || destination.pixelBytes == 0 ||
+      destination.channels <= 0 || !mask.data || mask.width <= 0 ||
+      mask.height <= 0 || mask.rowBytes == 0) return;
+  const RectI writable = intersect(renderWindow, destination.bounds);
+  if (empty(writable)) return;
+  const PointI origin = computeTextOrigin(
+      destination.bounds, mask.width, mask.height, options);
+  const RectI maskBounds{origin.x, origin.y, origin.x + mask.width, origin.y + mask.height};
+  const RectI area = intersect(writable, maskBounds);
+  if (empty(area)) return;
+  const float colourAlpha = std::clamp(options.colour[3], 0.0F, 1.0F);
+  const float opacity = std::clamp(options.opacity, 0.0F, 1.0F);
+  for (int y = area.y1; y < area.y2; ++y) {
+    const int maskY = y - origin.y;
+    const auto* maskRow = mask.data + static_cast<std::ptrdiff_t>(maskY) * mask.rowBytes;
+    for (int x = area.x1; x < area.x2; ++x) {
+      const float coverage = static_cast<float>(maskRow[x - origin.x]) / 255.0F;
+      const float alpha = coverage * colourAlpha * opacity;
+      if (alpha <= 0.0F) continue;
+      auto base = readRGBA(destination, x, y, options.outputPremultiplied, true);
+      std::array<float, 4> result{};
+      for (std::size_t channel = 0; channel < 3; ++channel) {
+        result[channel] = options.colour[channel] * alpha + base[channel] * (1.0F - alpha);
+      }
+      result[3] = alpha + base[3] * (1.0F - alpha);
+      if (!options.outputPremultiplied && result[3] > 1.0e-8F) {
+        for (std::size_t channel = 0; channel < 3; ++channel) result[channel] /= result[3];
+      }
+      writePixel(destination, x, y, result);
+    }
+  }
+}
+
 }  // namespace wipreview::probe
