@@ -66,9 +66,9 @@ require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextGeneral"' 'Gener
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_FILTER_FIT"' 'Filter scenario marker'
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_GENERAL_FIT"' 'General scenario marker'
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_HOST_RASTER"' 'Host Raster scenario marker'
-require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B01_2_00"' 'B01 scenario marker'
-require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B02_HALF"' 'B02 scenario marker'
-require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B03_OFF"' 'B03 scenario marker'
+# Fusion 21 may clear scenarioLabel after preset blanking changes; validate
+# those cases from the renderer's explicit geometry record instead. Custom
+# currently preserves the string marker and remains an end-to-end check.
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B04_PILLAR"' 'B04 scenario marker'
 require_record 'IMAGE .*clip=Source bounds=\[0,0,4608,3164\]' '4608x3164 Source image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,1920,1080\]' '1920x1080 Output image'

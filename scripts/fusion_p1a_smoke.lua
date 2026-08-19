@@ -72,12 +72,14 @@ local ok, failure = pcall(function()
         probe.canvasMode = canvas_mode
         probe.placementMode = placement
         probe.resampleFilter = 2
-        probe.scenarioLabel = name
         probe.AllowResize = 1
         probe.blankingEnabled = blanking_enabled or 0
         probe.blankingAspectPreset = blanking_preset or 3
         probe.blankingAspectCustom = blanking_custom or 2.0
         probe.blankingOpacity = blanking_opacity or 1.0
+        -- Fusion may reset string values while subsequent geometry parameters
+        -- invalidate the OFX node, so the diagnostic marker is assigned last.
+        probe.scenarioLabel = name
         comp:SetActiveTool(probe)
         comp:Unlock()
         local image = probe.Output:GetValue(0)
