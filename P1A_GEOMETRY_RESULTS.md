@@ -9,6 +9,8 @@ especificación.
 - Canvas `Host Raster` y `Requested Review Raster`.
 - Placement CPU `Identity`, `Fit`, `Fill / Crop`, `Stretch` y `1:1`.
 - Resampling `Bilinear`, `Bicubic (Catmull-Rom)` y `Lanczos3`.
+- Soporte de kernel ensanchado al reducir para antialias; Identity usa lectura
+  exacta y no ejecuta un filtro.
 - Canvas RGBA, negro opaco por defecto.
 - Cálculo Fit/Fill con PAR de Source y Output.
 - Formatos Byte, Short, Half y Float; componentes RGB y RGBA.

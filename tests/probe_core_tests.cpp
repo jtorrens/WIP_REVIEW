@@ -175,6 +175,22 @@ void testPremultiplication() {
   assert(std::abs(destination[3] - 0.25F) < 1.0e-6F);
 }
 
+void testDownsampleAntialias() {
+  std::array<float, 16> source{};
+  for (int x = 0; x < 4; ++x) {
+    source[static_cast<std::size_t>(x * 4)] = x % 2 == 0 ? 0.0F : 1.0F;
+    source[static_cast<std::size_t>(x * 4 + 3)] = 1.0F;
+  }
+  std::array<float, 4> destination{};
+  const ImageView src = rgbaFloatView(source.data(), {0, 0, 4, 1}, 16 * sizeof(float));
+  const ImageView dst = rgbaFloatView(destination.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  RenderOptions options;
+  options.placement = PlacementMode::Stretch;
+  options.filter = wipreview::probe::ResampleFilter::Bilinear;
+  wipreview::probe::renderStaticFrame(src, dst, {0, 0, 1, 1}, options);
+  assert(std::abs(destination[0] - 0.5F) < 1.0e-6F);
+}
+
 }  // namespace
 
 int main() {
@@ -186,5 +202,6 @@ int main() {
   testFillAndOneToOne();
   testIdentityAndUInt16Canvas();
   testPremultiplication();
+  testDownsampleAntialias();
   return 0;
 }

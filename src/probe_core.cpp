@@ -134,35 +134,51 @@ double kernel(double distance, ResampleFilter filter) noexcept {
   return x < 3.0 ? sinc(x) * sinc(x / 3.0) : 0.0;
 }
 
+std::array<float, 4> readRGBA(const ImageView& source, int x, int y,
+                              bool sourcePremultiplied,
+                              bool outputPremultiplied) noexcept {
+  const std::byte* pixel = pixelAddress(source, x, y);
+  std::array<float, 4> rgba{0.0F, 0.0F, 0.0F, 1.0F};
+  if (source.channels == 1) {
+    rgba[3] = readChannel(pixel, 0, source.channelType);
+  } else {
+    for (int channel = 0; channel < source.channels; ++channel) {
+      rgba[static_cast<std::size_t>(channel)] = readChannel(pixel, channel, source.channelType);
+    }
+  }
+  if (!sourcePremultiplied) {
+    for (std::size_t channel = 0; channel < 3; ++channel) rgba[channel] *= rgba[3];
+  }
+  if (!outputPremultiplied && rgba[3] > 1.0e-8F) {
+    for (std::size_t channel = 0; channel < 3; ++channel) rgba[channel] /= rgba[3];
+  }
+  return rgba;
+}
+
 std::array<float, 4> sample(const ImageView& source, double x, double y,
+                            double scaleX, double scaleY,
                             ResampleFilter filter, bool sourcePremultiplied,
                             bool outputPremultiplied) noexcept {
   std::array<double, 4> sum{};
   double weightSum = 0.0;
-  const int radius = filter == ResampleFilter::Bilinear ? 1
-                   : filter == ResampleFilter::Bicubic ? 2 : 3;
-  const int firstX = static_cast<int>(std::floor(x)) - radius + 1;
-  const int firstY = static_cast<int>(std::floor(y)) - radius + 1;
-  for (int iy = firstY; iy < firstY + radius * 2; ++iy) {
-    const double wy = kernel(y - static_cast<double>(iy), filter);
+  const double radius = filter == ResampleFilter::Bilinear ? 1.0
+                      : filter == ResampleFilter::Bicubic ? 2.0 : 3.0;
+  const double filterScaleX = std::max(1.0, 1.0 / std::abs(scaleX));
+  const double filterScaleY = std::max(1.0, 1.0 / std::abs(scaleY));
+  const int firstX = static_cast<int>(std::ceil(x - radius * filterScaleX));
+  const int lastX = static_cast<int>(std::floor(x + radius * filterScaleX));
+  const int firstY = static_cast<int>(std::ceil(y - radius * filterScaleY));
+  const int lastY = static_cast<int>(std::floor(y + radius * filterScaleY));
+  for (int iy = firstY; iy <= lastY; ++iy) {
+    const double wy = kernel((y - static_cast<double>(iy)) / filterScaleY, filter);
     if (wy == 0.0) continue;
     const int sy = std::clamp(iy, source.bounds.y1, source.bounds.y2 - 1);
-    for (int ix = firstX; ix < firstX + radius * 2; ++ix) {
-      const double weight = wy * kernel(x - static_cast<double>(ix), filter);
+    for (int ix = firstX; ix <= lastX; ++ix) {
+      const double weight = wy * kernel(
+          (x - static_cast<double>(ix)) / filterScaleX, filter);
       if (weight == 0.0) continue;
       const int sx = std::clamp(ix, source.bounds.x1, source.bounds.x2 - 1);
-      const std::byte* pixel = pixelAddress(source, sx, sy);
-      std::array<float, 4> rgba{0.0F, 0.0F, 0.0F, 1.0F};
-      if (source.channels == 1) {
-        rgba[3] = readChannel(pixel, 0, source.channelType);
-      } else {
-        for (int channel = 0; channel < source.channels; ++channel) {
-          rgba[static_cast<std::size_t>(channel)] = readChannel(pixel, channel, source.channelType);
-        }
-      }
-      if (!sourcePremultiplied) {
-        for (std::size_t channel = 0; channel < 3; ++channel) rgba[channel] *= rgba[3];
-      }
+      const auto rgba = readRGBA(source, sx, sy, sourcePremultiplied, true);
       for (std::size_t channel = 0; channel < 4; ++channel) {
         sum[channel] += static_cast<double>(rgba[channel]) * weight;
       }
@@ -284,9 +300,19 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
       }
       // Image samples live at integer pixel centres after subtracting 0.5 from
       // the canonical coordinate used by the placement transform.
-      writePixel(destination, x, y,
-                 sample(source, sourceX - 0.5, sourceY - 0.5, options.filter,
-                        options.sourcePremultiplied, options.outputPremultiplied));
+      const double sampleX = sourceX - 0.5;
+      const double sampleY = sourceY - 0.5;
+      const bool exactIdentity = options.placement == PlacementMode::Identity;
+      if (exactIdentity) {
+        writePixel(destination, x, y,
+                   readRGBA(source, x, y, options.sourcePremultiplied,
+                            options.outputPremultiplied));
+      } else {
+        writePixel(destination, x, y,
+                   sample(source, sampleX, sampleY, transform.scaleX, transform.scaleY,
+                          options.filter, options.sourcePremultiplied,
+                          options.outputPremultiplied));
+      }
     }
   }
 }
