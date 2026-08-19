@@ -49,9 +49,9 @@ CTFontRef createSystemFont(CGFloat size) noexcept {
 
 }  // namespace
 
-GlyphMask rasterizeUTF8(const std::string& text, const std::string& fontFamily,
-                        FontStyle style, double pixelSize) noexcept {
-  GlyphMask result;
+GlyphRaster rasterizeUTF8(const std::string& text, const std::string& fontFamily,
+                          FontStyle style, double pixelSize) noexcept {
+  GlyphRaster result;
   try {
     if (text.empty() || text.size() > 16384 || !std::isfinite(pixelSize)) return result;
     const CGFloat size = static_cast<CGFloat>(std::clamp(pixelSize, 1.0, 4096.0));
@@ -152,13 +152,13 @@ GlyphMask rasterizeUTF8(const std::string& text, const std::string& fontFamily,
     if (cropX1 >= cropX2 || cropY1 >= cropY2) return {};
     result.width = cropX2 - cropX1;
     result.height = cropY2 - cropY1;
-    result.pixels.resize(static_cast<std::size_t>(result.width)
-                       * static_cast<std::size_t>(result.height));
+    result.fillPixels.resize(static_cast<std::size_t>(result.width)
+                           * static_cast<std::size_t>(result.height));
     for (int y = 0; y < result.height; ++y) {
       // CGBitmapContext stores its first row at the visual top. OFX image
       // coordinates grow upward, so expose the glyph mask bottom-up as well.
       const int sourceY = cropY2 - 1 - y;
-      std::memcpy(result.pixels.data() + static_cast<std::size_t>(y * result.width),
+      std::memcpy(result.fillPixels.data() + static_cast<std::size_t>(y * result.width),
                   raw.data() + static_cast<std::size_t>(sourceY * width + cropX1),
                   static_cast<std::size_t>(result.width));
     }

@@ -1,6 +1,7 @@
 #include "probe_core.hpp"
 #include "text_rasterizer.hpp"
 
+#include <algorithm>
 #include <array>
 #ifdef NDEBUG
 #undef NDEBUG
@@ -68,6 +69,10 @@ void setGray(std::array<float, 32>& pixels, int width, int x, int y, float value
 
 float red(const float* pixels, int width, int x, int y) {
   return pixels[(y * width + x) * 4];
+}
+
+float green(const float* pixels, int width, int x, int y) {
+  return pixels[(y * width + x) * 4 + 1];
 }
 
 void testPlacementTransformsAndPAR() {
@@ -337,25 +342,25 @@ void testSystemTextRasterizerUTF8() {
   const auto regular = wipreview::text::rasterizeUTF8(
       "SECUENCIA ÁRTICO — VERSIÓN 03", "System Default",
       wipreview::text::FontStyle::Regular, 32.0);
-  assert(!regular.pixels.empty());
+  assert(!regular.fillPixels.empty());
   assert(regular.width > 0 && regular.height > 0);
   assert(!regular.resolvedFont.empty());
 
   const auto larger = wipreview::text::rasterizeUTF8(
       "ÁRTICO", "System Default", wipreview::text::FontStyle::Bold, 64.0);
-  assert(!larger.pixels.empty());
+  assert(!larger.fillPixels.empty());
   assert(larger.height > regular.height);
 
   const auto orientation = wipreview::text::rasterizeUTF8(
       "F", "System Default", wipreview::text::FontStyle::Regular, 96.0);
-  assert(!orientation.pixels.empty() && orientation.height >= 3);
+  assert(!orientation.fillPixels.empty() && orientation.height >= 3);
   std::uint64_t bottomInk = 0;
   std::uint64_t topInk = 0;
   for (int y = 0; y < orientation.height / 3; ++y) {
     for (int x = 0; x < orientation.width; ++x) {
-      bottomInk += orientation.pixels[static_cast<std::size_t>(
+      bottomInk += orientation.fillPixels[static_cast<std::size_t>(
           y * orientation.width + x)];
-      topInk += orientation.pixels[static_cast<std::size_t>(
+      topInk += orientation.fillPixels[static_cast<std::size_t>(
           (orientation.height - 1 - y) * orientation.width + x)];
     }
   }
@@ -364,14 +369,59 @@ void testSystemTextRasterizerUTF8() {
   const auto fallback = wipreview::text::rasterizeUTF8(
       "FALLBACK", "WIPReview Font That Does Not Exist 7F3A",
       wipreview::text::FontStyle::Regular, 32.0);
-  assert(!fallback.pixels.empty());
+  assert(!fallback.fillPixels.empty());
   assert(fallback.usedFallback);
   assert(!fallback.resolvedFont.empty());
 
   const std::string invalidUTF8{"\xff\xfe", 2};
   const auto invalid = wipreview::text::rasterizeUTF8(
       invalidUTF8, "System Default", wipreview::text::FontStyle::Regular, 32.0);
-  assert(invalid.pixels.empty());
+  assert(invalid.fillPixels.empty());
+}
+
+void testOutlineUsesGlyphAlpha() {
+  wipreview::text::GlyphRaster glyph;
+  glyph.width = 1;
+  glyph.height = 1;
+  glyph.fillPixels = {255};
+  glyph.resolvedFont = "TestFont";
+
+  assert(wipreview::text::addOutline(glyph, 1));
+  assert(glyph.width == 3 && glyph.height == 3);
+  const std::array<std::uint8_t, 9> expectedFill{
+      0, 0, 0,
+      0, 255, 0,
+      0, 0, 0};
+  const std::array<std::uint8_t, 9> expectedOutline{
+      0, 255, 0,
+      255, 255, 255,
+      0, 255, 0};
+  assert(std::equal(glyph.fillPixels.begin(), glyph.fillPixels.end(),
+                    expectedFill.begin(), expectedFill.end()));
+  assert(std::equal(glyph.outlinePixels.begin(), glyph.outlinePixels.end(),
+                    expectedOutline.begin(), expectedOutline.end()));
+  assert(glyph.resolvedFont == "TestFont");
+
+  std::array<float, 5 * 5 * 4> pixels{};
+  fillOpaqueWhite(pixels);
+  const ImageView dst = rgbaFloatView(
+      pixels.data(), {0, 0, 5, 5}, 5 * 4 * sizeof(float));
+  TextOverlayOptions outline;
+  outline.enabled = true;
+  outline.anchor = TextAnchor::BottomLeft;
+  outline.paddingLeft = outline.paddingBottom = 0.0;
+  outline.colour[0] = outline.colour[1] = outline.colour[2] = 0.0F;
+  wipreview::probe::compositeTextMask(
+      dst, {0, 0, 5, 5}, glyph.outlineView(), outline);
+
+  TextOverlayOptions fill = outline;
+  fill.colour[0] = 1.0F;
+  wipreview::probe::compositeTextMask(
+      dst, {0, 0, 5, 5}, glyph.fillView(), fill);
+  assert(red(pixels.data(), 5, 1, 0) == 0.0F);    // outline-only pixel
+  assert(red(pixels.data(), 5, 1, 1) == 1.0F);   // red fill over outline
+  assert(green(pixels.data(), 5, 1, 1) == 0.0F);
+  assert(red(pixels.data(), 5, 0, 0) == 1.0F);    // outside both masks
 }
 
 }  // namespace
@@ -392,5 +442,6 @@ int main() {
   testTextAnchorsAndGrowth();
   testTextMaskComposition();
   testSystemTextRasterizerUTF8();
+  testOutlineUsesGlyphAlpha();
   return 0;
 }

@@ -96,5 +96,9 @@ require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR 25%" .*use_opacity_o
 require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BL OFFSET" .*origin=\[125,65\] offset=\[0\.050000,0\.040000\]' 'P2a normalized offsets'
 require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL OVER BLANKING" .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P2a zone over blanking'
 require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR OVER BLANKING" .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P2a opposite zone over blanking'
+require_record 'TEXT_OUTLINE .*enabled=true normalized_width=0\.001000 pixel_radius=1 colour=\[0\.000000,0\.000000,0\.000000,1\.000000\] opacity=1\.000000' 'P2b default outline settings'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="P2B DEFAULT OUTLINE" .*outline=true' 'P2b default glyph outline'
+require_record 'TEXT_OUTLINE .*enabled=true normalized_width=0\.006000 pixel_radius=6 colour=\[1\.000000,0\.000000,0\.000000,1\.000000\] opacity=0\.500000' 'P2b wide red half-opacity outline settings'
+require_record 'TEXT_ZONE .*zone="TC" enabled=true text="P2B RED 50% OUTLINE" .*outline=true' 'P2b wide glyph outline'
 
-echo "Automated Fusion cumulative P1/P2a smoke test passed"
+echo "Automated Fusion cumulative P1/P2b smoke test passed"

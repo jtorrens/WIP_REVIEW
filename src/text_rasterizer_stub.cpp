@@ -2,8 +2,8 @@
 
 namespace wipreview::text {
 
-GlyphMask rasterizeUTF8(const std::string&, const std::string&,
-                        FontStyle, double) noexcept {
+GlyphRaster rasterizeUTF8(const std::string&, const std::string&,
+                          FontStyle, double) noexcept {
   return {};
 }
 

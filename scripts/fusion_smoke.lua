@@ -81,6 +81,7 @@ local ok, failure = pcall(function()
         probe.fontStyle = 0
         probe.fontSize = 0.028
         probe.textOpacity = 1.0
+        probe.outlineEnabled = 0
         if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
@@ -159,6 +160,19 @@ local ok, failure = pcall(function()
                  1, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.brEnabled = 1
         p.tlText = "TL OVER BLANKING"; p.brText = "BR OVER BLANKING"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2B_OUTLINE_DEFAULT", 2, 1, 4, 4,
+                 0, 2, 2.0, 1.0, function(p)
+        p.outlineEnabled = 1; p.outlineWidth = 0.001
+        p.tlEnabled = 1; p.tlText = "P2B DEFAULT OUTLINE"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2B_OUTLINE_WIDE_RED_HALF", 2, 1, 5, 4,
+                 0, 2, 2.0, 1.0, function(p)
+        p.outlineEnabled = 1; p.outlineWidth = 0.006
+        p.outlineColorRed = 1.0; p.outlineColorGreen = 0.0
+        p.outlineColorBlue = 0.0; p.outlineColorAlpha = 1.0
+        p.outlineOpacity = 0.5
+        p.tcEnabled = 1; p.tcText = "P2B RED 50% OUTLINE"
     end)
 
     print("WIPREVIEW_AUTOMATION_OK")

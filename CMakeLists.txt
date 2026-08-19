@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WIPReviewProbe VERSION 0.5.0 LANGUAGES CXX)
+project(WIPReviewProbe VERSION 0.6.0 LANGUAGES CXX)
 
 include(FetchContent)
 
-option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative P1 tests" ON)
+option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative formatter tests" ON)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
@@ -50,7 +50,10 @@ if(APPLE)
   find_library(WIPREVIEW_CORETEXT_FRAMEWORK CoreText REQUIRED)
   find_library(WIPREVIEW_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
   find_library(WIPREVIEW_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
-  add_library(wipreview_text_rasterizer STATIC src/text_rasterizer_macos.cpp)
+  add_library(wipreview_text_rasterizer STATIC
+    src/text_effects.cpp
+    src/text_rasterizer_macos.cpp
+  )
   target_link_libraries(wipreview_text_rasterizer PUBLIC
     wipreview_probe_core
     "${WIPREVIEW_CORETEXT_FRAMEWORK}"
@@ -58,7 +61,10 @@ if(APPLE)
     "${WIPREVIEW_COREFOUNDATION_FRAMEWORK}"
   )
 else()
-  add_library(wipreview_text_rasterizer STATIC src/text_rasterizer_stub.cpp)
+  add_library(wipreview_text_rasterizer STATIC
+    src/text_effects.cpp
+    src/text_rasterizer_stub.cpp
+  )
   target_link_libraries(wipreview_text_rasterizer PUBLIC wipreview_probe_core)
 endif()
 target_include_directories(wipreview_text_rasterizer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")

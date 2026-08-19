@@ -12,6 +12,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -61,6 +62,10 @@ constexpr char kParamFontStyle[] = "fontStyle";
 constexpr char kParamFontSize[] = "fontSize";
 constexpr char kParamTextColour[] = "textColor";
 constexpr char kParamTextOpacity[] = "textOpacity";
+constexpr char kParamOutlineEnabled[] = "outlineEnabled";
+constexpr char kParamOutlineWidth[] = "outlineWidth";
+constexpr char kParamOutlineColour[] = "outlineColor";
+constexpr char kParamOutlineOpacity[] = "outlineOpacity";
 constexpr char kParamPaddingLeft[] = "paddingLeft";
 constexpr char kParamPaddingRight[] = "paddingRight";
 constexpr char kParamPaddingTop[] = "paddingTop";
@@ -365,6 +370,10 @@ struct InstanceData {
   OfxParamHandle fontSize = nullptr;
   OfxParamHandle textColour = nullptr;
   OfxParamHandle textOpacity = nullptr;
+  OfxParamHandle outlineEnabled = nullptr;
+  OfxParamHandle outlineWidth = nullptr;
+  OfxParamHandle outlineColour = nullptr;
+  OfxParamHandle outlineOpacity = nullptr;
   OfxParamHandle paddingLeft = nullptr;
   OfxParamHandle paddingRight = nullptr;
   OfxParamHandle paddingTop = nullptr;
@@ -655,6 +664,11 @@ struct TextRenderSettings {
   wipreview::text::FontStyle fontStyle = wipreview::text::FontStyle::Regular;
   double normalizedSize = 0.028;
   double pixelSize = 0.0;
+  bool outlineEnabled = true;
+  double normalizedOutlineWidth = 0.001;
+  int outlineRadiusPixels = 0;
+  float outlineColour[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+  float outlineOpacity = 1.0F;
 };
 
 TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime time,
@@ -666,6 +680,10 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   double fontSize = 0.028;
   double colour[4] = {1.0, 1.0, 1.0, 1.0};
   double opacity = 1.0;
+  int outlineEnabled = 1;
+  double outlineWidth = 0.001;
+  double outlineColour[4] = {0.0, 0.0, 0.0, 1.0};
+  double outlineOpacity = 1.0;
   double paddingLeft = 0.015;
   double paddingRight = 0.015;
   double paddingTop = 0.020;
@@ -678,6 +696,20 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
                                          &colour[0], &colour[1], &colour[2], &colour[3]);
   }
   if (instance->textOpacity) gParameterSuite->paramGetValueAtTime(instance->textOpacity, time, &opacity);
+  if (instance->outlineEnabled) {
+    gParameterSuite->paramGetValueAtTime(instance->outlineEnabled, time, &outlineEnabled);
+  }
+  if (instance->outlineWidth) {
+    gParameterSuite->paramGetValueAtTime(instance->outlineWidth, time, &outlineWidth);
+  }
+  if (instance->outlineColour) {
+    gParameterSuite->paramGetValueAtTime(instance->outlineColour, time,
+                                         &outlineColour[0], &outlineColour[1],
+                                         &outlineColour[2], &outlineColour[3]);
+  }
+  if (instance->outlineOpacity) {
+    gParameterSuite->paramGetValueAtTime(instance->outlineOpacity, time, &outlineOpacity);
+  }
   if (instance->paddingLeft) gParameterSuite->paramGetValueAtTime(instance->paddingLeft, time, &paddingLeft);
   if (instance->paddingRight) gParameterSuite->paramGetValueAtTime(instance->paddingRight, time, &paddingRight);
   if (instance->paddingTop) gParameterSuite->paramGetValueAtTime(instance->paddingTop, time, &paddingTop);
@@ -705,6 +737,18 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   settings.normalizedSize = std::clamp(fontSize, 0.001, 1.0);
   settings.pixelSize = settings.normalizedSize
                      * std::max(0, outputView.bounds.y2 - outputView.bounds.y1);
+  settings.outlineEnabled = outlineEnabled != 0;
+  settings.normalizedOutlineWidth = std::clamp(outlineWidth, 0.0, 0.010);
+  const int outputHeight = std::max(0, outputView.bounds.y2 - outputView.bounds.y1);
+  settings.outlineRadiusPixels = settings.outlineEnabled &&
+      settings.normalizedOutlineWidth > 0.0
+      ? std::max(1, static_cast<int>(std::lround(
+            settings.normalizedOutlineWidth * outputHeight)))
+      : 0;
+  settings.outlineOpacity = static_cast<float>(outlineOpacity);
+  for (int channel = 0; channel < 4; ++channel) {
+    settings.outlineColour[channel] = static_cast<float>(outlineColour[channel]);
+  }
   return settings;
 }
 
@@ -815,15 +859,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P2a Filter Only)"
-                                          : "WIP Review Probe (P2a)");
+                               filterOnly ? "WIP Review Probe (P2b Filter Only)"
+                                          : "WIP Review Probe (P2b)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Six Zone Overlay P2a — Filter Only"
-                                          : "WIP Review Six Zone Overlay P2a");
+                               filterOnly ? "WIP Review Six Zone Outline P2b — Filter Only"
+                                          : "WIP Review Six Zone Outline P2b");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P2a overlay: review raster, placement, blanking and six independent static UTF-8 text zones with host diagnostics.");
+      "P2b overlay: review raster, placement, blanking and six static UTF-8 text zones with a global glyph-mask outline.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -1052,6 +1096,23 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
 
   defineDoubleParam(params, kParamTextOpacity, "Text Opacity", 1.0, 0.0, 1.0, 0.0, 1.0,
                     "Multiplies text alpha.");
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamOutlineEnabled, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Enabled");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  defineDoubleParam(params, kParamOutlineWidth, "Outline Width", 0.0010,
+                    0.0, 0.010, 0.0, 0.010,
+                    "Glyph-mask dilation radius normalized to output height.");
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamOutlineColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Colour");
+  const double outlineColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
+                                outlineColourDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  defineDoubleParam(params, kParamOutlineOpacity, "Outline Opacity", 1.0,
+                    0.0, 1.0, 0.0, 1.0,
+                    "Multiplies outline alpha independently of text opacity.");
   defineDoubleParam(params, kParamPaddingLeft, "Padding Left", 0.015, 0.0, 1.0, 0.0, 0.25,
                     "Normalized to output width.");
   defineDoubleParam(params, kParamPaddingRight, "Padding Right", 0.015, 0.0, 1.0, 0.0, 0.25,
@@ -1127,6 +1188,10 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamFontSize, &instance->fontSize, nullptr);
   gParameterSuite->paramGetHandle(params, kParamTextColour, &instance->textColour, nullptr);
   gParameterSuite->paramGetHandle(params, kParamTextOpacity, &instance->textOpacity, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamOutlineEnabled, &instance->outlineEnabled, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamOutlineWidth, &instance->outlineWidth, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamOutlineColour, &instance->outlineColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamOutlineOpacity, &instance->outlineOpacity, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingLeft, &instance->paddingLeft, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingRight, &instance->paddingRight, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingTop, &instance->paddingTop, nullptr);
@@ -1359,9 +1424,10 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
     const auto globalText = readGlobalTextSettings(instance, time, outputImage, outputView);
     std::array<ZoneTextSettings, 6> zoneSettings{};
-    std::array<wipreview::text::GlyphMask, 6> zoneGlyphs{};
+    std::array<wipreview::text::GlyphRaster, 6> zoneGlyphs{};
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
+    bool outlineGenerationFailed = false;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
           instance, index, time, globalText, outputView);
@@ -1369,15 +1435,31 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       if (layer.overlay.enabled) {
         zoneGlyphs[index] = wipreview::text::rasterizeUTF8(
             layer.text, layer.fontFamily, layer.fontStyle, layer.pixelSize);
+        if (!zoneGlyphs[index].fillPixels.empty() &&
+            layer.outlineRadiusPixels > 0) {
+          outlineGenerationFailed = !wipreview::text::addOutline(
+              zoneGlyphs[index], layer.outlineRadiusPixels) || outlineGenerationFailed;
+        }
+      }
+      if (!zoneGlyphs[index].outlinePixels.empty()) {
+        auto outlineOverlay = layer.overlay;
+        outlineOverlay.opacity = layer.outlineOpacity;
+        for (int channel = 0; channel < 4; ++channel) {
+          outlineOverlay.colour[channel] = layer.outlineColour[channel];
+        }
+        wipreview::probe::compositeTextMask(
+            outputView,
+            {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+            zoneGlyphs[index].outlineView(), outlineOverlay);
       }
       wipreview::probe::compositeTextMask(
           outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
-          zoneGlyphs[index].view(), layer.overlay);
+          zoneGlyphs[index].fillView(), layer.overlay);
       zoneOrigins[index] = wipreview::probe::computeTextOrigin(
           outputView.bounds, zoneGlyphs[index].width, zoneGlyphs[index].height,
           layer.overlay);
       zoneRasterizationFailed = zoneRasterizationFailed ||
-          (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].pixels.empty());
+          (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].fillPixels.empty());
     }
     Logger::instance().write("STATIC_FORMATTER",
         instancePrefix(instance) +
@@ -1405,6 +1487,16 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                         std::to_string(blanking.colour[2]) + ',' +
                         std::to_string(blanking.colour[3]) + ']' +
         " opacity=" + std::to_string(blanking.opacity));
+    Logger::instance().write("TEXT_OUTLINE",
+        instancePrefix(instance) +
+        " enabled=" + (globalText.outlineEnabled ? "true" : "false") +
+        " normalized_width=" + std::to_string(globalText.normalizedOutlineWidth) +
+        " pixel_radius=" + std::to_string(globalText.outlineRadiusPixels) +
+        " colour=[" + std::to_string(globalText.outlineColour[0]) + ',' +
+                       std::to_string(globalText.outlineColour[1]) + ',' +
+                       std::to_string(globalText.outlineColour[2]) + ',' +
+                       std::to_string(globalText.outlineColour[3]) + ']' +
+        " opacity=" + std::to_string(globalText.outlineOpacity));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
@@ -1425,6 +1517,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           " pixel_size=" + std::to_string(layer.pixelSize) +
           " mask=[" + std::to_string(zoneMask.width) + ',' +
                        std::to_string(zoneMask.height) + ']' +
+          " outline=" + (!zoneMask.outlinePixels.empty() ? "true" : "false") +
           " origin=[" + std::to_string(origin.x) + ',' + std::to_string(origin.y) + ']' +
           " offset=[" + std::to_string(layer.overlay.offsetX) + ',' +
                          std::to_string(layer.overlay.offsetY) + ']' +
@@ -1444,6 +1537,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (zoneRasterizationFailed) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " zone_text_rasterization_failed=true output_continues=true");
+    } else if (outlineGenerationFailed) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " glyph_outline_generation_failed=true");
     } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
                (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
                 sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {

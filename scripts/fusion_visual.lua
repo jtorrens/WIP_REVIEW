@@ -114,6 +114,7 @@ local ok, failure = pcall(function()
         probe.fontStyle = font_style
         probe.fontSize = font_size
         probe.textOpacity = 1.0
+        probe.outlineEnabled = 0
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -162,6 +163,7 @@ local ok, failure = pcall(function()
         probe.fontStyle = 0
         probe.fontSize = 0.040
         probe.textOpacity = 1.0
+        probe.outlineEnabled = 0
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -172,7 +174,7 @@ local ok, failure = pcall(function()
         return probe
     end
 
-    local six_zones = add_zones("P2A_SIX_ZONES", 0, function(p)
+    add_zones("P2A_SIX_ZONES", 0, function(p)
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
         p.tlText = "TOP LEFT Á"; p.tcText = "TOP CENTER —"; p.trText = "TOP RIGHT Ó"
@@ -209,11 +211,30 @@ local ok, failure = pcall(function()
         p.blText = "BL ON BAR"; p.bcText = "BC ON BAR"; p.brText = "BR ON BAR"
     end, 4)
 
+    local outline_default = add_zones("P2B_OUTLINE_DEFAULT", 0, function(p)
+        p.outlineEnabled = 1; p.outlineWidth = 0.001
+        p.tcEnabled = 1; p.tcText = "DEFAULT BLACK OUTLINE"
+    end, 5)
+    add_zones("P2B_OUTLINE_WIDE_RED_HALF", 0, function(p)
+        p.outlineEnabled = 1; p.outlineWidth = 0.006
+        p.outlineColorRed = 1.0; p.outlineColorGreen = 0.0
+        p.outlineColorBlue = 0.0; p.outlineColorAlpha = 1.0
+        p.outlineOpacity = 0.5
+        p.bcEnabled = 1; p.bcText = "WIDE RED 50% OUTLINE"
+    end, 6)
+    add_zones("P2B_OUTLINE_SIX_ZONES", 1, function(p)
+        p.outlineEnabled = 1; p.outlineWidth = 0.003
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "TL OUT"; p.tcText = "TC OUT"; p.trText = "TR OUT"
+        p.blText = "BL OUT"; p.bcText = "BC OUT"; p.brText = "BR OUT"
+    end, 7)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(six_zones)
+    comp:SetActiveTool(outline_default)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P2A_SIX_ZONES")
+    print("active_tool=P2B_OUTLINE_DEFAULT")
     print("chart=" .. chart_path)
 end)
 
