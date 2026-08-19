@@ -90,7 +90,7 @@ require_record 'TEXT_ZONE .*zone="TC" enabled=true text="TEXT OVER BLANKING" .*m
 for zone in TL TC TR BL BC BR; do
     require_record "TEXT_ZONE .*zone=\"$zone\" enabled=true text=\"$zone[^\"]*\" .*normalized_size=0\.028000 requested_pixel_size=30\.240000 effective_pixel_size=30\.240000 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]" "P2a zone $zone"
 done
-require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL LARGE" use_size_override=true .*normalized_size=0\.056000 requested_pixel_size=60\.480000 effective_pixel_size=60\.480000' 'P2a size override'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL LARGE" .*use_size_override=true .*normalized_size=0\.056000 requested_pixel_size=60\.480000 effective_pixel_size=60\.480000' 'P2a size override'
 require_record 'TEXT_ZONE .*zone="TC" enabled=true text="TC GREEN" .*use_color_override=true .*colour=\[0\.000000,1\.000000,0\.000000,1\.000000\]' 'P2a colour override'
 require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR 25%" .*use_opacity_override=true .*opacity=0\.250000' 'P2a opacity override'
 require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BL OFFSET" .*origin=\[125,65\] offset=\[0\.050000,0\.040000\]' 'P2a normalized offsets'
