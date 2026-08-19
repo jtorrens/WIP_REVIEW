@@ -414,6 +414,8 @@ PointI computeTextOrigin(RectI outputBounds, int maskWidth, int maskHeight,
       origin.y = bottom;
       break;
   }
+  origin.x += static_cast<int>(std::lround(options.offsetX * width));
+  origin.y += static_cast<int>(std::lround(options.offsetY * height));
   return origin;
 }
 

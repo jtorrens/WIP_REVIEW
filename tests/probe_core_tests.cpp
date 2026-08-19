@@ -301,6 +301,17 @@ void testTextAnchorsAndGrowth() {
   const auto bottomTaller = wipreview::probe::computeTextOrigin(
       {0, 0, 100, 100}, 20, 20, options);
   assert(bottomTaller.x == 10 && bottomTaller.y == 5);  // grows upward
+
+  options.offsetX = 0.25;
+  options.offsetY = -0.10;
+  origin = wipreview::probe::computeTextOrigin({0, 0, 100, 100}, 20, 10, options);
+  assert(origin.x == 35 && origin.y == -5);
+
+  options.anchor = TextAnchor::TopRight;
+  options.offsetX = -0.05;
+  options.offsetY = 0.05;
+  origin = wipreview::probe::computeTextOrigin({10, 20, 210, 120}, 20, 10, options);
+  assert(origin.x == 140 && origin.y == 105);
 }
 
 void testTextMaskComposition() {

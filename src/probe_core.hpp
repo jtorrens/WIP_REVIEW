@@ -100,6 +100,8 @@ struct TextOverlayOptions {
   double paddingRight = 0.015;
   double paddingTop = 0.020;
   double paddingBottom = 0.020;
+  double offsetX = 0.0;
+  double offsetY = 0.0;
   bool outputPremultiplied = true;
   float colour[4] = {1.0F, 1.0F, 1.0F, 1.0F};
   float opacity = 1.0F;
