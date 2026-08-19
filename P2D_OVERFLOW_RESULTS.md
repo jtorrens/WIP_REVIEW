@@ -96,6 +96,18 @@ Fusion Studio 21.0.4 para macOS:
 - no se registraron fallos de rasterización, outline ni shadow;
 - los 23 escenarios acumulativos anteriores continúan aprobados.
 
-## Validación visual
+## Validación visual — aprobada
 
-Pendiente de validación humana en Fusion Studio 21.0.4.
+Validación humana completada el 19 de agosto de 2026 en Fusion Studio 21.0.4:
+
+- `P2D_OVERFLOW_CLIP`: tres textos grandes quedan recortados dentro de sus
+  celdas roja, verde y azul, con gaps limpios y sin invasión;
+- `P2D_OVERFLOW_ELLIPSIS`: las seis zonas permanecen separadas y los textos
+  largos terminan en `…`;
+- `P2D_OVERFLOW_SHRINK`: la fila superior reduce cada zona de forma
+  independiente y los tres textos cortos inferiores conservan mayor tamaño;
+- `P2D_OVERFLOW_MIN_CLIP`: el texto al mínimo queda centrado y recortado
+  simétricamente dentro de la celda central sobre blanking.
+
+No se observaron cruces entre columnas, pérdida de gaps ni cambios de tamaño en
+zonas que ya cabían.
