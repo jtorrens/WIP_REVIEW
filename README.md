@@ -154,11 +154,13 @@ un error de I/O al host.
 
 ## Test automático en Fusion Standalone
 
-El harness macOS crea una composición privada, genera un Source `4608×3164`,
-instancia el descriptor Filter-only, activa `AllowResize`, solicita
-`1920×1080`, fuerza el render y valida el tramo nuevo del log. La composición
-temporal se cierra bloqueada para que Fusion no muestre un diálogo de guardado;
-la composición que estuviera activa se restaura y nunca se modifica.
+El harness macOS crea una composición privada y genera un Source `4608×3164`.
+Prueba los cinco placements en Filter-only con Output `1920×1080`, repite Fit en
+General y valida además `Canvas Mode = Host Raster` con Output `4608×3164`.
+Activa `AllowResize`, fuerza cada render y valida exclusivamente el tramo nuevo
+del log. La composición temporal se cierra bloqueada para que Fusion no muestre
+un diálogo de guardado; la composición que estuviera activa se restaura y nunca
+se modifica.
 
 Con el bundle ya instalado:
 

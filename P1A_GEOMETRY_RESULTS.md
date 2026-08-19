@@ -55,9 +55,11 @@ natural el raster correspondiente a su `renderScale`.
 Los tests host-independent cubren intersección, canvas, renderWindow, Fit,
 Fill/Crop, Stretch, 1:1, Identity, PAR, UInt16, alpha straight/premult y row
 bytes negativos. El smoke test de Fusion crea una composición privada con
-Source `4608×3164`, Output `1920×1080`, Filter-only, `AllowResize=1`, Fit y
-Lanczos3; valida en el log los dos bounds, el renderWindow y el evento
-`STATIC_FORMATTER`.
+Source `4608×3164`, ejecuta los cinco placements en Filter-only con Output
+`1920×1080`, repite Fit en General y prueba Host Raster `4608×3164`. Todos usan
+`AllowResize=1` y Lanczos3. El arnés valida bounds, renderWindow, contexto,
+scenario, cada valor de placement, el warning de Identity incompatible y el
+evento `STATIC_FORMATTER`.
 
 ```sh
 cmake --build build --parallel
@@ -68,6 +70,11 @@ scripts/run_fusion_p1a_smoke.sh
 El smoke de host requiere que el bundle recién construido esté instalado y que
 Fusion Standalone 21 pueda abrirse. La composición temporal se cierra bloqueada
 para evitar el diálogo de guardado y no modifica la composición activa.
+
+Medición orientativa en Fusion Studio 21.0.4 sobre la máquina de desarrollo:
+Fit/Lanczos3 antialiased `4608×3164 → 1920×1080` empleó aproximadamente 7,1 s
+en CPU. La matriz completa de siete renders empleó 29,2 s. Es un renderer CPU
+de referencia; esta cifra no se presenta como objetivo de rendimiento final.
 
 ## Resultado arquitectónico heredado de P0
 

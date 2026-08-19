@@ -62,10 +62,17 @@ require_record() {
 }
 
 require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextFilter"' 'Filter context'
-require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_FUSION_P1A_SMOKE"' 'scenario marker'
+require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextGeneral"' 'General context'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_FILTER_FIT"' 'Filter scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_GENERAL_FIT"' 'General scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_HOST_RASTER"' 'Host Raster scenario marker'
 require_record 'IMAGE .*clip=Source bounds=\[0,0,4608,3164\]' '4608x3164 Source image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,1920,1080\]' '1920x1080 Output image'
+require_record 'IMAGE .*clip=Output bounds=\[0,0,4608,3164\]' 'Host Raster Output image'
 require_record 'RENDER .*render_window=\[0,0,1920,1080\].*render_scale=\[1,1\]' 'full-scale render window'
-require_record 'STATIC_FORMATTER .*placement=1 filter=2 .*source_PAR=1\.000000 output_PAR=1\.000000' 'P1a Fit/Lanczos3 formatter pass'
+for placement in 0 1 2 3 4; do
+    require_record "STATIC_FORMATTER .*placement=$placement filter=2 .*source_PAR=1\\.000000 output_PAR=1\\.000000" "P1a placement $placement formatter pass"
+done
+require_record 'RENDER_WARNING .*identity_raster_mismatch=true implicit_resize=false' 'Identity mismatch warning'
 
 echo "Automated Fusion P1a smoke test passed"

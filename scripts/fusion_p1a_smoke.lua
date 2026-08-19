@@ -15,7 +15,14 @@ if fusion == nil then
 end
 
 local previous = fusion.CurrentComp
-local comp = fusion:NewComp()
+local comp = nil
+for attempt = 1, 30 do
+    comp = fusion:NewComp()
+    if comp ~= nil then
+        break
+    end
+    bmd.wait(1)
+end
 if comp == nil then
     error("Fusion failed to create an isolated test composition")
 end
@@ -49,26 +56,42 @@ local ok, failure = pcall(function()
     source.TopLeftBlue = 0.5
     source.TopLeftAlpha = 1.0
 
-    local probe = require_tool("ofx.com.jtorrens.WIPReviewProbe.Filter", 1, 0)
-    probe:SetAttrs({TOOLS_Name = "AutomatedWIPReviewFilter"})
-    probe.Source = source.Output
-    probe.requestCustomRoD = 1
-    probe.requestedWidth = 1920
-    probe.requestedHeight = 1080
-    probe.canvasMode = 1
-    probe.placementMode = 1
-    probe.resampleFilter = 2
-    probe.scenarioLabel = "AUTOMATED_FUSION_P1A_SMOKE"
-    probe.AllowResize = 1
-
-    comp:SetActiveTool(probe)
     comp.CurrentTime = 0
     comp:Unlock()
 
-    local image = probe.Output:GetValue(0)
-    if image == nil then
-        error("Fusion returned no image from the automated OFX graph")
+    local function render_probe(reg_id, name, placement, canvas_mode, x, y)
+        comp:Lock()
+        local probe = require_tool(reg_id, x, y)
+        probe:SetAttrs({TOOLS_Name = name})
+        probe.Source = source.Output
+        probe.requestCustomRoD = 1
+        probe.requestedWidth = 1920
+        probe.requestedHeight = 1080
+        probe.canvasMode = canvas_mode
+        probe.placementMode = placement
+        probe.resampleFilter = 2
+        probe.scenarioLabel = name
+        probe.AllowResize = 1
+        comp:SetActiveTool(probe)
+        comp:Unlock()
+        local image = probe.Output:GetValue(0)
+        if image == nil then
+            error("Fusion returned no image for " .. name)
+        end
+        print("rendered=" .. name)
+        return probe
     end
+
+    local placement_names = {"IDENTITY", "FIT", "FILL", "STRETCH", "ONE_TO_ONE"}
+    local probe = nil
+    for placement = 0, 4 do
+        probe = render_probe(
+            "ofx.com.jtorrens.WIPReviewProbe.Filter",
+            "AUTOMATED_P1A_FILTER_" .. placement_names[placement + 1],
+            placement, 1, placement + 1, 0)
+    end
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P1A_GENERAL_FIT", 1, 1, 1, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1A_HOST_RASTER", 0, 0, 2, 1)
 
     print("WIPREVIEW_AUTOMATION_OK")
     print("fusion_version=" .. tostring(fusion:GetAttrs().FUSIONS_Version))
