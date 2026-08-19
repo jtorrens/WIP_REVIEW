@@ -82,6 +82,7 @@ local ok, failure = pcall(function()
         probe.fontSize = 0.028
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
+        probe.shadowEnabled = 0
         if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
@@ -173,6 +174,21 @@ local ok, failure = pcall(function()
         p.outlineColorBlue = 0.0; p.outlineColorAlpha = 1.0
         p.outlineOpacity = 0.5
         p.tcEnabled = 1; p.tcText = "P2B RED 50% OUTLINE"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2C_SHADOW_DEFAULT", 2, 1, 1, 5,
+                 0, 2, 2.0, 1.0, function(p)
+        p.shadowEnabled = 1
+        p.tlEnabled = 1; p.tlText = "P2C DEFAULT SHADOW"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2C_SHADOW_HARD_BLUE", 2, 1, 2, 5,
+                 0, 2, 2.0, 1.0, function(p)
+        p.shadowEnabled = 1
+        p.shadowOffsetX = -0.01; p.shadowOffsetY = -0.01
+        p.shadowSoftness = 0.0
+        p.shadowColorRed = 0.0; p.shadowColorGreen = 0.0
+        p.shadowColorBlue = 1.0; p.shadowColorAlpha = 1.0
+        p.shadowOpacity = 1.0
+        p.brEnabled = 1; p.brText = "P2C HARD BLUE SHADOW"
     end)
 
     print("WIPREVIEW_AUTOMATION_OK")

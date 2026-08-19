@@ -424,6 +424,45 @@ void testOutlineUsesGlyphAlpha() {
   assert(red(pixels.data(), 5, 0, 0) == 1.0F);    // outside both masks
 }
 
+void testShadowUsesGlyphAlpha() {
+  wipreview::text::GlyphRaster offsetGlyph;
+  offsetGlyph.width = 1;
+  offsetGlyph.height = 1;
+  offsetGlyph.fillPixels = {255};
+  assert(wipreview::text::addShadow(offsetGlyph, 1, 1, 0.0));
+  assert(offsetGlyph.width == 2 && offsetGlyph.height == 2);
+  const std::array<std::uint8_t, 4> expectedFill{0, 0, 255, 0};
+  const std::array<std::uint8_t, 4> expectedShadow{0, 255, 0, 0};
+  assert(std::equal(offsetGlyph.fillPixels.begin(), offsetGlyph.fillPixels.end(),
+                    expectedFill.begin(), expectedFill.end()));
+  assert(std::equal(offsetGlyph.shadowPixels.begin(), offsetGlyph.shadowPixels.end(),
+                    expectedShadow.begin(), expectedShadow.end()));
+
+  wipreview::text::GlyphRaster softGlyph;
+  softGlyph.width = 1;
+  softGlyph.height = 1;
+  softGlyph.fillPixels = {255};
+  assert(wipreview::text::addShadow(softGlyph, 0, 0, 1.0));
+  assert(softGlyph.width == 7 && softGlyph.height == 7);
+  const auto centre = softGlyph.shadowPixels[3 * 7 + 3];
+  const auto neighbour = softGlyph.shadowPixels[3 * 7 + 4];
+  assert(centre > neighbour && neighbour > 0 && centre < 255);
+  std::uint64_t shadowSum = 0;
+  for (const auto value : softGlyph.shadowPixels) shadowSum += value;
+  assert(shadowSum > 240 && shadowSum < 270);
+
+  wipreview::text::GlyphRaster styledGlyph;
+  styledGlyph.width = 1;
+  styledGlyph.height = 1;
+  styledGlyph.fillPixels = {255};
+  assert(wipreview::text::addOutline(styledGlyph, 1));
+  assert(wipreview::text::addShadow(styledGlyph, 1, 1, 0.0));
+  assert(styledGlyph.width == 4 && styledGlyph.height == 4);
+  assert(styledGlyph.fillPixels.size() == 16);
+  assert(styledGlyph.outlinePixels.size() == 16);
+  assert(styledGlyph.shadowPixels.size() == 16);
+}
+
 }  // namespace
 
 int main() {
@@ -443,5 +482,6 @@ int main() {
   testTextMaskComposition();
   testSystemTextRasterizerUTF8();
   testOutlineUsesGlyphAlpha();
+  testShadowUsesGlyphAlpha();
   return 0;
 }

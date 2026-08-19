@@ -115,6 +115,7 @@ local ok, failure = pcall(function()
         probe.fontSize = font_size
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
+        probe.shadowEnabled = 0
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -164,6 +165,7 @@ local ok, failure = pcall(function()
         probe.fontSize = 0.040
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
+        probe.shadowEnabled = 0
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -211,7 +213,7 @@ local ok, failure = pcall(function()
         p.blText = "BL ON BAR"; p.bcText = "BC ON BAR"; p.brText = "BR ON BAR"
     end, 4)
 
-    local outline_default = add_zones("P2B_OUTLINE_DEFAULT", 0, function(p)
+    add_zones("P2B_OUTLINE_DEFAULT", 0, function(p)
         p.outlineEnabled = 1; p.outlineWidth = 0.001
         p.tcEnabled = 1; p.tcText = "DEFAULT BLACK OUTLINE"
     end, 5)
@@ -232,11 +234,39 @@ local ok, failure = pcall(function()
         p.blText = "BL OUT"; p.bcText = "BC OUT"; p.brText = "BR OUT"
     end, 7)
 
+    local shadow_default = add_zones("P2C_SHADOW_DEFAULT", 0, function(p)
+        p.fontSize = 0.080
+        p.shadowEnabled = 1
+        p.tcEnabled = 1; p.tcText = "DEFAULT BLACK SOFT SHADOW"
+    end, 8)
+    add_zones("P2C_SHADOW_HARD_BLUE", 0, function(p)
+        p.fontSize = 0.080
+        p.shadowEnabled = 1
+        p.shadowOffsetX = 0.012; p.shadowOffsetY = 0.018
+        p.shadowSoftness = 0.0
+        p.shadowColorRed = 0.0; p.shadowColorGreen = 0.0
+        p.shadowColorBlue = 1.0; p.shadowColorAlpha = 1.0
+        p.shadowOpacity = 1.0
+        p.bcEnabled = 1; p.bcText = "HARD BLUE SHADOW"
+    end, 9)
+    add_zones("P2C_SHADOW_SIX_ZONES", 1, function(p)
+        p.shadowEnabled = 1
+        p.shadowOffsetX = 0.006; p.shadowOffsetY = 0.009
+        p.shadowSoftness = 0.004
+        p.shadowColorRed = 0.0; p.shadowColorGreen = 1.0
+        p.shadowColorBlue = 1.0; p.shadowColorAlpha = 1.0
+        p.shadowOpacity = 0.8
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "TL SHADOW"; p.tcText = "TC SHADOW"; p.trText = "TR SHADOW"
+        p.blText = "BL SHADOW"; p.bcText = "BC SHADOW"; p.brText = "BR SHADOW"
+    end, 10)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(outline_default)
+    comp:SetActiveTool(shadow_default)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P2B_OUTLINE_DEFAULT")
+    print("active_tool=P2C_SHADOW_DEFAULT")
     print("chart=" .. chart_path)
 end)
 

@@ -9,12 +9,85 @@
 #include <vector>
 
 namespace wipreview::text {
+namespace {
+
+constexpr std::size_t kMaximumLayerPixels = 32U * 1024U * 1024U;
+
+bool validFill(const GlyphRaster& glyph) noexcept {
+  return glyph.width > 0 && glyph.height > 0 &&
+      glyph.fillPixels.size() == static_cast<std::size_t>(glyph.width) *
+                                 static_cast<std::size_t>(glyph.height);
+}
+
+std::vector<std::uint8_t> padLayer(const std::vector<std::uint8_t>& source,
+                                   int sourceWidth,
+                                   int sourceHeight,
+                                   int outputWidth,
+                                   int outputHeight,
+                                   int offsetX,
+                                   int offsetY) {
+  if (source.empty()) return {};
+  std::vector<std::uint8_t> result(
+      static_cast<std::size_t>(outputWidth) * static_cast<std::size_t>(outputHeight), 0);
+  for (int y = 0; y < sourceHeight; ++y) {
+    std::copy_n(source.data() + static_cast<std::size_t>(y * sourceWidth),
+                sourceWidth,
+                result.data() + static_cast<std::size_t>(
+                    (y + offsetY) * outputWidth + offsetX));
+  }
+  return result;
+}
+
+void gaussianBlur(std::vector<std::uint8_t>& mask, int width, int height,
+                  double sigma) {
+  if (sigma <= 0.0 || mask.empty()) return;
+  const int radius = static_cast<int>(std::ceil(3.0 * sigma));
+  std::vector<double> kernel(static_cast<std::size_t>(2 * radius + 1));
+  double kernelSum = 0.0;
+  for (int offset = -radius; offset <= radius; ++offset) {
+    const double value = std::exp(-0.5 * static_cast<double>(offset * offset) /
+                                  (sigma * sigma));
+    kernel[static_cast<std::size_t>(offset + radius)] = value;
+    kernelSum += value;
+  }
+  for (auto& value : kernel) value /= kernelSum;
+
+  const std::size_t pixelCount = static_cast<std::size_t>(width) *
+                                 static_cast<std::size_t>(height);
+  std::vector<float> horizontal(pixelCount, 0.0F);
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      double sum = 0.0;
+      for (int offset = -radius; offset <= radius; ++offset) {
+        const int sourceX = x + offset;
+        if (sourceX < 0 || sourceX >= width) continue;
+        sum += static_cast<double>(mask[static_cast<std::size_t>(y * width + sourceX)]) *
+               kernel[static_cast<std::size_t>(offset + radius)];
+      }
+      horizontal[static_cast<std::size_t>(y * width + x)] = static_cast<float>(sum);
+    }
+  }
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      double sum = 0.0;
+      for (int offset = -radius; offset <= radius; ++offset) {
+        const int sourceY = y + offset;
+        if (sourceY < 0 || sourceY >= height) continue;
+        sum += static_cast<double>(horizontal[
+                   static_cast<std::size_t>(sourceY * width + x)]) *
+               kernel[static_cast<std::size_t>(offset + radius)];
+      }
+      mask[static_cast<std::size_t>(y * width + x)] =
+          static_cast<std::uint8_t>(std::clamp(std::lround(sum), 0L, 255L));
+    }
+  }
+}
+
+}  // namespace
 
 bool addOutline(GlyphRaster& glyph, int radiusPixels) noexcept {
   try {
-    if (radiusPixels <= 0 || glyph.width <= 0 || glyph.height <= 0 ||
-        glyph.fillPixels.size() != static_cast<std::size_t>(glyph.width) *
-                                   static_cast<std::size_t>(glyph.height)) {
+    if (radiusPixels <= 0 || !validFill(glyph)) {
       return false;
     }
 
@@ -29,7 +102,7 @@ bool addOutline(GlyphRaster& glyph, int radiusPixels) noexcept {
     const int outputHeight = sourceHeight + 2 * radius;
     const std::size_t pixelCount = static_cast<std::size_t>(outputWidth) *
                                    static_cast<std::size_t>(outputHeight);
-    if (pixelCount > 128U * 1024U * 1024U) return false;
+    if (pixelCount > kMaximumLayerPixels) return false;
 
     std::vector<std::uint8_t> paddedFill(pixelCount, 0);
     std::vector<std::uint8_t> outline(pixelCount, 0);
@@ -70,6 +143,64 @@ bool addOutline(GlyphRaster& glyph, int radiusPixels) noexcept {
 
     glyph.fillPixels = std::move(paddedFill);
     glyph.outlinePixels = std::move(outline);
+    glyph.width = outputWidth;
+    glyph.height = outputHeight;
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+bool addShadow(GlyphRaster& glyph, int offsetXPixels, int offsetDownPixels,
+               double softnessPixels) noexcept {
+  try {
+    if (!validFill(glyph) || !std::isfinite(softnessPixels) ||
+        softnessPixels < 0.0) {
+      return false;
+    }
+    const int blurRadius = static_cast<int>(std::ceil(
+        3.0 * std::min(softnessPixels, 4096.0)));
+    const int offsetY = -offsetDownPixels;
+    const long long minimumX = std::min<long long>(0, offsetXPixels - blurRadius);
+    const long long minimumY = std::min<long long>(0, offsetY - blurRadius);
+    const long long maximumX = std::max<long long>(
+        glyph.width, static_cast<long long>(offsetXPixels) + glyph.width + blurRadius);
+    const long long maximumY = std::max<long long>(
+        glyph.height, static_cast<long long>(offsetY) + glyph.height + blurRadius);
+    const long long outputWidth64 = maximumX - minimumX;
+    const long long outputHeight64 = maximumY - minimumY;
+    if (outputWidth64 <= 0 || outputHeight64 <= 0 ||
+        outputWidth64 > std::numeric_limits<int>::max() ||
+        outputHeight64 > std::numeric_limits<int>::max()) {
+      return false;
+    }
+    const int outputWidth = static_cast<int>(outputWidth64);
+    const int outputHeight = static_cast<int>(outputHeight64);
+    const std::size_t pixelCount = static_cast<std::size_t>(outputWidth) *
+                                   static_cast<std::size_t>(outputHeight);
+    if (pixelCount > kMaximumLayerPixels) return false;
+
+    const int layerOffsetX = static_cast<int>(-minimumX);
+    const int layerOffsetY = static_cast<int>(-minimumY);
+    auto fill = padLayer(glyph.fillPixels, glyph.width, glyph.height,
+                         outputWidth, outputHeight, layerOffsetX, layerOffsetY);
+    auto outline = padLayer(glyph.outlinePixels, glyph.width, glyph.height,
+                            outputWidth, outputHeight, layerOffsetX, layerOffsetY);
+    std::vector<std::uint8_t> shadow(pixelCount, 0);
+    const int shadowX = layerOffsetX + offsetXPixels;
+    const int shadowY = layerOffsetY + offsetY;
+    for (int y = 0; y < glyph.height; ++y) {
+      std::copy_n(glyph.fillPixels.data() + static_cast<std::size_t>(y * glyph.width),
+                  glyph.width,
+                  shadow.data() + static_cast<std::size_t>(
+                      (y + shadowY) * outputWidth + shadowX));
+    }
+    gaussianBlur(shadow, outputWidth, outputHeight,
+                 std::min(softnessPixels, 4096.0));
+
+    glyph.fillPixels = std::move(fill);
+    glyph.outlinePixels = std::move(outline);
+    glyph.shadowPixels = std::move(shadow);
     glyph.width = outputWidth;
     glyph.height = outputHeight;
     return true;

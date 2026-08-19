@@ -100,5 +100,9 @@ require_record 'TEXT_OUTLINE .*enabled=true normalized_width=0\.001000 pixel_rad
 require_record 'TEXT_ZONE .*zone="TL" enabled=true text="P2B DEFAULT OUTLINE" .*outline=true' 'P2b default glyph outline'
 require_record 'TEXT_OUTLINE .*enabled=true normalized_width=0\.006000 pixel_radius=6 colour=\[1\.000000,0\.000000,0\.000000,1\.000000\] opacity=0\.500000' 'P2b wide red half-opacity outline settings'
 require_record 'TEXT_ZONE .*zone="TC" enabled=true text="P2B RED 50% OUTLINE" .*outline=true' 'P2b wide glyph outline'
+require_record 'TEXT_SHADOW .*enabled=true normalized_offset=\[0\.001500,0\.002000\] pixel_offset=\[3,2\] normalized_softness=0\.002000 pixel_softness=2\.160000 colour=\[0\.000000,0\.000000,0\.000000,1\.000000\] opacity=0\.600000' 'P2c default shadow settings'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="P2C DEFAULT SHADOW" .*shadow=true' 'P2c default glyph shadow'
+require_record 'TEXT_SHADOW .*enabled=true normalized_offset=\[-0\.010000,-0\.010000\] pixel_offset=\[-19,-11\] normalized_softness=0\.000000 pixel_softness=0\.000000 colour=\[0\.000000,0\.000000,1\.000000,1\.000000\] opacity=1\.000000' 'P2c hard blue shadow settings'
+require_record 'TEXT_ZONE .*zone="BR" enabled=true text="P2C HARD BLUE SHADOW" .*shadow=true' 'P2c hard glyph shadow'
 
-echo "Automated Fusion cumulative P1/P2b smoke test passed"
+echo "Automated Fusion cumulative P1/P2c smoke test passed"

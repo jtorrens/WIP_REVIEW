@@ -66,6 +66,14 @@ constexpr char kParamOutlineEnabled[] = "outlineEnabled";
 constexpr char kParamOutlineWidth[] = "outlineWidth";
 constexpr char kParamOutlineColour[] = "outlineColor";
 constexpr char kParamOutlineOpacity[] = "outlineOpacity";
+constexpr char kParamOutlineGroup[] = "outlineGroup";
+constexpr char kParamShadowEnabled[] = "shadowEnabled";
+constexpr char kParamShadowOffsetX[] = "shadowOffsetX";
+constexpr char kParamShadowOffsetY[] = "shadowOffsetY";
+constexpr char kParamShadowSoftness[] = "shadowSoftness";
+constexpr char kParamShadowColour[] = "shadowColor";
+constexpr char kParamShadowOpacity[] = "shadowOpacity";
+constexpr char kParamShadowGroup[] = "shadowGroup";
 constexpr char kParamPaddingLeft[] = "paddingLeft";
 constexpr char kParamPaddingRight[] = "paddingRight";
 constexpr char kParamPaddingTop[] = "paddingTop";
@@ -374,6 +382,12 @@ struct InstanceData {
   OfxParamHandle outlineWidth = nullptr;
   OfxParamHandle outlineColour = nullptr;
   OfxParamHandle outlineOpacity = nullptr;
+  OfxParamHandle shadowEnabled = nullptr;
+  OfxParamHandle shadowOffsetX = nullptr;
+  OfxParamHandle shadowOffsetY = nullptr;
+  OfxParamHandle shadowSoftness = nullptr;
+  OfxParamHandle shadowColour = nullptr;
+  OfxParamHandle shadowOpacity = nullptr;
   OfxParamHandle paddingLeft = nullptr;
   OfxParamHandle paddingRight = nullptr;
   OfxParamHandle paddingTop = nullptr;
@@ -669,6 +683,15 @@ struct TextRenderSettings {
   int outlineRadiusPixels = 0;
   float outlineColour[4] = {0.0F, 0.0F, 0.0F, 1.0F};
   float outlineOpacity = 1.0F;
+  bool shadowEnabled = false;
+  double normalizedShadowOffsetX = 0.0015;
+  double normalizedShadowOffsetY = 0.0020;
+  double normalizedShadowSoftness = 0.0020;
+  int shadowOffsetXPixels = 0;
+  int shadowOffsetDownPixels = 0;
+  double shadowSoftnessPixels = 0.0;
+  float shadowColour[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+  float shadowOpacity = 0.60F;
 };
 
 TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime time,
@@ -684,6 +707,12 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   double outlineWidth = 0.001;
   double outlineColour[4] = {0.0, 0.0, 0.0, 1.0};
   double outlineOpacity = 1.0;
+  int shadowEnabled = 0;
+  double shadowOffsetX = 0.0015;
+  double shadowOffsetY = 0.0020;
+  double shadowSoftness = 0.0020;
+  double shadowColour[4] = {0.0, 0.0, 0.0, 1.0};
+  double shadowOpacity = 0.60;
   double paddingLeft = 0.015;
   double paddingRight = 0.015;
   double paddingTop = 0.020;
@@ -709,6 +738,26 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   }
   if (instance->outlineOpacity) {
     gParameterSuite->paramGetValueAtTime(instance->outlineOpacity, time, &outlineOpacity);
+  }
+  if (instance->shadowEnabled) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowEnabled, time, &shadowEnabled);
+  }
+  if (instance->shadowOffsetX) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowOffsetX, time, &shadowOffsetX);
+  }
+  if (instance->shadowOffsetY) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowOffsetY, time, &shadowOffsetY);
+  }
+  if (instance->shadowSoftness) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowSoftness, time, &shadowSoftness);
+  }
+  if (instance->shadowColour) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowColour, time,
+                                         &shadowColour[0], &shadowColour[1],
+                                         &shadowColour[2], &shadowColour[3]);
+  }
+  if (instance->shadowOpacity) {
+    gParameterSuite->paramGetValueAtTime(instance->shadowOpacity, time, &shadowOpacity);
   }
   if (instance->paddingLeft) gParameterSuite->paramGetValueAtTime(instance->paddingLeft, time, &paddingLeft);
   if (instance->paddingRight) gParameterSuite->paramGetValueAtTime(instance->paddingRight, time, &paddingRight);
@@ -748,6 +797,20 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   settings.outlineOpacity = static_cast<float>(outlineOpacity);
   for (int channel = 0; channel < 4; ++channel) {
     settings.outlineColour[channel] = static_cast<float>(outlineColour[channel]);
+  }
+  const int outputWidth = std::max(0, outputView.bounds.x2 - outputView.bounds.x1);
+  settings.shadowEnabled = shadowEnabled != 0;
+  settings.normalizedShadowOffsetX = std::clamp(shadowOffsetX, -0.05, 0.05);
+  settings.normalizedShadowOffsetY = std::clamp(shadowOffsetY, -0.05, 0.05);
+  settings.normalizedShadowSoftness = std::clamp(shadowSoftness, 0.0, 0.05);
+  settings.shadowOffsetXPixels = static_cast<int>(std::lround(
+      settings.normalizedShadowOffsetX * outputWidth));
+  settings.shadowOffsetDownPixels = static_cast<int>(std::lround(
+      settings.normalizedShadowOffsetY * outputHeight));
+  settings.shadowSoftnessPixels = settings.normalizedShadowSoftness * outputHeight;
+  settings.shadowOpacity = static_cast<float>(shadowOpacity);
+  for (int channel = 0; channel < 4; ++channel) {
+    settings.shadowColour[channel] = static_cast<float>(shadowColour[channel]);
   }
   return settings;
 }
@@ -859,15 +922,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P2b Filter Only)"
-                                          : "WIP Review Probe (P2b)");
+                               filterOnly ? "WIP Review Probe (P2c Filter Only)"
+                                          : "WIP Review Probe (P2c)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Six Zone Outline P2b — Filter Only"
-                                          : "WIP Review Six Zone Outline P2b");
+                               filterOnly ? "WIP Review Six Zone Shadow P2c — Filter Only"
+                                          : "WIP Review Six Zone Shadow P2c");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P2b overlay: review raster, placement, blanking and six static UTF-8 text zones with a global glyph-mask outline.");
+      "P2c overlay: review raster, placement, blanking and six UTF-8 zones with global glyph-mask outline and shadow.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -1097,22 +1160,63 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   defineDoubleParam(params, kParamTextOpacity, "Text Opacity", 1.0, 0.0, 1.0, 0.0, 1.0,
                     "Multiplies text alpha.");
 
+  gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamOutlineGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamOutlineEnabled, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Enabled");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, kParamOutlineGroup);
   defineDoubleParam(params, kParamOutlineWidth, "Outline Width", 0.0010,
                     0.0, 0.010, 0.0, 0.010,
-                    "Glyph-mask dilation radius normalized to output height.");
+                    "Glyph-mask dilation radius normalized to output height.",
+                    kParamOutlineGroup);
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamOutlineColour, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Colour");
   const double outlineColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
   gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
                                 outlineColourDefault);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, kParamOutlineGroup);
   defineDoubleParam(params, kParamOutlineOpacity, "Outline Opacity", 1.0,
                     0.0, 1.0, 0.0, 1.0,
-                    "Multiplies outline alpha independently of text opacity.");
+                    "Multiplies outline alpha independently of text opacity.",
+                    kParamOutlineGroup);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamShadowGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Drop Shadow");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamShadowEnabled, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Shadow Enabled");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, kParamShadowGroup);
+  defineDoubleParam(params, kParamShadowOffsetX, "Shadow Offset X", 0.0015,
+                    -0.05, 0.05, -0.05, 0.05,
+                    "Normalized to output width; positive values move right.",
+                    kParamShadowGroup);
+  defineDoubleParam(params, kParamShadowOffsetY, "Shadow Offset Y", 0.0020,
+                    -0.05, 0.05, -0.05, 0.05,
+                    "Normalized to output height; positive values move visually down.",
+                    kParamShadowGroup);
+  defineDoubleParam(params, kParamShadowSoftness, "Shadow Softness", 0.0020,
+                    0.0, 0.05, 0.0, 0.05,
+                    "Gaussian sigma normalized to output height; applied to shadow alpha.",
+                    kParamShadowGroup);
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamShadowColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Shadow Colour");
+  const double shadowColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
+                                shadowColourDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, kParamShadowGroup);
+  defineDoubleParam(params, kParamShadowOpacity, "Shadow Opacity", 0.60,
+                    0.0, 1.0, 0.0, 1.0,
+                    "Multiplies shadow alpha independently of fill and outline.",
+                    kParamShadowGroup);
   defineDoubleParam(params, kParamPaddingLeft, "Padding Left", 0.015, 0.0, 1.0, 0.0, 0.25,
                     "Normalized to output width.");
   defineDoubleParam(params, kParamPaddingRight, "Padding Right", 0.015, 0.0, 1.0, 0.0, 0.25,
@@ -1192,6 +1296,12 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamOutlineWidth, &instance->outlineWidth, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineColour, &instance->outlineColour, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineOpacity, &instance->outlineOpacity, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowEnabled, &instance->shadowEnabled, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowOffsetX, &instance->shadowOffsetX, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowOffsetY, &instance->shadowOffsetY, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowSoftness, &instance->shadowSoftness, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowColour, &instance->shadowColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamShadowOpacity, &instance->shadowOpacity, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingLeft, &instance->paddingLeft, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingRight, &instance->paddingRight, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingTop, &instance->paddingTop, nullptr);
@@ -1428,6 +1538,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
     bool outlineGenerationFailed = false;
+    bool shadowGenerationFailed = false;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
           instance, index, time, globalText, outputView);
@@ -1440,6 +1551,23 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           outlineGenerationFailed = !wipreview::text::addOutline(
               zoneGlyphs[index], layer.outlineRadiusPixels) || outlineGenerationFailed;
         }
+        if (!zoneGlyphs[index].fillPixels.empty() && layer.shadowEnabled) {
+          shadowGenerationFailed = !wipreview::text::addShadow(
+              zoneGlyphs[index], layer.shadowOffsetXPixels,
+              layer.shadowOffsetDownPixels, layer.shadowSoftnessPixels) ||
+              shadowGenerationFailed;
+        }
+      }
+      if (!zoneGlyphs[index].shadowPixels.empty()) {
+        auto shadowOverlay = layer.overlay;
+        shadowOverlay.opacity = layer.shadowOpacity;
+        for (int channel = 0; channel < 4; ++channel) {
+          shadowOverlay.colour[channel] = layer.shadowColour[channel];
+        }
+        wipreview::probe::compositeTextMask(
+            outputView,
+            {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+            zoneGlyphs[index].shadowView(), shadowOverlay);
       }
       if (!zoneGlyphs[index].outlinePixels.empty()) {
         auto outlineOverlay = layer.overlay;
@@ -1497,6 +1625,20 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                        std::to_string(globalText.outlineColour[2]) + ',' +
                        std::to_string(globalText.outlineColour[3]) + ']' +
         " opacity=" + std::to_string(globalText.outlineOpacity));
+    Logger::instance().write("TEXT_SHADOW",
+        instancePrefix(instance) +
+        " enabled=" + (globalText.shadowEnabled ? "true" : "false") +
+        " normalized_offset=[" + std::to_string(globalText.normalizedShadowOffsetX) + ',' +
+                                  std::to_string(globalText.normalizedShadowOffsetY) + ']' +
+        " pixel_offset=[" + std::to_string(globalText.shadowOffsetXPixels) + ',' +
+                             std::to_string(globalText.shadowOffsetDownPixels) + ']' +
+        " normalized_softness=" + std::to_string(globalText.normalizedShadowSoftness) +
+        " pixel_softness=" + std::to_string(globalText.shadowSoftnessPixels) +
+        " colour=[" + std::to_string(globalText.shadowColour[0]) + ',' +
+                       std::to_string(globalText.shadowColour[1]) + ',' +
+                       std::to_string(globalText.shadowColour[2]) + ',' +
+                       std::to_string(globalText.shadowColour[3]) + ']' +
+        " opacity=" + std::to_string(globalText.shadowOpacity));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
@@ -1518,6 +1660,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           " mask=[" + std::to_string(zoneMask.width) + ',' +
                        std::to_string(zoneMask.height) + ']' +
           " outline=" + (!zoneMask.outlinePixels.empty() ? "true" : "false") +
+          " shadow=" + (!zoneMask.shadowPixels.empty() ? "true" : "false") +
           " origin=[" + std::to_string(origin.x) + ',' + std::to_string(origin.y) + ']' +
           " offset=[" + std::to_string(layer.overlay.offsetX) + ',' +
                          std::to_string(layer.overlay.offsetY) + ']' +
@@ -1540,6 +1683,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (outlineGenerationFailed) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " glyph_outline_generation_failed=true");
+    } else if (shadowGenerationFailed) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " glyph_shadow_generation_failed=true");
     } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
                (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
                 sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {
