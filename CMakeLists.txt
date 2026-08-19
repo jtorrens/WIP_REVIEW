@@ -113,7 +113,7 @@ if(WIPREVIEW_BUILD_TESTS)
     add_custom_target(fusion_host_smoke
       COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_p1a_smoke.sh"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMENT "Running isolated Fusion Standalone OFX host smoke test"
+      COMMENT "Running isolated Fusion Standalone P1a/P1b OFX host smoke test"
       USES_TERMINAL
     )
   endif()

@@ -32,4 +32,4 @@ if ! printf '%s\n' "$script_output" | grep -F 'WIPREVIEW_VISUAL_READY' >/dev/nul
     exit 1
 fi
 
-echo "Visual composition ready; select a P1A node and press 1 or 2."
+echo "Visual composition ready; select a P1A or P1B node and press 1 or 2."

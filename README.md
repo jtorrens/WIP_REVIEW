@@ -1,12 +1,26 @@
-# WIP Review OFX — P0 Host Probe + P1a Geometry
+# WIP Review OFX — P0 Probe + P1a Geometry + P1b Blanking
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
-resampling CPU de referencia.
+resampling CPU de referencia. P1b añade un blanking editorial independiente.
 
-Este repositorio **no implementa** el formatter final, seis zonas, tipografía,
-blanking, transformaciones OCIO, GPU ni presets. El probe anuncia y registra la
+Este repositorio **no implementa** texto, seis zonas, transformaciones OCIO de
+píxeles, GPU ni presets de estado. El probe anuncia y registra la
 negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
+
+## P1b — Editorial Blanking
+
+El blanking se compone después del placement y nunca cambia el raster ni recorta
+físicamente la imagen. Controles:
+
+- **Blanking Enabled**, desactivado por defecto;
+- presets de display aspect `1.78`, `1.85`, `2.00`, `2.39` y **Custom**;
+- color RGBA y opacity `0–1`.
+
+La geometría incorpora Output PAR, genera letterbox o pillarbox sin asumir una
+orientación fija y usa cobertura de píxel en límites fraccionales. La composición
+se realiza en premult incluso cuando el Output negociado es straight-alpha. Véase
+[P1B_BLANKING_RESULTS.md](P1B_BLANKING_RESULTS.md).
 
 ## P1a — Geometry/Placement
 
@@ -48,8 +62,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P1a)`: anuncia Filter y General;
-- `WIP Review Probe (P1a Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P1b)`: anuncia Filter y General;
+- `WIP Review Probe (P1b Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -162,6 +176,9 @@ del log. La composición temporal se cierra bloqueada para que Fusion no muestre
 un diálogo de guardado; la composición que estuviera activa se restaura y nunca
 se modifica.
 
+P1b añade los escenarios B01–B04: aspect 2.00, opacity 0.5, blanking off y
+pillarbox Custom 1.33. El mismo runner mantiene toda la cobertura P1a.
+
 Con el bundle ya instalado:
 
 ```sh
@@ -183,13 +200,13 @@ sistema sigue siendo una condición externa al harness.
 
 Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
 deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
-1:1 y Host Raster:
+1:1, Host Raster y los cuatro casos visuales P1b:
 
 ```sh
 scripts/open_fusion_p1a_visual.sh
 ```
 
-Selecciona cada nodo `P1A_*` y pulsa `1` o `2` para verlo. La composición se
+Selecciona cada nodo `P1A_*` o `P1B_*` y pulsa `1` o `2` para verlo. La composición se
 llama `WIPReview_P1A_VISUAL_VALIDATION_DO_NOT_SAVE`; es intencionadamente
 temporal y no modifica la composición que estuviera activa.
 

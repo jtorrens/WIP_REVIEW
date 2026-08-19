@@ -66,6 +66,10 @@ require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextGeneral"' 'Gener
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_FILTER_FIT"' 'Filter scenario marker'
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_GENERAL_FIT"' 'General scenario marker'
 require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1A_HOST_RASTER"' 'Host Raster scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B01_2_00"' 'B01 scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B02_HALF"' 'B02 scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B03_OFF"' 'B03 scenario marker'
+require_record 'TEMPORAL_STRING_PROBE .*scenario="AUTOMATED_P1B_B04_PILLAR"' 'B04 scenario marker'
 require_record 'IMAGE .*clip=Source bounds=\[0,0,4608,3164\]' '4608x3164 Source image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,1920,1080\]' '1920x1080 Output image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,4608,3164\]' 'Host Raster Output image'
@@ -74,5 +78,9 @@ for placement in 0 1 2 3 4; do
     require_record "STATIC_FORMATTER .*placement=$placement filter=2 .*source_PAR=1\\.000000 output_PAR=1\\.000000" "P1a placement $placement formatter pass"
 done
 require_record 'RENDER_WARNING .*identity_raster_mismatch=true implicit_resize=false' 'Identity mismatch warning'
+require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\.000000 aperture=\[0\.000000,60\.000000,1920\.000000,1020\.000000\].*opacity=1\.000000' 'B01 opaque 2.00 letterbox'
+require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\.000000 aperture=\[0\.000000,60\.000000,1920\.000000,1020\.000000\].*opacity=0\.500000' 'B02 half-opacity letterbox'
+require_record 'EDITORIAL_BLANKING .*enabled=false' 'B03 blanking disabled'
+require_record 'EDITORIAL_BLANKING .*enabled=true aspect=1\.330000 output_PAR=1\.000000 aperture=\[241\.800000,0\.000000,1678\.200000,1080\.000000\].*opacity=1\.000000' 'B04 narrow-aspect pillarbox'
 
-echo "Automated Fusion P1a smoke test passed"
+echo "Automated Fusion P1a/P1b smoke test passed"

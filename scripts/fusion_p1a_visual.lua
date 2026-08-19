@@ -67,11 +67,36 @@ local ok, failure = pcall(function()
     host.scenarioLabel = "VISUAL_P1A_HOST_RASTER"
     host.AllowResize = 1
 
+    local function add_blanking(name, preset, custom_aspect, opacity, enabled, x)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 2)
+        if probe == nil then error("Unable to create blanking probe " .. name) end
+        probe:SetAttrs({TOOLS_Name = name})
+        probe.Source = loader.Output
+        probe.requestCustomRoD = 1
+        probe.canvasMode = 1
+        probe.requestedWidth = 1920
+        probe.requestedHeight = 1080
+        probe.placementMode = 1
+        probe.resampleFilter = 2
+        probe.blankingEnabled = enabled
+        probe.blankingAspectPreset = preset
+        probe.blankingAspectCustom = custom_aspect
+        probe.blankingOpacity = opacity
+        probe.scenarioLabel = "VISUAL_" .. name
+        probe.AllowResize = 1
+        return probe
+    end
+
+    local blanking_opaque = add_blanking("P1B_BLANK_2_00_OPAQUE", 2, 2.0, 1.0, 1, 1)
+    add_blanking("P1B_BLANK_2_00_HALF", 2, 2.0, 0.5, 1, 2)
+    add_blanking("P1B_BLANK_OFF", 2, 2.0, 1.0, 0, 3)
+    add_blanking("P1B_PILLAR_1_33", 4, 1.33, 1.0, 1, 4)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(probes[2])
+    comp:SetActiveTool(blanking_opaque)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P1A_FIT")
+    print("active_tool=P1B_BLANK_2_00_OPAQUE")
     print("chart=" .. chart_path)
 end)
 

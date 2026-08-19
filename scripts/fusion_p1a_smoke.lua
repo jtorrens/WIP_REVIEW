@@ -59,7 +59,9 @@ local ok, failure = pcall(function()
     comp.CurrentTime = 0
     comp:Unlock()
 
-    local function render_probe(reg_id, name, placement, canvas_mode, x, y)
+    local function render_probe(reg_id, name, placement, canvas_mode, x, y,
+                                blanking_enabled, blanking_preset,
+                                blanking_custom, blanking_opacity)
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -72,6 +74,10 @@ local ok, failure = pcall(function()
         probe.resampleFilter = 2
         probe.scenarioLabel = name
         probe.AllowResize = 1
+        probe.blankingEnabled = blanking_enabled or 0
+        probe.blankingAspectPreset = blanking_preset or 3
+        probe.blankingAspectCustom = blanking_custom or 2.0
+        probe.blankingOpacity = blanking_opacity or 1.0
         comp:SetActiveTool(probe)
         comp:Unlock()
         local image = probe.Output:GetValue(0)
@@ -92,6 +98,14 @@ local ok, failure = pcall(function()
     end
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P1A_GENERAL_FIT", 1, 1, 1, 1)
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1A_HOST_RASTER", 0, 0, 2, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B01_2_00", 0, 1, 1, 2,
+                 1, 2, 2.0, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B02_HALF", 0, 1, 2, 2,
+                 1, 2, 2.0, 0.5)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B03_OFF", 0, 1, 3, 2,
+                 0, 2, 2.0, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B04_PILLAR", 0, 1, 4, 2,
+                 1, 4, 1.33, 1.0)
 
     print("WIPREVIEW_AUTOMATION_OK")
     print("fusion_version=" .. tostring(fusion:GetAttrs().FUSIONS_Version))
