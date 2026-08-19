@@ -32,4 +32,4 @@ if ! printf '%s\n' "$script_output" | grep -F 'WIPREVIEW_VISUAL_READY' >/dev/nul
     exit 1
 fi
 
-echo "Visual composition ready; select a cumulative P1, P2A, P2B or P2C node and press 1 or 2."
+echo "Visual composition ready; select a cumulative P1, P2A, P2B, P2C or P2D node and press 1 or 2."

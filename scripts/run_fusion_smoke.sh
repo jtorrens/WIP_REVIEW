@@ -82,15 +82,15 @@ require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\
 require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\.000000 aperture=\[0\.000000,60\.000000,1920\.000000,1020\.000000\].*opacity=0\.500000' 'B02 half-opacity letterbox'
 require_record 'EDITORIAL_BLANKING .*enabled=false' 'B03 blanking disabled'
 require_record 'EDITORIAL_BLANKING .*enabled=true aspect=1\.330000 output_PAR=1\.000000 aperture=\[241\.800000,0\.000000,1678\.200000,1080\.000000\].*opacity=1\.000000' 'B04 narrow-aspect pillarbox'
-require_record 'TEXT_ZONE .*zone="TL" enabled=true text="SECUENCIA ÁRTICO — VERSIÓN 03" .*requested_font="System Default" resolved_font="[^"]+" fallback=false normalized_size=0\.028000 pixel_size=30\.240000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'UTF-8 text rasterization'
-require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TOP GROWS DOWN" .*normalized_size=0\.056000 pixel_size=60\.480000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'top growth text'
-require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BOTTOM GROWS UP" .*pixel_size=60\.480000 .*origin=\[29,22\]' 'bottom anchor and padding'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="SECUENCIA ÁRTICO — VERSIÓN 03" .*requested_font="System Default" resolved_font="[^"]+" fallback=false normalized_size=0\.028000 requested_pixel_size=30\.240000 effective_pixel_size=30\.240000 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'UTF-8 text rasterization'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TOP GROWS DOWN" .*normalized_size=0\.056000 requested_pixel_size=60\.480000 effective_pixel_size=60\.480000 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'top growth text'
+require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BOTTOM GROWS UP" .*requested_pixel_size=60\.480000 effective_pixel_size=60\.480000 .*origin=\[29,22\]' 'bottom anchor and padding'
 require_record 'TEXT_ZONE .*zone="TR" enabled=true text="FONT FALLBACK" .*fallback=true .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'missing-font fallback'
 require_record 'TEXT_ZONE .*zone="TC" enabled=true text="TEXT OVER BLANKING" .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'text after blanking'
 for zone in TL TC TR BL BC BR; do
-    require_record "TEXT_ZONE .*zone=\"$zone\" enabled=true text=\"$zone[^\"]*\" .*normalized_size=0\.028000 pixel_size=30\.240000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]" "P2a zone $zone"
+    require_record "TEXT_ZONE .*zone=\"$zone\" enabled=true text=\"$zone[^\"]*\" .*normalized_size=0\.028000 requested_pixel_size=30\.240000 effective_pixel_size=30\.240000 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]" "P2a zone $zone"
 done
-require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL LARGE" use_size_override=true .*normalized_size=0\.056000 pixel_size=60\.480000' 'P2a size override'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL LARGE" use_size_override=true .*normalized_size=0\.056000 requested_pixel_size=60\.480000 effective_pixel_size=60\.480000' 'P2a size override'
 require_record 'TEXT_ZONE .*zone="TC" enabled=true text="TC GREEN" .*use_color_override=true .*colour=\[0\.000000,1\.000000,0\.000000,1\.000000\]' 'P2a colour override'
 require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR 25%" .*use_opacity_override=true .*opacity=0\.250000' 'P2a opacity override'
 require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BL OFFSET" .*origin=\[125,65\] offset=\[0\.050000,0\.040000\]' 'P2a normalized offsets'
@@ -104,5 +104,12 @@ require_record 'TEXT_SHADOW .*enabled=true normalized_offset=\[0\.001500,0\.0020
 require_record 'TEXT_ZONE .*zone="TL" enabled=true text="P2C DEFAULT SHADOW" .*shadow=true' 'P2c default glyph shadow'
 require_record 'TEXT_SHADOW .*enabled=true normalized_offset=\[-0\.010000,-0\.010000\] pixel_offset=\[-19,-11\] normalized_softness=0\.000000 pixel_softness=0\.000000 colour=\[0\.000000,0\.000000,1\.000000,1\.000000\] opacity=1\.000000' 'P2c hard blue shadow settings'
 require_record 'TEXT_ZONE .*zone="BR" enabled=true text="P2C HARD BLUE SHADOW" .*shadow=true' 'P2c hard glyph shadow'
+require_record 'TEXT_OVERFLOW .*mode=0 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d Clip policy'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" rendered_text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" .*effective_scale=1\.000000 overflowed=true clipped=true ellipsized=false cell=\[29,630\]' 'P2d Clip result'
+require_record 'TEXT_OVERFLOW .*mode=1 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d Ellipsis policy'
+require_record 'TEXT_ZONE .*zone="TC" enabled=true text="ELLIPSIS PRESERVES UTF-8 ÁRTICO AND REPLACES THE TAIL" rendered_text="[^"]*…" .*effective_scale=1\.000000 overflowed=true clipped=false ellipsized=true cell=\[650,1270\]' 'P2d UTF-8 Ellipsis result'
+require_record 'TEXT_OVERFLOW .*mode=2 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d ShrinkToFit policy'
+require_record 'TEXT_ZONE .*zone="TR" enabled=true text="SHRINK TO FIT THIS CELL" .*effective_scale=0\.[6-9][0-9]* overflowed=true clipped=false ellipsized=false cell=\[1290,1891\]' 'P2d ShrinkToFit result'
+require_record 'TEXT_ZONE .*zone="BL" enabled=true text="MINIMUM SCALE STILL CANNOT FIT THIS DELIBERATELY VERY LONG STRING AND MUST CLIP" .*effective_scale=0\.600000 overflowed=true clipped=true ellipsized=false cell=\[29,630\]' 'P2d minimum-scale Clip result'
 
-echo "Automated Fusion cumulative P1/P2c smoke test passed"
+echo "Automated Fusion cumulative P1/P2d smoke test passed"

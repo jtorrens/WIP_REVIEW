@@ -382,8 +382,12 @@ PointI computeTextOrigin(RectI outputBounds, int maskWidth, int maskHeight,
                          const TextOverlayOptions& options) noexcept {
   const int width = std::max(0, outputBounds.x2 - outputBounds.x1);
   const int height = std::max(0, outputBounds.y2 - outputBounds.y1);
-  const int left = outputBounds.x1 + static_cast<int>(std::lround(options.paddingLeft * width));
-  const int right = outputBounds.x2 - static_cast<int>(std::lround(options.paddingRight * width));
+  const int left = options.constrainToCell
+      ? options.cellBounds.x1
+      : outputBounds.x1 + static_cast<int>(std::lround(options.paddingLeft * width));
+  const int right = options.constrainToCell
+      ? options.cellBounds.x2
+      : outputBounds.x2 - static_cast<int>(std::lround(options.paddingRight * width));
   const int bottom = outputBounds.y1 + static_cast<int>(std::lround(options.paddingBottom * height));
   const int top = outputBounds.y2 - static_cast<int>(std::lround(options.paddingTop * height));
 
@@ -395,7 +399,9 @@ PointI computeTextOrigin(RectI outputBounds, int maskWidth, int maskHeight,
       break;
     case TextAnchor::TopCenter:
     case TextAnchor::BottomCenter:
-      origin.x = outputBounds.x1 + (width - maskWidth) / 2;
+      origin.x = options.constrainToCell
+          ? left + (right - left - maskWidth) / 2
+          : outputBounds.x1 + (width - maskWidth) / 2;
       break;
     case TextAnchor::TopRight:
     case TextAnchor::BottomRight:
@@ -419,13 +425,49 @@ PointI computeTextOrigin(RectI outputBounds, int maskWidth, int maskHeight,
   return origin;
 }
 
+RectI computeTextCell(RectI outputBounds, TextAnchor anchor,
+                      double paddingLeft, double paddingRight,
+                      double zoneGap) noexcept {
+  const int width = std::max(0, outputBounds.x2 - outputBounds.x1);
+  const double left = static_cast<double>(outputBounds.x1) +
+      std::clamp(paddingLeft, 0.0, 1.0) * width;
+  const double right = static_cast<double>(outputBounds.x2) -
+      std::clamp(paddingRight, 0.0, 1.0) * width;
+  const double firstThird = static_cast<double>(outputBounds.x1) + width / 3.0;
+  const double secondThird = static_cast<double>(outputBounds.x1) + 2.0 * width / 3.0;
+  const double halfGap = std::clamp(zoneGap, 0.0, 1.0) * width * 0.5;
+
+  RectI cell{outputBounds.x1, outputBounds.y1, outputBounds.x2, outputBounds.y2};
+  switch (anchor) {
+    case TextAnchor::TopLeft:
+    case TextAnchor::BottomLeft:
+      cell.x1 = static_cast<int>(std::lround(left));
+      cell.x2 = static_cast<int>(std::lround(firstThird - halfGap));
+      break;
+    case TextAnchor::TopCenter:
+    case TextAnchor::BottomCenter:
+      cell.x1 = static_cast<int>(std::lround(firstThird + halfGap));
+      cell.x2 = static_cast<int>(std::lround(secondThird - halfGap));
+      break;
+    case TextAnchor::TopRight:
+    case TextAnchor::BottomRight:
+      cell.x1 = static_cast<int>(std::lround(secondThird + halfGap));
+      cell.x2 = static_cast<int>(std::lround(right));
+      break;
+  }
+  cell.x1 = std::clamp(cell.x1, outputBounds.x1, outputBounds.x2);
+  cell.x2 = std::clamp(cell.x2, cell.x1, outputBounds.x2);
+  return cell;
+}
+
 void compositeTextMask(const ImageView& destination, RectI renderWindow,
                        const GlyphMaskView& mask,
                        const TextOverlayOptions& options) noexcept {
   if (!options.enabled || !destination.data || destination.pixelBytes == 0 ||
       destination.channels <= 0 || !mask.data || mask.width <= 0 ||
       mask.height <= 0 || mask.rowBytes == 0) return;
-  const RectI writable = intersect(renderWindow, destination.bounds);
+  RectI writable = intersect(renderWindow, destination.bounds);
+  if (options.constrainToCell) writable = intersect(writable, options.cellBounds);
   if (empty(writable)) return;
   const PointI origin = computeTextOrigin(
       destination.bounds, mask.width, mask.height, options);

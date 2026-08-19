@@ -116,6 +116,9 @@ local ok, failure = pcall(function()
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
         probe.shadowEnabled = 0
+        probe.zoneGap = 0.010
+        probe.overflowMode = 2
+        probe.minimumFontScale = 0.60
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -166,6 +169,9 @@ local ok, failure = pcall(function()
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
         probe.shadowEnabled = 0
+        probe.zoneGap = 0.010
+        probe.overflowMode = 2
+        probe.minimumFontScale = 0.60
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -234,7 +240,7 @@ local ok, failure = pcall(function()
         p.blText = "BL OUT"; p.bcText = "BC OUT"; p.brText = "BR OUT"
     end, 7)
 
-    local shadow_default = add_zones("P2C_SHADOW_DEFAULT", 0, function(p)
+    add_zones("P2C_SHADOW_DEFAULT", 0, function(p)
         p.fontSize = 0.080
         p.shadowEnabled = 1
         p.tcEnabled = 1; p.tcText = "DEFAULT BLACK SOFT SHADOW"
@@ -262,11 +268,50 @@ local ok, failure = pcall(function()
         p.blText = "BL SHADOW"; p.bcText = "BC SHADOW"; p.brText = "BR SHADOW"
     end, 10)
 
+    local overflow_clip = add_zones("P2D_OVERFLOW_CLIP", 0, function(p)
+        p.overflowMode = 0; p.fontSize = 0.080
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.tlUseColorOverride = 1
+        p.tlColorRed = 1.0; p.tlColorGreen = 0.0; p.tlColorBlue = 0.0
+        p.tcUseColorOverride = 1
+        p.tcColorRed = 0.0; p.tcColorGreen = 1.0; p.tcColorBlue = 0.0
+        p.trUseColorOverride = 1
+        p.trColorRed = 0.0; p.trColorGreen = 0.4; p.trColorBlue = 1.0
+        p.tlText = "LEFT CLIPS AT ITS CELL BOUNDARY"
+        p.tcText = "CENTER CLIPS AT BOTH CELL BOUNDARIES"
+        p.trText = "RIGHT CLIPS AT ITS CELL BOUNDARY"
+    end, 11)
+    add_zones("P2D_OVERFLOW_ELLIPSIS", 0, function(p)
+        p.overflowMode = 1; p.fontSize = 0.060
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "LEFT ELLIPSIS PRESERVES ÁRTICO"
+        p.tcText = "CENTER ELLIPSIS PRESERVES VERSIÓN"
+        p.trText = "RIGHT ELLIPSIS PRESERVES SECUENCIA"
+        p.blText = "BOTTOM LEFT ELLIPSIS"
+        p.bcText = "BOTTOM CENTER ELLIPSIS"
+        p.brText = "BOTTOM RIGHT ELLIPSIS"
+    end, 12)
+    add_zones("P2D_OVERFLOW_SHRINK", 0, function(p)
+        p.overflowMode = 2; p.fontSize = 0.080; p.minimumFontScale = 0.60
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "LEFT SHRINKS TO FIT"
+        p.tcText = "CENTER SHRINKS TO FIT"
+        p.trText = "RIGHT SHRINKS TO FIT"
+        p.blText = "SHORT"; p.bcText = "SHORT"; p.brText = "SHORT"
+    end, 13)
+    add_zones("P2D_OVERFLOW_MIN_CLIP", 1, function(p)
+        p.overflowMode = 2; p.fontSize = 0.080; p.minimumFontScale = 0.60
+        p.tcEnabled = 1
+        p.tcText = "MINIMUM SCALE CANNOT FIT THIS EXTREMELY LONG STRING SO THE CELL CLIPS IT"
+    end, 14)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(shadow_default)
+    comp:SetActiveTool(overflow_clip)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P2C_SHADOW_DEFAULT")
+    print("active_tool=P2D_OVERFLOW_CLIP")
     print("chart=" .. chart_path)
 end)
 

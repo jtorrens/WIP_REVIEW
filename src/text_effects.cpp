@@ -19,6 +19,38 @@ bool validFill(const GlyphRaster& glyph) noexcept {
                                  static_cast<std::size_t>(glyph.height);
 }
 
+int styledWidth(int fillWidth, const TextLayoutRequest& request) noexcept {
+  if (fillWidth <= 0) return 0;
+  const int outline = std::max(0, request.outlineRadiusPixels);
+  long long width = static_cast<long long>(fillWidth) + 2LL * outline;
+  if (request.shadowEnabled) {
+    const int blur = static_cast<int>(std::ceil(
+        3.0 * std::clamp(request.shadowSoftnessPixels, 0.0, 4096.0)));
+    const long long minimum = std::min<long long>(
+        0, static_cast<long long>(request.shadowOffsetXPixels) - blur);
+    const long long maximum = std::max<long long>(
+        width, static_cast<long long>(request.shadowOffsetXPixels) + width + blur);
+    width = maximum - minimum;
+  }
+  return width > std::numeric_limits<int>::max()
+      ? std::numeric_limits<int>::max()
+      : static_cast<int>(width);
+}
+
+std::vector<std::size_t> utf8Boundaries(const std::string& text) {
+  std::vector<std::size_t> boundaries{0};
+  for (std::size_t index = 0; index < text.size();) {
+    const auto lead = static_cast<unsigned char>(text[index]);
+    std::size_t length = 1;
+    if ((lead & 0xE0U) == 0xC0U) length = 2;
+    else if ((lead & 0xF0U) == 0xE0U) length = 3;
+    else if ((lead & 0xF8U) == 0xF0U) length = 4;
+    index = std::min(text.size(), index + length);
+    boundaries.push_back(index);
+  }
+  return boundaries;
+}
+
 std::vector<std::uint8_t> padLayer(const std::vector<std::uint8_t>& source,
                                    int sourceWidth,
                                    int sourceHeight,
@@ -84,6 +116,94 @@ void gaussianBlur(std::vector<std::uint8_t>& mask, int width, int height,
 }
 
 }  // namespace
+
+TextLayoutResult layoutUTF8(const TextLayoutRequest& request) noexcept {
+  TextLayoutResult result;
+  try {
+    const double requestedSize = std::clamp(request.requestedPixelSize, 1.0, 4096.0);
+    const int availableWidth = std::max(0, request.availableWidth);
+    const auto rasterize = [&](const std::string& text, double size) {
+      return rasterizeUTF8(text, request.fontFamily, request.fontStyle, size);
+    };
+    const auto fits = [&](const GlyphRaster& glyph) {
+      return validFill(glyph) && styledWidth(glyph.width, request) <= availableWidth;
+    };
+
+    result.renderedText = request.text;
+    result.effectivePixelSize = requestedSize;
+    result.glyph = rasterize(request.text, requestedSize);
+    if (!validFill(result.glyph)) return result;
+    if (fits(result.glyph)) return result;
+    result.overflowed = true;
+
+    if (request.overflowMode == OverflowMode::Clip) {
+      result.clipped = true;
+      return result;
+    }
+
+    if (request.overflowMode == OverflowMode::Ellipsis) {
+      constexpr const char* kEllipsis = "\xE2\x80\xA6";
+      const auto boundaries = utf8Boundaries(request.text);
+      std::size_t low = 0;
+      std::size_t high = boundaries.empty() ? 0 : boundaries.size() - 1;
+      GlyphRaster best = rasterize(kEllipsis, requestedSize);
+      std::string bestText = kEllipsis;
+      bool foundFit = fits(best);
+      while (low <= high) {
+        const std::size_t middle = low + (high - low) / 2;
+        const std::string candidate = request.text.substr(0, boundaries[middle]) + kEllipsis;
+        auto glyph = rasterize(candidate, requestedSize);
+        if (fits(glyph)) {
+          best = std::move(glyph);
+          bestText = candidate;
+          foundFit = true;
+          low = middle + 1;
+        } else {
+          if (middle == 0) break;
+          high = middle - 1;
+        }
+      }
+      result.glyph = std::move(best);
+      result.renderedText = std::move(bestText);
+      result.ellipsized = true;
+      result.clipped = !foundFit;
+      return result;
+    }
+
+    const double minimumScale = std::clamp(request.minimumFontScale, 0.01, 1.0);
+    const double minimumSize = requestedSize * minimumScale;
+    auto minimumGlyph = rasterize(request.text, minimumSize);
+    if (!fits(minimumGlyph)) {
+      result.glyph = std::move(minimumGlyph);
+      result.effectivePixelSize = minimumSize;
+      result.effectiveScale = minimumScale;
+      result.clipped = true;
+      return result;
+    }
+
+    double lowSize = minimumSize;
+    double highSize = requestedSize;
+    GlyphRaster best = std::move(minimumGlyph);
+    double bestSize = minimumSize;
+    for (int iteration = 0; iteration < 16; ++iteration) {
+      const double middle = (lowSize + highSize) * 0.5;
+      auto glyph = rasterize(request.text, middle);
+      if (fits(glyph)) {
+        best = std::move(glyph);
+        bestSize = middle;
+        lowSize = middle;
+      } else {
+        highSize = middle;
+      }
+    }
+    result.glyph = std::move(best);
+    result.effectivePixelSize = bestSize;
+    result.effectiveScale = bestSize / requestedSize;
+    return result;
+  } catch (...) {
+    return {};
+  }
+}
 
 bool addOutline(GlyphRaster& glyph, int radiusPixels) noexcept {
   try {

@@ -105,6 +105,8 @@ struct TextOverlayOptions {
   bool outputPremultiplied = true;
   float colour[4] = {1.0F, 1.0F, 1.0F, 1.0F};
   float opacity = 1.0F;
+  bool constrainToCell = false;
+  RectI cellBounds{};
 };
 
 struct PointI {
@@ -151,6 +153,15 @@ void applyBlanking(const ImageView& destination,
     int maskWidth,
     int maskHeight,
     const TextOverlayOptions& options) noexcept;
+
+// Divides the output into left, centre and right logical columns. The gap is
+// the complete empty width between adjacent cells, normalized to output width.
+[[nodiscard]] RectI computeTextCell(
+    RectI outputBounds,
+    TextAnchor anchor,
+    double paddingLeft,
+    double paddingRight,
+    double zoneGap) noexcept;
 
 void compositeTextMask(const ImageView& destination,
                        RectI renderWindow,
