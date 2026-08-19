@@ -67,10 +67,25 @@ scripts/open_fusion_p1a_visual.sh
 Los nombres conservan `p1a` para no romper el harness publicado; desde 0.4.0 su
 cobertura es acumulativa P1a/P1b/P1c.
 
-## Resultado automático — pendiente de ejecución final
+## Resultado automático — Fusion Studio 21.0.4
 
-El código y los tests host-independent pasan en arm64. Esta sección se cerrará
-con el bundle universal 0.4.0 instalado y el smoke real de Fusion Studio 21.
+La matriz acumulativa de 16 renders pasó con el bundle universal 0.4.0 instalado:
+
+- UTF-8 TL: `.SFNS-Regular`, 30.24 px, máscara `484×29`, origen `[29,1029]`;
+- Top Large: `.SFNS-Bold`, 60.48 px, máscara `550×45`, origen `[29,1013]`;
+- Bottom Large: `.SFNS-Bold`, 60.48 px, máscara `575×45`, origen `[29,22]`;
+- familia inexistente: fallback explícito a `.SFNS-Regular`, máscara `228×24`;
+- texto sobre blanking: máscara `306×24`, después del evento de blanking 2.00
+  con aperture `[0,60,1920,1020]`.
+
+Todos los casos P1c recibieron Output bounds `1920×1080`, Output PAR 1.0 y
+render scale 1.0. El tamaño normalizado 0.028 produjo 30.24 px y 0.056 produjo
+60.48 px, confirmando que se calcula contra la altura física del Output.
+
+Los tests host-independent pasaron además en el build universal arm64/x86_64;
+el bundle quedó firmado ad-hoc y la carga de exports OFX pasó para ambas
+arquitecturas. Tiempo orientativo del smoke acumulativo: 30 s en la máquina de
+desarrollo.
 
 ## Validación visual — pendiente
 
