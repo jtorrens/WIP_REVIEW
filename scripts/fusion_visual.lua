@@ -182,7 +182,9 @@ local ok, failure = pcall(function()
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
         p.tlUseSizeOverride = 1; p.tlSize = 0.080
-        p.tcUseColorOverride = 1; p.tcColor = {0.0, 1.0, 0.0, 1.0}
+        p.tcUseColorOverride = 1
+        p.tcColorRed = 0.0; p.tcColorGreen = 1.0
+        p.tcColorBlue = 0.0; p.tcColorAlpha = 1.0
         p.trUseOpacityOverride = 1; p.trOpacity = 0.25
         p.blOffsetX = 0.05; p.blOffsetY = 0.04
         p.tlText = "TL LARGE"; p.tcText = "TC GREEN"; p.trText = "TR 25%"

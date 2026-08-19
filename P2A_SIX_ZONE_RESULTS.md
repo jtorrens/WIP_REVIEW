@@ -53,10 +53,22 @@ La composición visual añade:
 - `P2A_OFFSETS_INWARD`;
 - `P2A_WITH_BLANKING`.
 
-## Resultado automático — pendiente
+## Resultado automático — aprobado
 
-Se completará tras construir e instalar el bundle universal 0.5.0 y ejecutar el
-smoke acumulativo en Fusion Studio 21.
+Ejecutado el 19 de agosto de 2026 con el bundle universal 0.5.0 instalado en
+Fusion Studio 21.0.4 para macOS:
+
+- 19 de 19 renderizaciones completadas;
+- los seis eventos `TEXT_ZONE` presentan máscara y origen propios;
+- el override TL resuelve `fontSize = 0.056` a 60.48 px;
+- el override TC resuelve RGBA efectivo `[0, 1, 0, 1]`;
+- el override BR resuelve opacity efectiva `0.25`;
+- el offset BL `[0.05, 0.04]` produce el origen esperado `[125, 65]`;
+- el texto se compone después del blanking.
+
+FusionScript expone cada color OFX como cuatro entradas escalares (`Red`,
+`Green`, `Blue`, `Alpha`). Los harnesses usan directamente esas entradas del
+host; el plugin no contiene adaptadores ni rutas alternativas para scripting.
 
 ## Validación visual — pendiente
 
