@@ -138,6 +138,31 @@ export WIPREVIEW_PROBE_LOG=/ruta/escribible/WIPReviewProbe.log
 El logger usa append, está protegido para renders concurrentes y nunca eleva
 un error de I/O al host.
 
+## Test automático en Fusion Standalone
+
+El harness macOS crea una composición privada, genera un Source `4608×3164`,
+instancia el descriptor Filter-only, activa `AllowResize`, solicita
+`1920×1080`, fuerza el render y valida el tramo nuevo del log. La composición
+temporal se cierra bloqueada para que Fusion no muestre un diálogo de guardado;
+la composición que estuviera activa se restaura y nunca se modifica.
+
+Con el bundle ya instalado:
+
+```sh
+scripts/run_fusion_p1a_smoke.sh
+```
+
+También está disponible como target explícito, fuera de `ctest` porque necesita
+la aplicación gráfica instalada:
+
+```sh
+cmake --build build --target fusion_host_smoke
+```
+
+El script abre Fusion si no está ejecutándose y conecta mediante el `fuscript`
+incluido en Fusion 21. Un crash, bloqueo de licencia o diálogo excepcional del
+sistema sigue siendo una condición externa al harness.
+
 ## Protocolo P0-Raster obligatorio
 
 1. Usa una entrada real `4608 × 3164` con PAR 1.0. Evita que un nodo upstream

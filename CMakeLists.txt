@@ -108,4 +108,13 @@ if(WIPREVIEW_BUILD_TESTS)
     "${openfx_sdk_SOURCE_DIR}/include")
   add_test(NAME wipreview_bundle_exports
     COMMAND wipreview_bundle_smoke "$<TARGET_FILE:WIPReviewProbe>")
+
+  if(APPLE)
+    add_custom_target(fusion_host_smoke
+      COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_p1a_smoke.sh"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMENT "Running isolated Fusion Standalone OFX host smoke test"
+      USES_TERMINAL
+    )
+  endif()
 endif()
