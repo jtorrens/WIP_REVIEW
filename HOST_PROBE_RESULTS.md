@@ -15,7 +15,7 @@ comportamiento de otro contexto.
 
 | Campo | Valor |
 |---|---|
-| Git commit del proyecto | PENDING |
+| Git commit del proyecto | El commit que contiene este informe (`git rev-parse HEAD`) |
 | OpenFX SDK commit | `3de640d6f645fe6e346acd57e568d8b0a5ae4574` |
 | Arquitectura binaria | Universal `arm64 + x86_64` |
 | macOS | `15.6 (24G84)` |
