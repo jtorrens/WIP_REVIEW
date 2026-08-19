@@ -47,6 +47,8 @@ struct RenderOptions {
   ResampleFilter filter = ResampleFilter::Lanczos3;
   double sourcePixelAspect = 1.0;
   double outputPixelAspect = 1.0;
+  bool sourcePremultiplied = true;
+  bool outputPremultiplied = true;
   float canvas[4] = {0.0F, 0.0F, 0.0F, 1.0F};
 };
 

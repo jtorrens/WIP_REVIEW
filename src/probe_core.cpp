@@ -110,7 +110,8 @@ void writePixel(const ImageView& image, int x, int y,
   std::byte* pixel = pixelAddress(image, x, y);
   for (int channel = 0; channel < image.channels; ++channel) {
     const int rgbaChannel = image.channels == 1 ? 3 : channel;
-    writeChannel(pixel, channel, image.channelType, rgba[rgbaChannel]);
+    writeChannel(pixel, channel, image.channelType,
+                 rgba[static_cast<std::size_t>(rgbaChannel)]);
   }
 }
 
@@ -134,7 +135,8 @@ double kernel(double distance, ResampleFilter filter) noexcept {
 }
 
 std::array<float, 4> sample(const ImageView& source, double x, double y,
-                            ResampleFilter filter) noexcept {
+                            ResampleFilter filter, bool sourcePremultiplied,
+                            bool outputPremultiplied) noexcept {
   std::array<double, 4> sum{};
   double weightSum = 0.0;
   const int radius = filter == ResampleFilter::Bilinear ? 1
@@ -150,20 +152,30 @@ std::array<float, 4> sample(const ImageView& source, double x, double y,
       if (weight == 0.0) continue;
       const int sx = std::clamp(ix, source.bounds.x1, source.bounds.x2 - 1);
       const std::byte* pixel = pixelAddress(source, sx, sy);
-      for (int channel = 0; channel < 4; ++channel) {
-        float value = channel == 3 ? 1.0F : 0.0F;
-        if (source.channels == 1) value = channel == 3
-            ? readChannel(pixel, 0, source.channelType) : 0.0F;
-        else if (channel < source.channels) value = readChannel(pixel, channel, source.channelType);
-        sum[channel] += static_cast<double>(value) * weight;
+      std::array<float, 4> rgba{0.0F, 0.0F, 0.0F, 1.0F};
+      if (source.channels == 1) {
+        rgba[3] = readChannel(pixel, 0, source.channelType);
+      } else {
+        for (int channel = 0; channel < source.channels; ++channel) {
+          rgba[static_cast<std::size_t>(channel)] = readChannel(pixel, channel, source.channelType);
+        }
+      }
+      if (!sourcePremultiplied) {
+        for (std::size_t channel = 0; channel < 3; ++channel) rgba[channel] *= rgba[3];
+      }
+      for (std::size_t channel = 0; channel < 4; ++channel) {
+        sum[channel] += static_cast<double>(rgba[channel]) * weight;
       }
       weightSum += weight;
     }
   }
   std::array<float, 4> result{};
   if (std::abs(weightSum) < std::numeric_limits<double>::epsilon()) return result;
-  for (int channel = 0; channel < 4; ++channel) {
+  for (std::size_t channel = 0; channel < 4; ++channel) {
     result[channel] = static_cast<float>(sum[channel] / weightSum);
+  }
+  if (!outputPremultiplied && result[3] > 1.0e-8F) {
+    for (std::size_t channel = 0; channel < 3; ++channel) result[channel] /= result[3];
   }
   return result;
 }
@@ -243,8 +255,11 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   if (!destination.data || destination.pixelBytes == 0 || destination.channels <= 0) return;
   const RectI writable = intersect(renderWindow, destination.bounds);
   if (empty(writable)) return;
-  const std::array<float, 4> canvas{options.canvas[0], options.canvas[1],
-                                    options.canvas[2], options.canvas[3]};
+  std::array<float, 4> canvas{options.canvas[0], options.canvas[1],
+                              options.canvas[2], options.canvas[3]};
+  if (options.outputPremultiplied) {
+    for (std::size_t channel = 0; channel < 3; ++channel) canvas[channel] *= canvas[3];
+  }
   if (!source.data || source.pixelBytes == 0 || source.channels <= 0 || empty(source.bounds)) {
     for (int y = writable.y1; y < writable.y2; ++y)
       for (int x = writable.x1; x < writable.x2; ++x) writePixel(destination, x, y, canvas);
@@ -270,7 +285,8 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
       // Image samples live at integer pixel centres after subtracting 0.5 from
       // the canonical coordinate used by the placement transform.
       writePixel(destination, x, y,
-                 sample(source, sourceX - 0.5, sourceY - 0.5, options.filter));
+                 sample(source, sourceX - 0.5, sourceY - 0.5, options.filter,
+                        options.sourcePremultiplied, options.outputPremultiplied));
     }
   }
 }

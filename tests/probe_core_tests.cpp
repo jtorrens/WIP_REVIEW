@@ -1,6 +1,9 @@
 #include "probe_core.hpp"
 
 #include <array>
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -126,7 +129,7 @@ void testFillAndOneToOne() {
   dst = rgbaFloatView(destination.data(), {0, 0, 4, 4}, 4 * 4 * sizeof(float));
   wipreview::probe::renderStaticFrame(src, dst, {0, 0, 4, 4}, options);
   assert(red(destination.data(), 4, 0, 0) == 0.0F);
-  assert(std::abs(red(destination.data(), 4, 1, 1) - 1.0F) < 1.0e-6F);
+  assert(std::abs(red(destination.data(), 4, 1, 1) - 2.0F) < 1.0e-6F);
   assert(std::abs(red(destination.data(), 4, 3, 2) - 4.0F) < 1.0e-6F);
   assert(red(destination.data(), 4, 3, 3) == 0.0F);
 }
@@ -149,6 +152,29 @@ void testIdentityAndUInt16Canvas() {
   assert(destination[3] == 65535);
 }
 
+void testPremultiplication() {
+  std::array<float, 8> source{1.0F, 0.0F, 0.0F, 0.0F,
+                              0.0F, 0.0F, 0.0F, 1.0F};
+  std::array<float, 4> destination{};
+  const ImageView src = rgbaFloatView(source.data(), {0, 0, 2, 1}, 8 * sizeof(float));
+  const ImageView dst = rgbaFloatView(destination.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  RenderOptions options;
+  options.placement = PlacementMode::Stretch;
+  options.filter = wipreview::probe::ResampleFilter::Bilinear;
+  options.sourcePremultiplied = false;
+  options.outputPremultiplied = false;
+  wipreview::probe::renderStaticFrame(src, dst, {0, 0, 1, 1}, options);
+  assert(std::abs(destination[0]) < 1.0e-6F);
+  assert(std::abs(destination[3] - 0.5F) < 1.0e-6F);
+
+  options.outputPremultiplied = true;
+  options.canvas[0] = 1.0F;
+  options.canvas[3] = 0.25F;
+  wipreview::probe::renderStaticFrame({}, dst, {0, 0, 1, 1}, options);
+  assert(std::abs(destination[0] - 0.25F) < 1.0e-6F);
+  assert(std::abs(destination[3] - 0.25F) < 1.0e-6F);
+}
+
 }  // namespace
 
 int main() {
@@ -159,5 +185,6 @@ int main() {
   testFitCanvasAndRenderWindow();
   testFillAndOneToOne();
   testIdentityAndUInt16Canvas();
+  testPremultiplication();
   return 0;
 }

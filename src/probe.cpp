@@ -486,6 +486,15 @@ double imagePAR(OfxPropertySetHandle image) {
   return value;
 }
 
+bool imageIsPremultiplied(OfxPropertySetHandle image) {
+  char* value = nullptr;
+  if (!image || gPropertySuite->propGetString(
+          image, kOfxImageEffectPropPreMultiplication, 0, &value) != kOfxStatOK || !value) {
+    return true;
+  }
+  return std::strcmp(value, kOfxImageUnPreMultiplied) != 0;
+}
+
 wipreview::probe::RenderOptions readRenderOptions(const InstanceData* instance,
                                                   OfxTime time,
                                                   OfxPropertySetHandle sourceImage,
@@ -514,6 +523,8 @@ wipreview::probe::RenderOptions readRenderOptions(const InstanceData* instance,
   options.filter = filters[static_cast<std::size_t>(std::clamp(filter, 0, 2))];
   options.sourcePixelAspect = imagePAR(sourceImage);
   options.outputPixelAspect = imagePAR(outputImage);
+  options.sourcePremultiplied = imageIsPremultiplied(sourceImage);
+  options.outputPremultiplied = imageIsPremultiplied(outputImage);
   for (int channel = 0; channel < 4; ++channel) {
     options.canvas[channel] = static_cast<float>(canvas[channel]);
   }
@@ -940,6 +951,8 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " filter=" + std::to_string(static_cast<int>(options.filter)) +
         " source_PAR=" + std::to_string(options.sourcePixelAspect) +
         " output_PAR=" + std::to_string(options.outputPixelAspect) +
+        " source_premult=" + (options.sourcePremultiplied ? "true" : "false") +
+        " output_premult=" + (options.outputPremultiplied ? "true" : "false") +
         " canvas=[" + std::to_string(options.canvas[0]) + ',' +
                          std::to_string(options.canvas[1]) + ',' +
                          std::to_string(options.canvas[2]) + ',' +
@@ -951,6 +964,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (sourceImage && sourceView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_source_pixel_format=true output_canvas_only=true");
+    } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
+               (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
+                sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " identity_raster_mismatch=true implicit_resize=false");
     }
   }
 

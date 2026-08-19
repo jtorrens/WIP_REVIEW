@@ -1,14 +1,28 @@
-# WIP Review OFX — P0 Host Probe
+# WIP Review OFX — P0 Host Probe + P1a Geometry
 
-`WIPReviewProbe.ofx` es el probe P0 de capacidades OpenFX para DaVinci
-Resolve/Fusion. Su única función es medir el contrato real del host antes de
-congelar la arquitectura del renderer de WIP Review.
+`WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
+checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
+resampling CPU de referencia.
 
 Este repositorio **no implementa** el formatter final, seis zonas, tipografía,
 blanking, transformaciones OCIO, GPU ni presets. El probe anuncia y registra la
-negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color. Para
-mantener una salida válida, limpia el `renderWindow` y copia solo la intersección
-Source/Output con coordenadas idénticas; nunca hace resize ni reframe.
+negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
+
+## P1a — Geometry/Placement
+
+Controles implementados:
+
+- **Canvas Mode**: Host Raster o Requested Review Raster;
+- **Placement**: Identity, Fit, Fill / Crop, Stretch y 1:1;
+- **Resample Filter**: Bilinear, Bicubic Catmull-Rom y Lanczos3;
+- **Canvas Colour**: RGBA, negro opaco por defecto.
+
+Fit y Fill calculan el aspect ratio de display incorporando Source/Output PAR.
+Identity copia por coordenadas sin resize implícito y registra warning si los
+rasters no coinciden. 1:1 centra píxeles físicos. El renderer limita toda
+escritura al `renderWindow`, admite row bytes negativos y Byte/Short/Half/Float,
+y filtra alpha en premult para evitar halos. La implementación y sus límites
+están versionados en [P1A_GEOMETRY_RESULTS.md](P1A_GEOMETRY_RESULTS.md).
 
 ## Qué mide
 
@@ -34,8 +48,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P0)`: anuncia Filter y General;
-- `WIP Review Probe (P0 Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P1a)`: anuncia Filter y General;
+- `WIP Review Probe (P1a Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -126,8 +140,8 @@ Ruta por defecto:
 
 Cada línea contiene timestamp, PID, evento y pares `clave=valor`. Los eventos
 `INSTANCE_CREATE`, `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`,
-`RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION` y
-`TEMPORAL_STRING_PROBE` forman el registro principal.
+`RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`,
+`TEMPORAL_STRING_PROBE` y `STATIC_FORMATTER` forman el registro principal.
 
 Para usar otra ruta, inicia el host desde un entorno que contenga:
 
