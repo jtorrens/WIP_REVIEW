@@ -13,6 +13,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -53,6 +54,12 @@ constexpr char kParamCanvasMode[] = "canvasMode";
 constexpr char kParamPlacement[] = "placementMode";
 constexpr char kParamResample[] = "resampleFilter";
 constexpr char kParamCanvasColour[] = "canvasColour";
+constexpr char kParamColorGroup[] = "managedColorGroup";
+constexpr char kParamColorSpaceMode[] = "colorSpaceMode";
+constexpr char kParamManualColorSpace[] = "manualColorSpace";
+constexpr char kParamGraphicsWhiteMode[] = "graphicsWhiteMode";
+constexpr char kParamGraphicsWhiteNits[] = "graphicsWhiteNits";
+constexpr char kParamHlgPeakNits[] = "hlgPeakNits";
 constexpr char kParamBlankingEnabled[] = "blankingEnabled";
 constexpr char kParamBlankingAspectPreset[] = "blankingAspectPreset";
 constexpr char kParamBlankingAspectCustom[] = "blankingAspectCustom";
@@ -380,6 +387,11 @@ struct InstanceData {
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
   OfxParamHandle canvasColour = nullptr;
+  OfxParamHandle colorSpaceMode = nullptr;
+  OfxParamHandle manualColorSpace = nullptr;
+  OfxParamHandle graphicsWhiteMode = nullptr;
+  OfxParamHandle graphicsWhiteNits = nullptr;
+  OfxParamHandle hlgPeakNits = nullptr;
   OfxParamHandle blankingEnabled = nullptr;
   OfxParamHandle blankingAspectPreset = nullptr;
   OfxParamHandle blankingAspectCustom = nullptr;
@@ -498,7 +510,8 @@ void logImage(const InstanceData* instance, const char* label,
       " components=" + getString(image, kOfxImageEffectPropComponents) +
       " depth=" + getString(image, kOfxImageEffectPropPixelDepth) +
       " row_bytes=" + getInt(image, kOfxImagePropRowBytes) +
-      " premultiplication=" + getString(image, kOfxImageEffectPropPreMultiplication));
+      " premultiplication=" + getString(image, kOfxImageEffectPropPreMultiplication) +
+      " colourspace=" + getString(image, kOfxImageClipPropColourspace));
 }
 
 bool readRodRequest(const InstanceData* instance, bool& enabled, int& width, int& height) {
@@ -617,6 +630,118 @@ bool imageIsPremultiplied(OfxPropertySetHandle image) {
     return true;
   }
   return std::strcmp(value, kOfxImageUnPreMultiplied) != 0;
+}
+
+const char* displayEncodingName(wipreview::color::DisplayEncoding encoding) noexcept {
+  switch (encoding) {
+    case wipreview::color::DisplayEncoding::Rec709Gamma24:
+      return "Rec.709 Gamma 2.4";
+    case wipreview::color::DisplayEncoding::Rec2100PQ:
+      return "Rec.2100 PQ";
+    case wipreview::color::DisplayEncoding::Rec2100HLG:
+      return "Rec.2100 HLG";
+  }
+  return "Unknown";
+}
+
+bool identifyHostDisplayEncoding(
+    const std::string& colourspace,
+    wipreview::color::DisplayEncoding& encoding) {
+  std::string normalized = colourspace;
+  std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                 [](unsigned char value) {
+                   return static_cast<char>(std::tolower(value));
+                 });
+  if ((normalized.find("rec2100") != std::string::npos ||
+       normalized.find("rec.2100") != std::string::npos) &&
+      normalized.find("hlg") != std::string::npos) {
+    encoding = wipreview::color::DisplayEncoding::Rec2100HLG;
+    return true;
+  }
+  if (((normalized.find("rec2100") != std::string::npos ||
+        normalized.find("rec.2100") != std::string::npos) &&
+       normalized.find("pq") != std::string::npos) ||
+      normalized.find("st2084") != std::string::npos ||
+      normalized.find("st.2084") != std::string::npos) {
+    encoding = wipreview::color::DisplayEncoding::Rec2100PQ;
+    return true;
+  }
+  if ((normalized.find("rec709") != std::string::npos ||
+       normalized.find("rec.709") != std::string::npos) &&
+      (normalized.find("gamma 2.4") != std::string::npos ||
+       normalized.find("gamma2.4") != std::string::npos ||
+       normalized.find("g24") != std::string::npos ||
+       normalized.find("rec1886") != std::string::npos)) {
+    encoding = wipreview::color::DisplayEncoding::Rec709Gamma24;
+    return true;
+  }
+  return false;
+}
+
+struct ManagedColorSettings {
+  wipreview::color::DisplayConfig config;
+  std::string hostColourspace;
+  int colorSpaceMode = 0;
+  int manualColorSpace = 0;
+  int graphicsWhiteMode = 0;
+  bool hostRecognized = false;
+  bool usedManualInterpretation = false;
+};
+
+ManagedColorSettings readManagedColorSettings(
+    const InstanceData* instance, OfxPropertySetHandle sourceImage) {
+  ManagedColorSettings settings;
+  double manualWhite = 203.0;
+  double hlgPeak = 1000.0;
+  if (instance->colorSpaceMode) {
+    gParameterSuite->paramGetValue(
+        instance->colorSpaceMode, &settings.colorSpaceMode);
+  }
+  if (instance->manualColorSpace) {
+    gParameterSuite->paramGetValue(
+        instance->manualColorSpace, &settings.manualColorSpace);
+  }
+  if (instance->graphicsWhiteMode) {
+    gParameterSuite->paramGetValue(
+        instance->graphicsWhiteMode, &settings.graphicsWhiteMode);
+  }
+  if (instance->graphicsWhiteNits) {
+    gParameterSuite->paramGetValue(instance->graphicsWhiteNits, &manualWhite);
+  }
+  if (instance->hlgPeakNits) {
+    gParameterSuite->paramGetValue(instance->hlgPeakNits, &hlgPeak);
+  }
+  settings.colorSpaceMode = std::clamp(settings.colorSpaceMode, 0, 1);
+  settings.manualColorSpace = std::clamp(settings.manualColorSpace, 0, 2);
+  settings.graphicsWhiteMode = std::clamp(settings.graphicsWhiteMode, 0, 1);
+  settings.config.peakNits = std::clamp(hlgPeak, 100.0, 10000.0);
+
+  settings.hostColourspace = getString(sourceImage, kOfxImageClipPropColourspace);
+  if (settings.hostColourspace.empty()) {
+    OfxPropertySetHandle sourceProperties = nullptr;
+    if (gImageSuite->clipGetPropertySet(
+            instance->source, &sourceProperties) == kOfxStatOK) {
+      settings.hostColourspace = getString(
+          sourceProperties, kOfxImageClipPropColourspace);
+    }
+  }
+  settings.hostRecognized = identifyHostDisplayEncoding(
+      settings.hostColourspace, settings.config.encoding);
+  settings.usedManualInterpretation =
+      settings.colorSpaceMode == 1 || !settings.hostRecognized;
+  if (settings.usedManualInterpretation) {
+    const auto manualEncodings = std::array{
+        wipreview::color::DisplayEncoding::Rec709Gamma24,
+        wipreview::color::DisplayEncoding::Rec2100PQ,
+        wipreview::color::DisplayEncoding::Rec2100HLG};
+    settings.config.encoding = manualEncodings[
+        static_cast<std::size_t>(settings.manualColorSpace)];
+  }
+  settings.config.graphicsWhiteNits = settings.graphicsWhiteMode == 0
+      ? wipreview::color::automaticGraphicsWhiteNits(
+            settings.config.encoding, settings.config.peakNits)
+      : std::clamp(manualWhite, 1.0, 10000.0);
+  return settings;
 }
 
 wipreview::probe::RenderOptions readRenderOptions(const InstanceData* instance,
@@ -1222,6 +1347,31 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     {"Bilinear", "Bicubic (Catmull-Rom)", "Lanczos3"}, 2,
                     "CPU reference resampling filter. No sharpening is applied.");
 
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamColorGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Managed Color");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
+  defineChoiceParam(params, kParamColorSpaceMode, "Color Space Mode",
+                    {"Auto from Host", "Manual Override"}, 0,
+                    "Input and Output use the same display-referred review space. Auto requires a valid host colourspace.",
+                    kParamColorGroup);
+  defineChoiceParam(params, kParamManualColorSpace, "Manual Color Space",
+                    {"Rec.709 Gamma 2.4", "Rec.2100 PQ", "Rec.2100 HLG"}, 0,
+                    "Explicit interpretation used in Manual Override or when Auto cannot identify the host colourspace.",
+                    kParamColorGroup);
+  defineChoiceParam(params, kParamGraphicsWhiteMode, "Graphics White Mode",
+                    {"Auto", "Manual"}, 0,
+                    "Auto uses 100 nits for Rec.709, 203 nits for PQ, and 20.3 percent of HLG peak.",
+                    kParamColorGroup);
+  defineDoubleParam(params, kParamGraphicsWhiteNits, "Graphics White Nits", 203.0,
+                    1.0, 10000.0, 48.0, 1000.0,
+                    "Reference white for graphic picker value 1.0 when Graphics White Mode is Manual.",
+                    kParamColorGroup);
+  defineDoubleParam(params, kParamHlgPeakNits, "HLG Peak Nits", 1000.0,
+                    100.0, 10000.0, 400.0, 4000.0,
+                    "Peak display luminance used by the Rec.2100 HLG OOTF and automatic Graphics White.",
+                    kParamColorGroup);
+
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamCanvasColour, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas Colour");
   const double canvasDefault[4] = {0.0, 0.0, 0.0, 1.0};
@@ -1456,6 +1606,16 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamColorSpaceMode, &instance->colorSpaceMode, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamManualColorSpace, &instance->manualColorSpace, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamGraphicsWhiteMode, &instance->graphicsWhiteMode, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamGraphicsWhiteNits, &instance->graphicsWhiteNits, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamHlgPeakNits, &instance->hlgPeakNits, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingEnabled, &instance->blankingEnabled, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingAspectPreset, &instance->blankingAspectPreset, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingAspectCustom, &instance->blankingAspectCustom, nullptr);
@@ -1723,14 +1883,46 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const auto sourceView = sourceImage ? imageView(sourceImage) : wipreview::probe::ImageView{};
     const auto outputView = imageView(outputImage);
     const auto options = readRenderOptions(instance, time, sourceImage, outputImage);
-    wipreview::probe::renderStaticFrame(
-        sourceView, outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
-        options);
-    const auto blanking = readBlankingOptions(instance, time, outputImage);
+    const auto managedColor = readManagedColorSettings(instance, sourceImage);
+    if (gMessageSuite) {
+      if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {
+        gMessageSuite->setPersistentMessage(
+            effect, kOfxMessageWarning, "WIPReviewUnknownColorSpace",
+            "Host colourspace '%s' is not a supported display space. Manual Color Space '%s' is being used.",
+            managedColor.hostColourspace.c_str(),
+            displayEncodingName(managedColor.config.encoding));
+      } else {
+        gMessageSuite->clearPersistentMessage(effect);
+      }
+    }
+    const int outputWidth = std::max(
+        0, outputView.bounds.x2 - outputView.bounds.x1);
+    const int outputHeight = std::max(
+        0, outputView.bounds.y2 - outputView.bounds.y1);
+    std::vector<float> displayLinearPixels(
+        static_cast<std::size_t>(outputWidth) *
+        static_cast<std::size_t>(outputHeight) * 4U);
+    const wipreview::probe::ImageView displayLinearView{
+        reinterpret_cast<std::byte*>(displayLinearPixels.data()),
+        outputView.bounds,
+        static_cast<std::ptrdiff_t>(outputWidth * 4 * sizeof(float)),
+        sizeof(float) * 4,
+        4,
+        wipreview::probe::ChannelType::Float32};
+    const wipreview::probe::RectI requestedWindow{
+        renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
+    wipreview::probe::renderManagedDisplayFrame(
+        sourceView, displayLinearView, requestedWindow, options,
+        managedColor.config);
+    auto blanking = readBlankingOptions(instance, time, outputImage);
+    blanking.outputPremultiplied = true;
     wipreview::probe::applyBlanking(
-        outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]}, blanking);
-    const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
-    const auto globalText = readGlobalTextSettings(instance, time, outputImage, outputView);
+        displayLinearView, requestedWindow, blanking);
+    const auto aperture = wipreview::probe::computeBlankingAperture(
+        displayLinearView.bounds, blanking);
+    auto globalText = readGlobalTextSettings(
+        instance, time, outputImage, displayLinearView);
+    globalText.overlay.outputPremultiplied = true;
     const auto dynamicText = readDynamicTextSettings(instance);
     std::array<ZoneTextSettings, 6> zoneSettings{};
     std::array<wipreview::tokens::Resolution, 6> zoneTokens{};
@@ -1743,7 +1935,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     bool timecodeResolutionFallback = false;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
-          instance, index, time, globalText, outputView);
+          instance, index, time, globalText, displayLinearView);
       const auto& layer = zoneSettings[index].layer;
       if (layer.overlay.enabled) {
         zoneTokens[index] = wipreview::tokens::resolve(
@@ -1785,8 +1977,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           shadowOverlay.colour[channel] = layer.shadowColour[channel];
         }
         wipreview::probe::compositeTextMask(
-            outputView,
-            {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+            displayLinearView, requestedWindow,
             zoneGlyphs[index].shadowView(), shadowOverlay);
       }
       if (!zoneGlyphs[index].outlinePixels.empty()) {
@@ -1796,18 +1987,45 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           outlineOverlay.colour[channel] = layer.outlineColour[channel];
         }
         wipreview::probe::compositeTextMask(
-            outputView,
-            {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+            displayLinearView, requestedWindow,
             zoneGlyphs[index].outlineView(), outlineOverlay);
       }
       wipreview::probe::compositeTextMask(
-          outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+          displayLinearView, requestedWindow,
           zoneGlyphs[index].fillView(), layer.overlay);
       zoneOrigins[index] = wipreview::probe::computeTextOrigin(
-          outputView.bounds, zoneGlyphs[index].width, zoneGlyphs[index].height,
+          displayLinearView.bounds, zoneGlyphs[index].width, zoneGlyphs[index].height,
           layer.overlay);
       zoneRasterizationFailed = zoneRasterizationFailed ||
           (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].fillPixels.empty());
+    }
+    wipreview::probe::encodeManagedDisplayFrame(
+        displayLinearView, outputView, requestedWindow, managedColor.config,
+        options.outputPremultiplied);
+    Logger::instance().write("MANAGED_COLOR",
+        instancePrefix(instance) +
+        " mode=" + std::to_string(managedColor.colorSpaceMode) +
+        " host_colourspace=" + quoted(managedColor.hostColourspace.c_str()) +
+        " host_recognized=" + (managedColor.hostRecognized ? "true" : "false") +
+        " used_manual_interpretation=" +
+            (managedColor.usedManualInterpretation ? "true" : "false") +
+        " display_encoding=" + quoted(
+            displayEncodingName(managedColor.config.encoding)) +
+        " graphics_white_mode=" +
+            std::to_string(managedColor.graphicsWhiteMode) +
+        " graphics_white_nits=" +
+            std::to_string(managedColor.config.graphicsWhiteNits) +
+        " hlg_peak_nits=" + std::to_string(managedColor.config.peakNits) +
+        " working_space=display-light-linear working_premult=true" +
+        " encode_count=1 output_premult=" +
+            (options.outputPremultiplied ? "true" : "false"));
+    if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) +
+          " unknown_host_colourspace=" +
+              quoted(managedColor.hostColourspace.c_str()) +
+          " manual_interpretation=" +
+              quoted(displayEncodingName(managedColor.config.encoding)));
     }
     Logger::instance().write("STATIC_FORMATTER",
         instancePrefix(instance) +

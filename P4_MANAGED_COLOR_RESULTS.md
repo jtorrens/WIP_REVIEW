@@ -61,9 +61,23 @@ El core dispone ya del recorrido de imagen gestionado:
 Las pruebas confirman tanto Output straight como premultiplicado y descartan
 explícitamente la mezcla directa en valores Gamma 2.4.
 
+## Parámetros P4
+
+- `Color Space Mode`: Auto from Host / Manual Override;
+- `Manual Color Space`: Rec.709 Gamma 2.4 / Rec.2100 PQ / Rec.2100 HLG;
+- `Graphics White Mode`: Auto / Manual;
+- `Graphics White Nits`;
+- `HLG Peak Nits`.
+
+Input y Output comparten una única interpretación display-referred. En Auto,
+un espacio de host desconocido, `Raw` o scene-linear activa la interpretación
+manual seleccionada y publica un warning persistente en el nodo y en el log.
+El estado `MANAGED_COLOR` registra espacio del host, reconocimiento, selección
+efectiva, Graphics White, peak HLG, working premultiplicado y
+`encode_count=1`.
+
 ## Pendiente
 
-- parámetros P4 y resolución Auto/Manual;
 - negociación OFX de Source/Output;
 - log y warning visible para espacio desconocido;
 - smoke automático y validación visual en Fusion Studio 21.0.4.
