@@ -88,16 +88,25 @@ el bundle quedó firmado ad-hoc y la carga de exports OFX pasó para ambas
 arquitecturas. Tiempo orientativo del smoke acumulativo: 30 s en la máquina de
 desarrollo.
 
-## Validación visual — pendiente
+## Validación visual — Fusion Studio 21.0.4
 
-La composición visual incorpora nodos `P1C_*` para UTF-8 en anclajes opuestos,
-crecimiento top/bottom, fallback y texto sobre blanking. La validación humana se
-hará después de completar el smoke automático; no se infiere de los logs.
+Validación humana completada el 19 de agosto de 2026 con Source `4608×3164`,
+Output `1920×1080` y Fill/Crop para aislar el texto:
+
+- UTF8 Top Left: string completo, orientación normal, acentos y raya correctos;
+- UTF8 Bottom Right: alineación y padding inferior/derecho correctos;
+- Top Large: negrita anclada arriba y crecimiento hacia abajo sin recorte;
+- Bottom Large: negrita anclada abajo y crecimiento hacia arriba sin recorte;
+- Text Over Blanking: texto centrado y visible sobre la banda superior,
+  confirmando composición posterior al blanking;
+- Font Fallback: texto visible y correcto con una familia inexistente;
+- modificación manual de Text Colour: el color de salida respondió al control.
 
 Un precheck mediante Saver detectó que la primera versión del raster CoreText
 exponía sus filas top-down mientras el compositor OFX espera coordenadas
 bottom-up, por lo que los glyphs aparecían invertidos verticalmente. Se corrigió
 la normalización de filas y se añadió una regresión asimétrica con el glyph `F`.
 Tras reinstalar y repetir el smoke, los exports Top Left, Bottom Right y Text
-Over Blanking muestran texto legible, UTF-8 correcto y los paddings esperados.
-La revisión humana de los seis nodos permanece deliberadamente pendiente.
+Over Blanking mostraron texto legible, UTF-8 correcto y los paddings esperados.
+La revisión humana posterior confirmó los seis nodos. Resultado: P1c cumple su
+contrato acotado de un único texto estático.
