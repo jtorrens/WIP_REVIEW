@@ -71,4 +71,20 @@ B04 sí conservó el marker. El runner documenta esta inconsistencia de string y
 valida los presets por `EDITORIAL_BLANKING`, no por el string auxiliar. No se ha
 añadido ningún workaround al plugin.
 
-La validación visual humana permanece pendiente.
+## Validación visual — Fusion Studio 21.0.4
+
+Validación humana completada el 19 de agosto de 2026 con Source `4608×3164`,
+Output `1920×1080` y Fill/Crop para aislar el blanking:
+
+- B01 2.00 / opacity 1.0: barras negras solo arriba y abajo.
+- B02 2.00 / opacity 0.5: mismo aperture y exterior visible bajo el negro.
+- B03 Off: imagen completa sin bandas.
+- B04 Custom 1.33: barras negras solo a izquierda y derecha.
+
+La primera carta visual usaba Fit y mostraba también su canvas lateral negro.
+No era un fallo del blanking, pero mezclaba dos operaciones. El harness se
+corrigió a Fill/Crop antes de aceptar el resultado visual. La implementación del
+plugin no necesitó cambios.
+
+Resultado: geometría, opacity, estado Off e independencia respecto a placement
+coinciden con el contrato P1b.
