@@ -140,11 +140,76 @@ local ok, failure = pcall(function()
     add_text("P1C_FONT_FALLBACK", "FONT FALLBACK", 2,
              0.040, 0, "WIPReview Font That Does Not Exist 7F3A", 0, 6)
 
+    local function add_zones(name, blanking_enabled, configure, x)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 6)
+        if probe == nil then error("Unable to create six-zone probe " .. name) end
+        probe:SetAttrs({TOOLS_Name = name})
+        probe.Source = loader.Output
+        probe.requestCustomRoD = 1
+        probe.canvasMode = 1
+        probe.requestedWidth = 1920
+        probe.requestedHeight = 1080
+        probe.placementMode = 2
+        probe.resampleFilter = 2
+        probe.blankingEnabled = blanking_enabled
+        probe.blankingAspectPreset = 2
+        probe.blankingAspectCustom = 2.0
+        probe.blankingOpacity = 1.0
+        probe.staticTextEnabled = 0
+        probe.fontFamily = "System Default"
+        probe.fontStyle = 0
+        probe.fontSize = 0.040
+        probe.textOpacity = 1.0
+        probe.paddingLeft = 0.015
+        probe.paddingRight = 0.015
+        probe.paddingTop = 0.020
+        probe.paddingBottom = 0.020
+        configure(probe)
+        probe.scenarioLabel = "VISUAL_" .. name
+        probe.AllowResize = 1
+        return probe
+    end
+
+    local six_zones = add_zones("P2A_SIX_ZONES", 0, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "TOP LEFT Á"; p.tcText = "TOP CENTER —"; p.trText = "TOP RIGHT Ó"
+        p.blText = "BOTTOM LEFT"; p.bcText = "BOTTOM CENTER"; p.brText = "BOTTOM RIGHT"
+    end, 1)
+    add_zones("P2A_OVERRIDES", 0, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlUseSizeOverride = 1; p.tlSize = 0.080
+        p.tcUseColorOverride = 1; p.tcColor = {0.0, 1.0, 0.0, 1.0}
+        p.trUseOpacityOverride = 1; p.trOpacity = 0.25
+        p.blOffsetX = 0.05; p.blOffsetY = 0.04
+        p.tlText = "TL LARGE"; p.tcText = "TC GREEN"; p.trText = "TR 25%"
+        p.blText = "BL OFFSET"; p.bcText = "BC GLOBAL"; p.brText = "BR GLOBAL"
+    end, 2)
+    add_zones("P2A_OFFSETS_INWARD", 0, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlOffsetX = 0.05; p.tlOffsetY = -0.08
+        p.tcOffsetY = -0.08
+        p.trOffsetX = -0.05; p.trOffsetY = -0.08
+        p.blOffsetX = 0.05; p.blOffsetY = 0.08
+        p.bcOffsetY = 0.08
+        p.brOffsetX = -0.05; p.brOffsetY = 0.08
+        p.tlText = "TL IN"; p.tcText = "TC IN"; p.trText = "TR IN"
+        p.blText = "BL IN"; p.bcText = "BC IN"; p.brText = "BR IN"
+    end, 3)
+    add_zones("P2A_WITH_BLANKING", 1, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "TL ON BAR"; p.tcText = "TC ON BAR"; p.trText = "TR ON BAR"
+        p.blText = "BL ON BAR"; p.bcText = "BC ON BAR"; p.brText = "BR ON BAR"
+    end, 4)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(text_top_left)
+    comp:SetActiveTool(six_zones)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P1C_UTF8_TOP_LEFT")
+    print("active_tool=P2A_SIX_ZONES")
     print("chart=" .. chart_path)
 end)
 

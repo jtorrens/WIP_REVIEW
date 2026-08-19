@@ -63,7 +63,8 @@ local ok, failure = pcall(function()
                                 blanking_enabled, blanking_preset,
                                 blanking_custom, blanking_opacity,
                                 text_enabled, text_value, text_anchor,
-                                font_family, font_style, font_size, text_opacity)
+                                font_family, font_style, font_size, text_opacity,
+                                configure_zones)
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -86,6 +87,7 @@ local ok, failure = pcall(function()
         probe.fontStyle = font_style or 0
         probe.fontSize = font_size or 0.028
         probe.textOpacity = text_opacity or 1.0
+        if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
         probe.scenarioLabel = name
@@ -132,6 +134,31 @@ local ok, failure = pcall(function()
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_OVER_BLANKING", 0, 1, 5, 3,
                  1, 2, 2.0, 1.0, 1, "TEXT OVER BLANKING", 1,
                  "System Default", 0, 0.028, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_SIX_ZONES", 2, 1, 1, 4,
+                 0, 2, 2.0, 1.0, 0, nil, 0,
+                 "System Default", 0, 0.028, 1.0, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
+        p.tlText = "TL Á"; p.tcText = "TC —"; p.trText = "TR Ó"
+        p.blText = "BL"; p.bcText = "BC"; p.brText = "BR"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_OVERRIDES", 2, 1, 2, 4,
+                 0, 2, 2.0, 1.0, 0, nil, 0,
+                 "System Default", 0, 0.028, 1.0, function(p)
+        p.tlEnabled = 1; p.tcEnabled = 1; p.brEnabled = 1; p.blEnabled = 1
+        p.tlUseSizeOverride = 1; p.tlSize = 0.056
+        p.tcUseColorOverride = 1; p.tcColor = {0.0, 1.0, 0.0, 1.0}
+        p.brUseOpacityOverride = 1; p.brOpacity = 0.25
+        p.blOffsetX = 0.05; p.blOffsetY = 0.04
+        p.tlText = "TL LARGE"; p.tcText = "TC GREEN"
+        p.brText = "BR 25%"; p.blText = "BL OFFSET"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_WITH_BLANKING", 2, 1, 3, 4,
+                 1, 2, 2.0, 1.0, 0, nil, 0,
+                 "System Default", 0, 0.028, 1.0, function(p)
+        p.tlEnabled = 1; p.brEnabled = 1
+        p.tlText = "TL OVER BLANKING"; p.brText = "BR OVER BLANKING"
+    end)
 
     print("WIPREVIEW_AUTOMATION_OK")
     print("fusion_version=" .. tostring(fusion:GetAttrs().FUSIONS_Version))

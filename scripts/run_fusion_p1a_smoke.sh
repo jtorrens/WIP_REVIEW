@@ -87,5 +87,14 @@ require_record 'STATIC_TEXT .*enabled=true text="TOP GROWS DOWN" anchor=0 .*norm
 require_record 'STATIC_TEXT .*enabled=true text="BOTTOM GROWS UP" anchor=3 .*pixel_size=60\.480000 .*origin=\[29,22\]' 'P1c bottom anchor and padding'
 require_record 'STATIC_TEXT .*enabled=true text="FONT FALLBACK" anchor=2 .*fallback=true .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c missing-font fallback'
 require_record 'STATIC_TEXT .*enabled=true text="TEXT OVER BLANKING" anchor=1 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c text after blanking'
+for zone in TL TC TR BL BC BR; do
+    require_record "TEXT_ZONE .*zone=\"$zone\" enabled=true text=\"$zone[^\"]*\" .*normalized_size=0\.028000 pixel_size=30\.240000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]" "P2a zone $zone"
+done
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL LARGE" use_size_override=true .*normalized_size=0\.056000 pixel_size=60\.480000' 'P2a size override'
+require_record 'TEXT_ZONE .*zone="TC" enabled=true text="TC GREEN" .*use_color_override=true .*colour=\[0\.000000,1\.000000,0\.000000,1\.000000\]' 'P2a colour override'
+require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR 25%" .*use_opacity_override=true .*opacity=0\.250000' 'P2a opacity override'
+require_record 'TEXT_ZONE .*zone="BL" enabled=true text="BL OFFSET" .*origin=\[125,65\] offset=\[0\.050000,0\.040000\]' 'P2a normalized offsets'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="TL OVER BLANKING" .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P2a zone over blanking'
+require_record 'TEXT_ZONE .*zone="BR" enabled=true text="BR OVER BLANKING" .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P2a opposite zone over blanking'
 
-echo "Automated Fusion P1a/P1b/P1c smoke test passed"
+echo "Automated Fusion cumulative P1/P2a smoke test passed"
