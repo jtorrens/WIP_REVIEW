@@ -64,11 +64,23 @@ GlyphMask rasterizeUTF8(const std::string& text, const std::string& fontFamily,
     if (!fontFamily.empty() && fontFamily != "System Default") {
       CFPtr<CFStringRef> requested(CFStringCreateWithCString(
           kCFAllocatorDefault, fontFamily.c_str(), kCFStringEncodingUTF8));
-      if (requested) rawBase = CTFontCreateWithName(requested.get(), size, nullptr);
+      if (requested) {
+        rawBase = CTFontCreateWithName(requested.get(), size, nullptr);
+        if (rawBase) {
+          CFPtr<CFStringRef> resolvedFamily(CTFontCopyFamilyName(rawBase));
+          if (!resolvedFamily || CFStringCompare(
+                  resolvedFamily.get(), requested.get(), kCFCompareCaseInsensitive) != kCFCompareEqualTo) {
+            CFRelease(rawBase);
+            rawBase = nullptr;
+            result.usedFallback = true;
+          }
+        }
+      }
     }
     if (!rawBase) {
       rawBase = createSystemFont(size);
-      result.usedFallback = !fontFamily.empty() && fontFamily != "System Default";
+      result.usedFallback = result.usedFallback ||
+          (!fontFamily.empty() && fontFamily != "System Default");
     }
     CFPtr<CTFontRef> base(rawBase);
     if (!base) return result;

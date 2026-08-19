@@ -335,6 +335,13 @@ void testSystemTextRasterizerUTF8() {
   assert(!larger.pixels.empty());
   assert(larger.height > regular.height);
 
+  const auto fallback = wipreview::text::rasterizeUTF8(
+      "FALLBACK", "WIPReview Font That Does Not Exist 7F3A",
+      wipreview::text::FontStyle::Regular, 32.0);
+  assert(!fallback.pixels.empty());
+  assert(fallback.usedFallback);
+  assert(!fallback.resolvedFont.empty());
+
   const std::string invalidUTF8{"\xff\xfe", 2};
   const auto invalid = wipreview::text::rasterizeUTF8(
       invalidUTF8, "System Default", wipreview::text::FontStyle::Regular, 32.0);
