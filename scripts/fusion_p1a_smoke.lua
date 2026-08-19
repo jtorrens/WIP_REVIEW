@@ -48,6 +48,9 @@ local ok, failure = pcall(function()
     probe.requestCustomRoD = 1
     probe.requestedWidth = 1920
     probe.requestedHeight = 1080
+    probe.canvasMode = 1
+    probe.placementMode = 1
+    probe.resampleFilter = 2
     probe.scenarioLabel = "AUTOMATED_FUSION_P1A_SMOKE"
     probe.AllowResize = 1
 

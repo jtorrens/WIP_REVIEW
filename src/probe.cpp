@@ -8,6 +8,7 @@
 #include <ofxProperty.h>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
@@ -45,6 +46,10 @@ constexpr char kParamWidth[] = "requestedWidth";
 constexpr char kParamHeight[] = "requestedHeight";
 constexpr char kParamScenario[] = "scenarioLabel";
 constexpr char kParamAnimatedString[] = "animatedStringProbe";
+constexpr char kParamCanvasMode[] = "canvasMode";
+constexpr char kParamPlacement[] = "placementMode";
+constexpr char kParamResample[] = "resampleFilter";
+constexpr char kParamCanvasColour[] = "canvasColour";
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
 
@@ -282,6 +287,10 @@ struct InstanceData {
   OfxParamHandle height = nullptr;
   OfxParamHandle scenario = nullptr;
   OfxParamHandle animatedString = nullptr;
+  OfxParamHandle canvasMode = nullptr;
+  OfxParamHandle placement = nullptr;
+  OfxParamHandle resample = nullptr;
+  OfxParamHandle canvasColour = nullptr;
   std::string context;
   std::uint64_t id = 0;
 };
@@ -377,10 +386,30 @@ bool readRodRequest(const InstanceData* instance, bool& enabled, int& width, int
   const OfxStatus a = gParameterSuite->paramGetValue(instance->requestRod, &request);
   const OfxStatus b = gParameterSuite->paramGetValue(instance->width, &width);
   const OfxStatus c = gParameterSuite->paramGetValue(instance->height, &height);
+  int canvasMode = 1;
+  if (instance->canvasMode) {
+    gParameterSuite->paramGetValue(instance->canvasMode, &canvasMode);
+  }
+  request = request && canvasMode == 1;
   enabled = request != 0;
   width = std::max(1, width);
   height = std::max(1, height);
   return a == kOfxStatOK && b == kOfxStatOK && c == kOfxStatOK;
+}
+
+void defineChoiceParam(OfxParamSetHandle params, const char* name, const char* label,
+                       const std::vector<const char*>& choices, int defaultValue,
+                       const char* hint) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(params, kOfxParamTypeChoice, name, &properties) != kOfxStatOK) return;
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
+  for (std::size_t index = 0; index < choices.size(); ++index) {
+    gPropertySuite->propSetString(properties, kOfxParamPropChoiceOption,
+                                 static_cast<int>(index), choices[index]);
+  }
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, defaultValue);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
 }
 
 std::size_t pixelBytes(OfxPropertySetHandle image) {
@@ -403,16 +432,28 @@ std::size_t pixelBytes(OfxPropertySetHandle image) {
   return channels * channelBytes;
 }
 
-bool samePixelFormat(OfxPropertySetHandle a, OfxPropertySetHandle b) {
-  char* aComponents = nullptr;
-  char* bComponents = nullptr;
-  char* aDepth = nullptr;
-  char* bDepth = nullptr;
-  return gPropertySuite->propGetString(a, kOfxImageEffectPropComponents, 0, &aComponents) == kOfxStatOK &&
-         gPropertySuite->propGetString(b, kOfxImageEffectPropComponents, 0, &bComponents) == kOfxStatOK &&
-         gPropertySuite->propGetString(a, kOfxImageEffectPropPixelDepth, 0, &aDepth) == kOfxStatOK &&
-         gPropertySuite->propGetString(b, kOfxImageEffectPropPixelDepth, 0, &bDepth) == kOfxStatOK &&
-         std::strcmp(aComponents, bComponents) == 0 && std::strcmp(aDepth, bDepth) == 0;
+int channelCount(OfxPropertySetHandle image) {
+  char* components = nullptr;
+  if (gPropertySuite->propGetString(image, kOfxImageEffectPropComponents, 0, &components) != kOfxStatOK) {
+    return 0;
+  }
+  if (std::strcmp(components, kOfxImageComponentRGBA) == 0) return 4;
+  if (std::strcmp(components, kOfxImageComponentRGB) == 0) return 3;
+  if (std::strcmp(components, kOfxImageComponentAlpha) == 0) return 1;
+  return 0;
+}
+
+bool channelType(OfxPropertySetHandle image, wipreview::probe::ChannelType& type) {
+  char* depth = nullptr;
+  if (gPropertySuite->propGetString(image, kOfxImageEffectPropPixelDepth, 0, &depth) != kOfxStatOK) {
+    return false;
+  }
+  if (std::strcmp(depth, kOfxBitDepthByte) == 0) type = wipreview::probe::ChannelType::UInt8;
+  else if (std::strcmp(depth, kOfxBitDepthShort) == 0) type = wipreview::probe::ChannelType::UInt16;
+  else if (std::strcmp(depth, kOfxBitDepthHalf) == 0) type = wipreview::probe::ChannelType::Half;
+  else if (std::strcmp(depth, kOfxBitDepthFloat) == 0) type = wipreview::probe::ChannelType::Float32;
+  else return false;
+  return true;
 }
 
 wipreview::probe::ImageView imageView(OfxPropertySetHandle image) {
@@ -427,8 +468,56 @@ wipreview::probe::ImageView imageView(OfxPropertySetHandle image) {
     view.bounds = {bounds[0], bounds[1], bounds[2], bounds[3]};
     view.rowBytes = rowBytes;
     view.pixelBytes = pixelBytes(image);
+    view.channels = channelCount(image);
+    if (!channelType(image, view.channelType)) {
+      view.pixelBytes = 0;
+      view.channels = 0;
+    }
   }
   return view;
+}
+
+double imagePAR(OfxPropertySetHandle image) {
+  double value = 1.0;
+  if (!image || gPropertySuite->propGetDouble(
+          image, kOfxImagePropPixelAspectRatio, 0, &value) != kOfxStatOK || value <= 0.0) {
+    return 1.0;
+  }
+  return value;
+}
+
+wipreview::probe::RenderOptions readRenderOptions(const InstanceData* instance,
+                                                  OfxTime time,
+                                                  OfxPropertySetHandle sourceImage,
+                                                  OfxPropertySetHandle outputImage) {
+  wipreview::probe::RenderOptions options;
+  int placement = 1;
+  int filter = 2;
+  double canvas[4] = {0.0, 0.0, 0.0, 1.0};
+  if (instance->placement) gParameterSuite->paramGetValueAtTime(instance->placement, time, &placement);
+  if (instance->resample) gParameterSuite->paramGetValueAtTime(instance->resample, time, &filter);
+  if (instance->canvasColour) {
+    gParameterSuite->paramGetValueAtTime(instance->canvasColour, time,
+                                         &canvas[0], &canvas[1], &canvas[2], &canvas[3]);
+  }
+  const auto placements = std::array{
+      wipreview::probe::PlacementMode::Identity,
+      wipreview::probe::PlacementMode::Fit,
+      wipreview::probe::PlacementMode::Fill,
+      wipreview::probe::PlacementMode::Stretch,
+      wipreview::probe::PlacementMode::OneToOne};
+  const auto filters = std::array{
+      wipreview::probe::ResampleFilter::Bilinear,
+      wipreview::probe::ResampleFilter::Bicubic,
+      wipreview::probe::ResampleFilter::Lanczos3};
+  options.placement = placements[static_cast<std::size_t>(std::clamp(placement, 0, 4))];
+  options.filter = filters[static_cast<std::size_t>(std::clamp(filter, 0, 2))];
+  options.sourcePixelAspect = imagePAR(sourceImage);
+  options.outputPixelAspect = imagePAR(outputImage);
+  for (int channel = 0; channel < 4; ++channel) {
+    options.canvas[channel] = static_cast<float>(canvas[channel]);
+  }
+  return options;
 }
 
 OfxStatus load() {
@@ -473,15 +562,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P0 Filter Only)"
-                                          : "WIP Review Probe (P0)");
+                               filterOnly ? "WIP Review Probe (P1a Filter Only)"
+                                          : "WIP Review Probe (P1a)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Host Capability Probe P0 — Filter Only"
-                                          : "WIP Review Host Capability Probe P0");
+                               filterOnly ? "WIP Review Geometry Probe P1a — Filter Only"
+                                          : "WIP Review Geometry Probe P1a");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "Diagnostic-only P0 probe. Requests a custom output RoD and logs Resolve/Fusion host capabilities.");
+      "P1a geometry probe: custom review raster, static placement and CPU resampling, with host diagnostics.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -560,7 +649,27 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
-      "When enabled, GetRegionOfDefinition requests the width and height below.");
+      "P0 diagnostic gate. When enabled with Requested Review Raster, requests the width and height below.");
+
+  defineChoiceParam(params, kParamCanvasMode, "Canvas Mode",
+                    {"Host Raster", "Requested Review Raster"}, 1,
+                    "Host Raster keeps the host output size; Requested Review Raster uses Requested Width/Height when the host accepts plugin RoD.");
+
+  defineChoiceParam(params, kParamPlacement, "Placement",
+                    {"Identity", "Fit", "Fill / Crop", "Stretch", "1:1"}, 1,
+                    "Static source placement inside the output canvas. Identity is coordinate-aligned and never resizes.");
+
+  defineChoiceParam(params, kParamResample, "Resample Filter",
+                    {"Bilinear", "Bicubic (Catmull-Rom)", "Lanczos3"}, 2,
+                    "CPU reference resampling filter. No sharpening is applied.");
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamCanvasColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas Colour");
+  const double canvasDefault[4] = {0.0, 0.0, 0.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, canvasDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
+      "RGBA canvas outside the placed source; defaults to opaque black.");
 
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
@@ -612,6 +721,10 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamHeight, &instance->height, nullptr);
   gParameterSuite->paramGetHandle(params, kParamScenario, &instance->scenario, nullptr);
   gParameterSuite->paramGetHandle(params, kParamAnimatedString, &instance->animatedString, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamCanvasMode, &instance->canvasMode, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
 
   Logger::instance().write("INSTANCE_CREATE",
@@ -815,19 +928,29 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   if (outputStatus != kOfxStatOK || !outputImage) {
     result = gImageSuite->abort(effect) ? kOfxStatOK : kOfxStatFailed;
   } else {
-    const bool formatsMatch = sourceImage && samePixelFormat(sourceImage, outputImage);
-    const auto sourceView = formatsMatch ? imageView(sourceImage) : wipreview::probe::ImageView{};
+    const auto sourceView = sourceImage ? imageView(sourceImage) : wipreview::probe::ImageView{};
     const auto outputView = imageView(outputImage);
-    wipreview::probe::copyProbeFrame(
-        sourceView, outputView,
-        {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]});
+    const auto options = readRenderOptions(instance, time, sourceImage, outputImage);
+    wipreview::probe::renderStaticFrame(
+        sourceView, outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+        options);
+    Logger::instance().write("STATIC_FORMATTER",
+        instancePrefix(instance) +
+        " placement=" + std::to_string(static_cast<int>(options.placement)) +
+        " filter=" + std::to_string(static_cast<int>(options.filter)) +
+        " source_PAR=" + std::to_string(options.sourcePixelAspect) +
+        " output_PAR=" + std::to_string(options.outputPixelAspect) +
+        " canvas=[" + std::to_string(options.canvas[0]) + ',' +
+                         std::to_string(options.canvas[1]) + ',' +
+                         std::to_string(options.canvas[2]) + ',' +
+                         std::to_string(options.canvas[3]) + ']');
     if (outputView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_output_pixel_format=true");
       result = kOfxStatFailed;
-    } else if (sourceImage && !formatsMatch) {
+    } else if (sourceImage && sourceView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
-          instancePrefix(instance) + " source_output_format_mismatch=true output_cleared=true");
+          instancePrefix(instance) + " unsupported_source_pixel_format=true output_canvas_only=true");
     }
   }
 

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WIPReviewProbe VERSION 0.1.2 LANGUAGES CXX)
+project(WIPReviewProbe VERSION 0.2.0 LANGUAGES CXX)
 
 include(FetchContent)
 
-option(WIPREVIEW_BUILD_TESTS "Build the host-independent P0 tests" ON)
+option(WIPREVIEW_BUILD_TESTS "Build the host-independent probe and P1a tests" ON)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
@@ -92,7 +92,7 @@ if(APPLE)
           DESTINATION "."
           USE_SOURCE_PERMISSIONS)
 else()
-  message(WARNING "P0 is currently packaged and documented for macOS only")
+  message(WARNING "The probe is currently packaged and documented for macOS only")
   install(TARGETS WIPReviewProbe LIBRARY DESTINATION WIPReviewProbe.ofx.bundle/Contents/Linux-x86-64)
 endif()
 
