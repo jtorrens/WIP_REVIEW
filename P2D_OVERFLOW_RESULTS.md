@@ -78,10 +78,23 @@ La composición visual añade:
 - tokens `{frame_rel}`, `{frame}` y `{timecode}`;
 - transformaciones OCIO de píxeles, GPU y presets.
 
-## Resultado automático
+## Resultado automático — aprobado
 
-Pendiente de ejecutar con el bundle universal 0.8.0 instalado en Fusion Studio
-21.0.4 para macOS.
+Ejecutado el 19 de agosto de 2026 con el bundle universal 0.8.0 instalado en
+Fusion Studio 21.0.4 para macOS:
+
+- 27 de 27 renderizaciones completadas;
+- las celdas registradas son `[29,630]`, `[650,1270]` y `[1290,1891]`;
+- Clip conserva string y escala `1.0`; su raster de `1931 px` queda limitado a
+  la celda izquierda de `601 px`;
+- Ellipsis produce `ELLIPSIS PRESERVE…`, escala `1.0` y raster de `597 px`
+  dentro de la celda central de `620 px`;
+- ShrinkToFit resuelve el caso derecho a escala `0.820905`, tamaño efectivo
+  `53.194614 px` y ancho exacto `601 px`;
+- el caso que no cabe al mínimo conserva escala `0.600000`, tamaño
+  `38.880000 px` y registra `clipped=true`;
+- no se registraron fallos de rasterización, outline ni shadow;
+- los 23 escenarios acumulativos anteriores continúan aprobados.
 
 ## Validación visual
 
