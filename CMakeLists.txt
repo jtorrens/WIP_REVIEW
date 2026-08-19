@@ -46,13 +46,32 @@ set_target_properties(wipreview_probe_core PROPERTIES
   VISIBILITY_INLINES_HIDDEN YES
 )
 
+if(APPLE)
+  find_library(WIPREVIEW_CORETEXT_FRAMEWORK CoreText REQUIRED)
+  find_library(WIPREVIEW_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+  find_library(WIPREVIEW_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+  add_library(wipreview_text_rasterizer STATIC src/text_rasterizer_macos.cpp)
+  target_link_libraries(wipreview_text_rasterizer PUBLIC
+    wipreview_probe_core
+    "${WIPREVIEW_CORETEXT_FRAMEWORK}"
+    "${WIPREVIEW_COREGRAPHICS_FRAMEWORK}"
+    "${WIPREVIEW_COREFOUNDATION_FRAMEWORK}"
+  )
+else()
+  add_library(wipreview_text_rasterizer STATIC src/text_rasterizer_stub.cpp)
+  target_link_libraries(wipreview_text_rasterizer PUBLIC wipreview_probe_core)
+endif()
+target_include_directories(wipreview_text_rasterizer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_compile_features(wipreview_text_rasterizer PUBLIC cxx_std_17)
+set_target_properties(wipreview_text_rasterizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 add_library(WIPReviewProbe MODULE
   src/probe.cpp
 )
 target_compile_features(WIPReviewProbe PRIVATE cxx_std_17)
 target_link_libraries(WIPReviewProbe PRIVATE
   openfx_sdk_headers
-  wipreview_probe_core
+  wipreview_text_rasterizer
 )
 target_compile_definitions(WIPReviewProbe PRIVATE
   WIPREVIEW_PROBE_VERSION="${PROJECT_VERSION}"
@@ -99,7 +118,9 @@ endif()
 if(WIPREVIEW_BUILD_TESTS)
   enable_testing()
   add_executable(wipreview_probe_tests tests/probe_core_tests.cpp)
-  target_link_libraries(wipreview_probe_tests PRIVATE wipreview_probe_core)
+  target_link_libraries(wipreview_probe_tests PRIVATE
+    wipreview_text_rasterizer
+  )
   add_test(NAME wipreview_probe_core COMMAND wipreview_probe_tests)
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)

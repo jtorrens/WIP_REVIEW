@@ -1,4 +1,5 @@
 #include "probe_core.hpp"
+#include "text_rasterizer.hpp"
 
 #include <array>
 #ifdef NDEBUG
@@ -321,6 +322,25 @@ void testTextMaskComposition() {
   assert(red(pixels.data(), 4, 3, 3) == 1.0F);
 }
 
+void testSystemTextRasterizerUTF8() {
+  const auto regular = wipreview::text::rasterizeUTF8(
+      "SECUENCIA ÁRTICO — VERSIÓN 03", "System Default",
+      wipreview::text::FontStyle::Regular, 32.0);
+  assert(!regular.pixels.empty());
+  assert(regular.width > 0 && regular.height > 0);
+  assert(!regular.resolvedFont.empty());
+
+  const auto larger = wipreview::text::rasterizeUTF8(
+      "ÁRTICO", "System Default", wipreview::text::FontStyle::Bold, 64.0);
+  assert(!larger.pixels.empty());
+  assert(larger.height > regular.height);
+
+  const std::string invalidUTF8{"\xff\xfe", 2};
+  const auto invalid = wipreview::text::rasterizeUTF8(
+      invalidUTF8, "System Default", wipreview::text::FontStyle::Regular, 32.0);
+  assert(invalid.pixels.empty());
+}
+
 }  // namespace
 
 int main() {
@@ -338,5 +358,6 @@ int main() {
   testBlankingStraightAlphaAndRenderWindow();
   testTextAnchorsAndGrowth();
   testTextMaskComposition();
+  testSystemTextRasterizerUTF8();
   return 0;
 }
