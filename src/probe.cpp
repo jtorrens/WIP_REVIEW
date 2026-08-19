@@ -1,5 +1,6 @@
 #include "probe_core.hpp"
 #include "text_rasterizer.hpp"
+#include "token_resolver.hpp"
 
 #include <ofxColour.h>
 #include <ofxCore.h>
@@ -66,6 +67,13 @@ constexpr char kParamTextGroup[] = "textGlobalGroup";
 constexpr char kParamZoneGap[] = "zoneGap";
 constexpr char kParamOverflowMode[] = "overflowMode";
 constexpr char kParamMinimumFontScale[] = "minimumFontScale";
+constexpr char kParamDynamicTextGroup[] = "dynamicTextGroup";
+constexpr char kParamFrameRelativeBase[] = "frameRelativeBase";
+constexpr char kParamFrameStart[] = "frameStart";
+constexpr char kParamFpsMode[] = "fpsMode";
+constexpr char kParamFpsOverride[] = "fpsOverride";
+constexpr char kParamTimecodeStart[] = "timecodeStart";
+constexpr char kParamDropFrameMode[] = "dropFrameMode";
 constexpr char kParamOutlineEnabled[] = "outlineEnabled";
 constexpr char kParamOutlineWidth[] = "outlineWidth";
 constexpr char kParamOutlineColour[] = "outlineColor";
@@ -385,6 +393,12 @@ struct InstanceData {
   OfxParamHandle zoneGap = nullptr;
   OfxParamHandle overflowMode = nullptr;
   OfxParamHandle minimumFontScale = nullptr;
+  OfxParamHandle frameRelativeBase = nullptr;
+  OfxParamHandle frameStart = nullptr;
+  OfxParamHandle fpsMode = nullptr;
+  OfxParamHandle fpsOverride = nullptr;
+  OfxParamHandle timecodeStart = nullptr;
+  OfxParamHandle dropFrameMode = nullptr;
   OfxParamHandle outlineEnabled = nullptr;
   OfxParamHandle outlineWidth = nullptr;
   OfxParamHandle outlineColour = nullptr;
@@ -917,6 +931,54 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   return settings;
 }
 
+struct DynamicTextSettings {
+  wipreview::tokens::Settings resolver;
+  int fpsMode = 0;
+  double hostFps = 0.0;
+};
+
+DynamicTextSettings readDynamicTextSettings(const InstanceData* instance) {
+  DynamicTextSettings settings;
+  int frameRelativeBase = 1;
+  int frameStart = 1001;
+  int fpsMode = 0;
+  double fpsOverride = 24.0;
+  char* timecodeStart = nullptr;
+  int dropFrameMode = 0;
+  if (instance->frameRelativeBase) {
+    gParameterSuite->paramGetValue(instance->frameRelativeBase, &frameRelativeBase);
+  }
+  if (instance->frameStart) {
+    gParameterSuite->paramGetValue(instance->frameStart, &frameStart);
+  }
+  if (instance->fpsMode) gParameterSuite->paramGetValue(instance->fpsMode, &fpsMode);
+  if (instance->fpsOverride) {
+    gParameterSuite->paramGetValue(instance->fpsOverride, &fpsOverride);
+  }
+  if (instance->timecodeStart) {
+    gParameterSuite->paramGetValue(instance->timecodeStart, &timecodeStart);
+  }
+  if (instance->dropFrameMode) {
+    gParameterSuite->paramGetValue(instance->dropFrameMode, &dropFrameMode);
+  }
+  OfxPropertySetHandle effectProperties = nullptr;
+  gImageSuite->getPropertySet(instance->effect, &effectProperties);
+  gPropertySuite->propGetDouble(
+      effectProperties, kOfxImageEffectPropFrameRate, 0, &settings.hostFps);
+  settings.fpsMode = std::clamp(fpsMode, 0, 1);
+  settings.resolver.frameRelativeBase = frameRelativeBase;
+  settings.resolver.frameStart = frameStart;
+  settings.resolver.fps = settings.fpsMode == 0 ? settings.hostFps : fpsOverride;
+  settings.resolver.timecodeStart = timecodeStart ? timecodeStart : "00:00:00:00";
+  const auto modes = std::array{
+      wipreview::tokens::DropFrameMode::Auto,
+      wipreview::tokens::DropFrameMode::NonDrop,
+      wipreview::tokens::DropFrameMode::Drop};
+  settings.resolver.dropFrameMode = modes[
+      static_cast<std::size_t>(std::clamp(dropFrameMode, 0, 2))];
+  return settings;
+}
+
 OfxStatus load() {
   if (!gHost || !gHost->fetchSuite) return kOfxStatErrMissingHostFeature;
   gImageSuite = static_cast<const OfxImageEffectSuiteV1*>(
@@ -959,15 +1021,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P2d Filter Only)"
-                                          : "WIP Review Probe (P2d)");
+                               filterOnly ? "WIP Review Probe (P3 Filter Only)"
+                                          : "WIP Review Probe (P3)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Six Zone Overflow P2d — Filter Only"
-                                          : "WIP Review Six Zone Overflow P2d");
+                               filterOnly ? "WIP Review Dynamic Tokens P3 — Filter Only"
+                                          : "WIP Review Dynamic Tokens P3");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P2d overlay: review raster, placement, blanking and six bounded UTF-8 zones with outline, shadow and overflow policy.");
+      "P3 overlay: six bounded UTF-8 zones with geometry, blanking, styling, overflow and temporal tokens.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -992,6 +1054,11 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginRenderThreadSafety, 0,
                                kOfxImageEffectRenderFullySafe);
   gPropertySuite->propSetInt(properties, kOfxImageEffectPluginPropHostFrameThreading, 0, 1);
+  for (std::size_t index = 0; index < kZoneParams.size(); ++index) {
+    gPropertySuite->propSetString(
+        properties, kOfxImageEffectPropClipPreferencesSlaveParam,
+        static_cast<int>(index), kZoneParams[index].text);
+  }
 
   const OfxStatus colourStyleStatus = gPropertySuite->propSetString(
       properties, kOfxImageEffectPropColourManagementStyle, 0,
@@ -1037,6 +1104,24 @@ void defineDoubleParam(OfxParamSetHandle params, const char* name, const char* l
   if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
 }
 
+void defineIntegerParam(OfxParamSetHandle params, const char* name, const char* label,
+                        int defaultValue, int minimum, int maximum,
+                        int displayMinimum, int displayMaximum,
+                        const char* hint, const char* parent = nullptr) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(
+          params, kOfxParamTypeInteger, name, &properties) != kOfxStatOK) return;
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, defaultValue);
+  gPropertySuite->propSetInt(properties, kOfxParamPropMin, 0, minimum);
+  gPropertySuite->propSetInt(properties, kOfxParamPropMax, 0, maximum);
+  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMin, 0, displayMinimum);
+  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMax, 0, displayMaximum);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  if (hint) gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+  if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
+}
+
 void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeGroup, zone.group,
@@ -1054,7 +1139,7 @@ void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
 
   const std::string textLabel = std::string(zone.label) + " Text";
   defineStringParam(params, zone.text, textLabel.c_str(), "", false,
-                    "Static UTF-8 zone text. Dynamic tokens are added in P3.", zone.group);
+                    "UTF-8 text. Supports {frame_rel}, {frame} and {timecode}.", zone.group);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.useSize, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Use Size Override");
@@ -1289,6 +1374,34 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     kParamShadowGroup);
   for (const auto& zone : kZoneParams) defineZoneParams(params, zone);
 
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamDynamicTextGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Dynamic Text");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  defineIntegerParam(params, kParamFrameRelativeBase, "Frame Relative Base", 1,
+                     -1000000000, 1000000000, -10000, 10000,
+                     "Added to round(effectTime) for {frame_rel}.",
+                     kParamDynamicTextGroup);
+  defineIntegerParam(params, kParamFrameStart, "Frame Start", 1001,
+                     -1000000000, 1000000000, -10000, 100000,
+                     "Added to round(effectTime) for {frame}; set explicitly from workflow data.",
+                     kParamDynamicTextGroup);
+  defineChoiceParam(params, kParamFpsMode, "FPS Mode",
+                    {"AutoFromHost", "Override"}, 0,
+                    "Use the effect frame rate published by the host or FPS Override.",
+                    kParamDynamicTextGroup);
+  defineDoubleParam(params, kParamFpsOverride, "FPS Override", 24.0,
+                    1.0, 240.0, 1.0, 120.0,
+                    "Frame rate used for {timecode} when FPS Mode is Override.",
+                    kParamDynamicTextGroup);
+  defineStringParam(params, kParamTimecodeStart, "Timecode Start", "00:00:00:00",
+                    false, "HH:MM:SS:FF or HH:MM:SS;FF start value.",
+                    kParamDynamicTextGroup);
+  defineChoiceParam(params, kParamDropFrameMode, "Drop Frame Mode",
+                    {"Auto", "NonDrop", "Drop"}, 0,
+                    "Auto enables drop-frame for 29.97/59.94; incompatible Drop requests are logged and use NonDrop.",
+                    kParamDynamicTextGroup);
+
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1920);
@@ -1357,6 +1470,15 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamOverflowMode, &instance->overflowMode, nullptr);
   gParameterSuite->paramGetHandle(
       params, kParamMinimumFontScale, &instance->minimumFontScale, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamFrameRelativeBase, &instance->frameRelativeBase, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFrameStart, &instance->frameStart, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFpsMode, &instance->fpsMode, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFpsOverride, &instance->fpsOverride, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamTimecodeStart, &instance->timecodeStart, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamDropFrameMode, &instance->dropFrameMode, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineEnabled, &instance->outlineEnabled, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineWidth, &instance->outlineWidth, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineColour, &instance->outlineColour, nullptr);
@@ -1494,13 +1616,24 @@ OfxStatus getClipPreferences(OfxImageEffectHandle effect,
   }
   const OfxStatus outputPARStatus = gPropertySuite->propSetDouble(
       outArgs, kOutputClipPARPreference, 0, 1.0);
-  gPropertySuite->propSetInt(outArgs, kOfxImageEffectFrameVarying, 0, 1);
+  bool outputFrameVarying = false;
+  for (const auto& zone : instance->zones) {
+    char* text = nullptr;
+    if (zone.text && gParameterSuite->paramGetValue(zone.text, &text) == kOfxStatOK &&
+        text && wipreview::tokens::containsDynamicToken(text)) {
+      outputFrameVarying = true;
+      break;
+    }
+  }
+  gPropertySuite->propSetInt(
+      outArgs, kOfxImageEffectFrameVarying, 0, outputFrameVarying ? 1 : 0);
   Logger::instance().write("GET_CLIP_PREFERENCES",
       instancePrefix(instance) + " source_components=" + quoted(components) +
       " source_depth=" + quoted(depth) +
       " source_premultiplication=" + quoted(premultiplication) +
       " requested_output_PAR=1 output_PAR_status=" + statusName(outputPARStatus) +
-      " output_frame_varying=true negotiated_style=" +
+      " output_frame_varying=" + (outputFrameVarying ? "true" : "false") +
+      " negotiated_style=" +
       getString([&] { OfxPropertySetHandle p = nullptr; gImageSuite->getPropertySet(effect, &p); return p; }(),
                 kOfxImageEffectPropColourManagementStyle));
   return kOfxStatOK;
@@ -1598,20 +1731,28 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]}, blanking);
     const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
     const auto globalText = readGlobalTextSettings(instance, time, outputImage, outputView);
+    const auto dynamicText = readDynamicTextSettings(instance);
     std::array<ZoneTextSettings, 6> zoneSettings{};
+    std::array<wipreview::tokens::Resolution, 6> zoneTokens{};
     std::array<wipreview::text::TextLayoutResult, 6> zoneLayouts{};
     std::array<wipreview::text::GlyphRaster, 6> zoneGlyphs{};
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
     bool outlineGenerationFailed = false;
     bool shadowGenerationFailed = false;
+    bool timecodeResolutionFallback = false;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
           instance, index, time, globalText, outputView);
       const auto& layer = zoneSettings[index].layer;
       if (layer.overlay.enabled) {
+        zoneTokens[index] = wipreview::tokens::resolve(
+            layer.text, time, dynamicText.resolver);
+        timecodeResolutionFallback = timecodeResolutionFallback ||
+            (layer.text.find("{timecode}") != std::string::npos &&
+             zoneTokens[index].usedTimecodeFallback);
         wipreview::text::TextLayoutRequest layoutRequest;
-        layoutRequest.text = layer.text;
+        layoutRequest.text = zoneTokens[index].text;
         layoutRequest.fontFamily = layer.fontFamily;
         layoutRequest.fontStyle = layer.fontStyle;
         layoutRequest.overflowMode = layer.overflowMode;
@@ -1724,17 +1865,31 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " normalized_zone_gap=" + std::to_string(globalText.normalizedZoneGap) +
         " minimum_font_scale=" + std::to_string(globalText.minimumFontScale) +
         " minimum_policy=clip");
+    Logger::instance().write("DYNAMIC_TEXT",
+        instancePrefix(instance) +
+        " time=" + std::to_string(time) +
+        " fps_mode=" + std::to_string(dynamicText.fpsMode) +
+        " host_fps=" + std::to_string(dynamicText.hostFps) +
+        " selected_fps=" + std::to_string(dynamicText.resolver.fps) +
+        " frame_relative_base=" +
+            std::to_string(dynamicText.resolver.frameRelativeBase) +
+        " frame_start=" + std::to_string(dynamicText.resolver.frameStart) +
+        " timecode_start=" + quoted(dynamicText.resolver.timecodeStart.c_str()) +
+        " drop_frame_mode=" + std::to_string(
+            static_cast<int>(dynamicText.resolver.dropFrameMode)));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
       const auto& zoneMask = zoneGlyphs[index];
       const auto& layout = zoneLayouts[index];
+      const auto& token = zoneTokens[index];
       const auto& origin = zoneOrigins[index];
       Logger::instance().write("TEXT_ZONE",
           instancePrefix(instance) +
           " zone=" + quoted(kZoneParams[index].label) +
           " enabled=" + (layer.overlay.enabled ? "true" : "false") +
           " text=" + quoted(layer.text.c_str()) +
+          " resolved_text=" + quoted(token.text.c_str()) +
           " rendered_text=" + quoted(layout.renderedText.c_str()) +
           " use_size_override=" + (zone.useSizeOverride ? "true" : "false") +
           " use_color_override=" + (zone.useColourOverride ? "true" : "false") +
@@ -1763,6 +1918,25 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                           std::to_string(layer.overlay.colour[2]) + ',' +
                           std::to_string(layer.overlay.colour[3]) + ']' +
           " opacity=" + std::to_string(layer.overlay.opacity));
+      if (token.containsDynamicTokens) {
+        Logger::instance().write("TOKEN_ZONE",
+            instancePrefix(instance) +
+            " zone=" + quoted(kZoneParams[index].label) +
+            " source=" + quoted(layer.text.c_str()) +
+            " resolved=" + quoted(token.text.c_str()) +
+            " effect_frame=" + std::to_string(token.effectFrame) +
+            " frame_rel=" + std::to_string(token.frameRelative) +
+            " frame=" + std::to_string(token.frame) +
+            " timecode=" + quoted(token.timecode.c_str()) +
+            " nominal_fps=" + std::to_string(token.nominalFps) +
+            " fps_valid=" + (token.fpsValid ? "true" : "false") +
+            " drop_compatible=" + (token.dropCompatible ? "true" : "false") +
+            " drop_applied=" + (token.dropApplied ? "true" : "false") +
+            " timecode_start_valid=" +
+                (token.timecodeStartValid ? "true" : "false") +
+            " used_timecode_fallback=" +
+                (token.usedTimecodeFallback ? "true" : "false"));
+      }
     }
     if (outputView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
@@ -1780,6 +1954,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (shadowGenerationFailed) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " glyph_shadow_generation_failed=true");
+    } else if (timecodeResolutionFallback) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " timecode_resolution_fallback=true");
     } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
                (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
                 sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {

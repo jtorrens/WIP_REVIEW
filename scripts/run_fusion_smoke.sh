@@ -105,11 +105,19 @@ require_record 'TEXT_ZONE .*zone="TL" enabled=true text="P2C DEFAULT SHADOW" .*s
 require_record 'TEXT_SHADOW .*enabled=true normalized_offset=\[-0\.010000,-0\.010000\] pixel_offset=\[-19,-11\] normalized_softness=0\.000000 pixel_softness=0\.000000 colour=\[0\.000000,0\.000000,1\.000000,1\.000000\] opacity=1\.000000' 'P2c hard blue shadow settings'
 require_record 'TEXT_ZONE .*zone="BR" enabled=true text="P2C HARD BLUE SHADOW" .*shadow=true' 'P2c hard glyph shadow'
 require_record 'TEXT_OVERFLOW .*mode=0 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d Clip policy'
-require_record 'TEXT_ZONE .*zone="TL" enabled=true text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" rendered_text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" .*effective_scale=1\.000000 overflowed=true clipped=true ellipsized=false cell=\[29,630\]' 'P2d Clip result'
+require_record 'TEXT_ZONE .*zone="TL" enabled=true text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" .*rendered_text="CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL" .*effective_scale=1\.000000 overflowed=true clipped=true ellipsized=false cell=\[29,630\]' 'P2d Clip result'
 require_record 'TEXT_OVERFLOW .*mode=1 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d Ellipsis policy'
-require_record 'TEXT_ZONE .*zone="TC" enabled=true text="ELLIPSIS PRESERVES UTF-8 ÁRTICO AND REPLACES THE TAIL" rendered_text="[^"]*…" .*effective_scale=1\.000000 overflowed=true clipped=false ellipsized=true cell=\[650,1270\]' 'P2d UTF-8 Ellipsis result'
+require_record 'TEXT_ZONE .*zone="TC" enabled=true text="ELLIPSIS PRESERVES UTF-8 ÁRTICO AND REPLACES THE TAIL" .*rendered_text="[^"]*…" .*effective_scale=1\.000000 overflowed=true clipped=false ellipsized=true cell=\[650,1270\]' 'P2d UTF-8 Ellipsis result'
 require_record 'TEXT_OVERFLOW .*mode=2 normalized_zone_gap=0\.010000 minimum_font_scale=0\.600000 minimum_policy=clip' 'P2d ShrinkToFit policy'
 require_record 'TEXT_ZONE .*zone="TR" enabled=true text="SHRINK TO FIT THIS CELL" .*effective_scale=0\.[6-9][0-9]* overflowed=true clipped=false ellipsized=false cell=\[1290,1891\]' 'P2d ShrinkToFit result'
 require_record 'TEXT_ZONE .*zone="BL" enabled=true text="MINIMUM SCALE STILL CANNOT FIT THIS DELIBERATELY VERY LONG STRING AND MUST CLIP" .*effective_scale=0\.600000 overflowed=true clipped=true ellipsized=false cell=\[29,630\]' 'P2d minimum-scale Clip result'
+require_record 'GET_CLIP_PREFERENCES .*output_frame_varying=false' 'static output frame-varying false'
+require_record 'GET_CLIP_PREFERENCES .*output_frame_varying=true' 'token output frame-varying true'
+require_record 'TOKEN_ZONE .*zone="TL" source="REL \{frame_rel\} ABS \{frame\} TC \{timecode\} UNKNOWN \{shot\}" resolved="REL 1 ABS 1001 TC 00:00:00:00 UNKNOWN \{shot\}" effect_frame=0 frame_rel=1 frame=1001 timecode="00:00:00:00" nominal_fps=24 .*used_timecode_fallback=false' 'P3 tokens at frame zero'
+require_record 'TOKEN_ZONE .*zone="TL" .*resolved="REL 2 ABS 1002 TC 00:00:00:01 UNKNOWN \{shot\}" effect_frame=1 frame_rel=2 frame=1002 timecode="00:00:00:01" nominal_fps=24 .*used_timecode_fallback=false' 'P3 tokens increment exactly one frame'
+require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:00:59;29" effect_frame=1799 .*drop_compatible=true drop_applied=true .*used_timecode_fallback=false' 'P3 29.97 DF before minute boundary'
+require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:01:00;02" effect_frame=1800 .*drop_compatible=true drop_applied=true .*used_timecode_fallback=false' 'P3 29.97 DF minute boundary'
+require_record 'TOKEN_ZONE .*zone="BR" source="INVALID TC \{timecode\}" resolved="INVALID TC 00:00:00:01" effect_frame=0 frame_rel=1 .*fps_valid=true drop_compatible=false drop_applied=false timecode_start_valid=false used_timecode_fallback=true' 'P3 invalid timecode controlled fallback'
+require_record 'RENDER_WARNING .*timecode_resolution_fallback=true' 'P3 invalid timecode warning'
 
-echo "Automated Fusion cumulative P1/P2d smoke test passed"
+echo "Automated Fusion cumulative P1/P3 smoke test passed"

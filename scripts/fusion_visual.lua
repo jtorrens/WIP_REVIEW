@@ -28,9 +28,9 @@ local ok, failure = pcall(function()
     comp:SetAttrs({
         COMPS_Name = "WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE",
         COMPN_GlobalStart = 0,
-        COMPN_GlobalEnd = 0,
+        COMPN_GlobalEnd = 1800,
         COMPN_RenderStart = 0,
-        COMPN_RenderEnd = 0,
+        COMPN_RenderEnd = 1800,
     })
 
     local loader = comp:AddTool("Loader", 0, 0)
@@ -119,6 +119,12 @@ local ok, failure = pcall(function()
         probe.zoneGap = 0.010
         probe.overflowMode = 2
         probe.minimumFontScale = 0.60
+        probe.frameRelativeBase = 1
+        probe.frameStart = 1001
+        probe.fpsMode = 1
+        probe.fpsOverride = 24.0
+        probe.timecodeStart = "00:00:00:00"
+        probe.dropFrameMode = 1
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -172,6 +178,12 @@ local ok, failure = pcall(function()
         probe.zoneGap = 0.010
         probe.overflowMode = 2
         probe.minimumFontScale = 0.60
+        probe.frameRelativeBase = 1
+        probe.frameStart = 1001
+        probe.fpsMode = 1
+        probe.fpsOverride = 24.0
+        probe.timecodeStart = "00:00:00:00"
+        probe.dropFrameMode = 1
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -268,7 +280,7 @@ local ok, failure = pcall(function()
         p.blText = "BL SHADOW"; p.bcText = "BC SHADOW"; p.brText = "BR SHADOW"
     end, 10)
 
-    local overflow_clip = add_zones("P2D_OVERFLOW_CLIP", 0, function(p)
+    add_zones("P2D_OVERFLOW_CLIP", 0, function(p)
         p.overflowMode = 0; p.fontSize = 0.080
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.tlUseColorOverride = 1
@@ -307,11 +319,32 @@ local ok, failure = pcall(function()
         p.tcText = "MINIMUM SCALE CANNOT FIT THIS EXTREMELY LONG STRING SO THE CELL CLIPS IT"
     end, 14)
 
+    local dynamic_tokens = add_zones("P3_TOKENS_24_NDF", 0, function(p)
+        p.frameRelativeBase = 1; p.frameStart = 1001
+        p.fpsMode = 1; p.fpsOverride = 24.0
+        p.timecodeStart = "00:00:00:00"; p.dropFrameMode = 1
+        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
+        p.tlText = "REL {frame_rel}"
+        p.tcText = "ABS {frame}"
+        p.trText = "TC {timecode}"
+        p.bcEnabled = 1; p.bcText = "UNKNOWN REMAINS {shot}"
+    end, 15)
+    add_zones("P3_TIMECODE_DF", 0, function(p)
+        p.fpsMode = 1; p.fpsOverride = 30000.0 / 1001.0
+        p.timecodeStart = "00:00:00;00"; p.dropFrameMode = 2
+        p.tcEnabled = 1; p.tcText = "29.97 DF {timecode}"
+    end, 16)
+    add_zones("P3_INVALID_TIMECODE", 1, function(p)
+        p.fpsMode = 1; p.fpsOverride = 25.0
+        p.timecodeStart = "invalid"; p.dropFrameMode = 2
+        p.tcEnabled = 1; p.tcText = "CONTROLLED FALLBACK {timecode}"
+    end, 17)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(overflow_clip)
+    comp:SetActiveTool(dynamic_tokens)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P2D_OVERFLOW_CLIP")
+    print("active_tool=P3_TOKENS_24_NDF")
     print("chart=" .. chart_path)
 end)
 

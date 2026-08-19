@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WIPReviewProbe VERSION 0.8.0 LANGUAGES CXX)
+project(WIPReviewProbe VERSION 0.9.0 LANGUAGES CXX)
 
 include(FetchContent)
 
@@ -37,6 +37,7 @@ target_include_directories(openfx_sdk_headers SYSTEM INTERFACE
 
 add_library(wipreview_probe_core STATIC
   src/probe_core.cpp
+  src/token_resolver.cpp
 )
 target_include_directories(wipreview_probe_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_features(wipreview_probe_core PUBLIC cxx_std_17)
@@ -140,7 +141,7 @@ if(WIPREVIEW_BUILD_TESTS)
     add_custom_target(fusion_host_smoke
       COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_smoke.sh"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMENT "Running cumulative Fusion Standalone P1/P2d OFX host smoke test"
+      COMMENT "Running cumulative Fusion Standalone P1/P3 OFX host smoke test"
       USES_TERMINAL
     )
   endif()

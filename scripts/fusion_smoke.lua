@@ -40,9 +40,9 @@ local ok, failure = pcall(function()
     comp:SetAttrs({
         COMPS_Name = "WIPReview_Automated_Cumulative_Smoke",
         COMPN_GlobalStart = 0,
-        COMPN_GlobalEnd = 1,
+        COMPN_GlobalEnd = 1800,
         COMPN_RenderStart = 0,
-        COMPN_RenderEnd = 1,
+        COMPN_RenderEnd = 1800,
     })
 
     local source = require_tool("Background", 0, 0)
@@ -61,7 +61,8 @@ local ok, failure = pcall(function()
 
     local function render_probe(reg_id, name, placement, canvas_mode, x, y,
                                 blanking_enabled, blanking_preset,
-                                blanking_custom, blanking_opacity, configure_zones)
+                                blanking_custom, blanking_opacity, configure_zones,
+                                render_times)
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -86,17 +87,27 @@ local ok, failure = pcall(function()
         probe.zoneGap = 0.010
         probe.overflowMode = 0
         probe.minimumFontScale = 0.60
+        probe.frameRelativeBase = 1
+        probe.frameStart = 1001
+        probe.fpsMode = 1
+        probe.fpsOverride = 24.0
+        probe.timecodeStart = "00:00:00:00"
+        probe.dropFrameMode = 1
         if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
         probe.scenarioLabel = name
         comp:SetActiveTool(probe)
         comp:Unlock()
-        local image = probe.Output:GetValue(0)
-        if image == nil then
-            error("Fusion returned no image for " .. name)
+        local times = render_times or {0}
+        for _, render_time in ipairs(times) do
+            comp.CurrentTime = render_time
+            local image = probe.Output:GetValue(render_time)
+            if image == nil then
+                error("Fusion returned no image for " .. name .. " at " .. render_time)
+            end
+            print("rendered=" .. name .. " time=" .. render_time)
         end
-        print("rendered=" .. name)
         return probe
     end
 
@@ -215,6 +226,26 @@ local ok, failure = pcall(function()
         p.overflowMode = 2; p.fontSize = 0.060; p.minimumFontScale = 0.60
         p.blEnabled = 1
         p.blText = "MINIMUM SCALE STILL CANNOT FIT THIS DELIBERATELY VERY LONG STRING AND MUST CLIP"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_TOKENS", 2, 1, 1, 7,
+                 0, 2, 2.0, 1.0, function(p)
+        p.frameRelativeBase = 1; p.frameStart = 1001
+        p.fpsMode = 1; p.fpsOverride = 24.0
+        p.timecodeStart = "00:00:00:00"; p.dropFrameMode = 1
+        p.tlEnabled = 1
+        p.tlText = "REL {frame_rel} ABS {frame} TC {timecode} UNKNOWN {shot}"
+    end, {0, 1})
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_TIMECODE_DF", 2, 1, 2, 7,
+                 0, 2, 2.0, 1.0, function(p)
+        p.fpsMode = 1; p.fpsOverride = 30000.0 / 1001.0
+        p.timecodeStart = "00:00:00;00"; p.dropFrameMode = 2
+        p.tcEnabled = 1; p.tcText = "DF {timecode}"
+    end, {1799, 1800})
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_INVALID_TIMECODE", 2, 1, 3, 7,
+                 0, 2, 2.0, 1.0, function(p)
+        p.fpsMode = 1; p.fpsOverride = 25.0
+        p.timecodeStart = "invalid"; p.dropFrameMode = 2
+        p.brEnabled = 1; p.brText = "INVALID TC {timecode}"
     end)
 
     print("WIPREVIEW_AUTOMATION_OK")
