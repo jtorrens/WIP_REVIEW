@@ -82,5 +82,10 @@ require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\
 require_record 'EDITORIAL_BLANKING .*enabled=true aspect=2\.000000 output_PAR=1\.000000 aperture=\[0\.000000,60\.000000,1920\.000000,1020\.000000\].*opacity=0\.500000' 'B02 half-opacity letterbox'
 require_record 'EDITORIAL_BLANKING .*enabled=false' 'B03 blanking disabled'
 require_record 'EDITORIAL_BLANKING .*enabled=true aspect=1\.330000 output_PAR=1\.000000 aperture=\[241\.800000,0\.000000,1678\.200000,1080\.000000\].*opacity=1\.000000' 'B04 narrow-aspect pillarbox'
+require_record 'STATIC_TEXT .*enabled=true text="SECUENCIA ÁRTICO — VERSIÓN 03" anchor=0 requested_font="System Default" resolved_font="[^"]+" fallback=false normalized_size=0\.028000 pixel_size=30\.240000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c UTF-8 text rasterization'
+require_record 'STATIC_TEXT .*enabled=true text="TOP GROWS DOWN" anchor=0 .*normalized_size=0\.056000 pixel_size=60\.480000 mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c top growth text'
+require_record 'STATIC_TEXT .*enabled=true text="BOTTOM GROWS UP" anchor=3 .*pixel_size=60\.480000 .*origin=\[29,22\]' 'P1c bottom anchor and padding'
+require_record 'STATIC_TEXT .*enabled=true text="FONT FALLBACK" anchor=2 .*fallback=true .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c missing-font fallback'
+require_record 'STATIC_TEXT .*enabled=true text="TEXT OVER BLANKING" anchor=1 .*mask=\[[1-9][0-9]*,[1-9][0-9]*\]' 'P1c text after blanking'
 
-echo "Automated Fusion P1a/P1b smoke test passed"
+echo "Automated Fusion P1a/P1b/P1c smoke test passed"

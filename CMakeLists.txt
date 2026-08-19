@@ -4,7 +4,7 @@ project(WIPReviewProbe VERSION 0.4.0 LANGUAGES CXX)
 
 include(FetchContent)
 
-option(WIPREVIEW_BUILD_TESTS "Build the host-independent probe and P1a tests" ON)
+option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative P1 tests" ON)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
@@ -134,7 +134,7 @@ if(WIPREVIEW_BUILD_TESTS)
     add_custom_target(fusion_host_smoke
       COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_p1a_smoke.sh"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMENT "Running isolated Fusion Standalone P1a/P1b OFX host smoke test"
+      COMMENT "Running isolated Fusion Standalone P1a/P1b/P1c OFX host smoke test"
       USES_TERMINAL
     )
   endif()

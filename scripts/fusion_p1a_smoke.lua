@@ -61,7 +61,9 @@ local ok, failure = pcall(function()
 
     local function render_probe(reg_id, name, placement, canvas_mode, x, y,
                                 blanking_enabled, blanking_preset,
-                                blanking_custom, blanking_opacity)
+                                blanking_custom, blanking_opacity,
+                                text_enabled, text_value, text_anchor,
+                                font_family, font_style, font_size, text_opacity)
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -77,6 +79,13 @@ local ok, failure = pcall(function()
         probe.blankingAspectPreset = blanking_preset or 3
         probe.blankingAspectCustom = blanking_custom or 2.0
         probe.blankingOpacity = blanking_opacity or 1.0
+        probe.staticTextEnabled = text_enabled or 0
+        probe.staticText = text_value or "SECUENCIA ÁRTICO — VERSIÓN 03"
+        probe.staticTextAnchor = text_anchor or 0
+        probe.fontFamily = font_family or "System Default"
+        probe.fontStyle = font_style or 0
+        probe.fontSize = font_size or 0.028
+        probe.textOpacity = text_opacity or 1.0
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
         probe.scenarioLabel = name
@@ -108,6 +117,21 @@ local ok, failure = pcall(function()
                  0, 2, 2.0, 1.0)
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B04_PILLAR", 0, 1, 4, 2,
                  1, 4, 1.33, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_UTF8_TL", 0, 1, 1, 3,
+                 0, 2, 2.0, 1.0, 1, "SECUENCIA ÁRTICO — VERSIÓN 03", 0,
+                 "System Default", 0, 0.028, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_TOP_LARGE", 0, 1, 2, 3,
+                 0, 2, 2.0, 1.0, 1, "TOP GROWS DOWN", 0,
+                 "System Default", 1, 0.056, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_BOTTOM_LARGE", 0, 1, 3, 3,
+                 0, 2, 2.0, 1.0, 1, "BOTTOM GROWS UP", 3,
+                 "System Default", 1, 0.056, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_FONT_FALLBACK", 0, 1, 4, 3,
+                 0, 2, 2.0, 1.0, 1, "FONT FALLBACK", 2,
+                 "WIPReview Font That Does Not Exist 7F3A", 0, 0.028, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_OVER_BLANKING", 0, 1, 5, 3,
+                 1, 2, 2.0, 1.0, 1, "TEXT OVER BLANKING", 1,
+                 "System Default", 0, 0.028, 1.0)
 
     print("WIPREVIEW_AUTOMATION_OK")
     print("fusion_version=" .. tostring(fusion:GetAttrs().FUSIONS_Version))

@@ -94,11 +94,57 @@ local ok, failure = pcall(function()
     add_blanking("P1B_BLANK_OFF", 2, 2.0, 1.0, 0, 3)
     add_blanking("P1B_PILLAR_1_33", 4, 1.33, 1.0, 1, 4)
 
+    local function add_text(name, text, anchor, font_size, font_style,
+                            font_family, blanking_enabled, x)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 4)
+        if probe == nil then error("Unable to create static-text probe " .. name) end
+        probe:SetAttrs({TOOLS_Name = name})
+        probe.Source = loader.Output
+        probe.requestCustomRoD = 1
+        probe.canvasMode = 1
+        probe.requestedWidth = 1920
+        probe.requestedHeight = 1080
+        probe.placementMode = 2
+        probe.resampleFilter = 2
+        probe.blankingEnabled = blanking_enabled
+        probe.blankingAspectPreset = 2
+        probe.blankingAspectCustom = 2.0
+        probe.blankingOpacity = 1.0
+        probe.staticTextEnabled = 1
+        probe.staticText = text
+        probe.staticTextAnchor = anchor
+        probe.fontFamily = font_family
+        probe.fontStyle = font_style
+        probe.fontSize = font_size
+        probe.textOpacity = 1.0
+        probe.paddingLeft = 0.015
+        probe.paddingRight = 0.015
+        probe.paddingTop = 0.020
+        probe.paddingBottom = 0.020
+        probe.scenarioLabel = "VISUAL_" .. name
+        probe.AllowResize = 1
+        return probe
+    end
+
+    local text_top_left = add_text(
+        "P1C_UTF8_TOP_LEFT", "SECUENCIA ÁRTICO — VERSIÓN 03", 0,
+        0.040, 0, "System Default", 0, 1)
+    add_text("P1C_UTF8_BOTTOM_RIGHT", "SECUENCIA ÁRTICO — VERSIÓN 03", 5,
+             0.040, 0, "System Default", 0, 2)
+    add_text("P1C_TOP_LARGE", "TOP GROWS DOWN", 0,
+             0.080, 1, "System Default", 0, 3)
+    add_text("P1C_BOTTOM_LARGE", "BOTTOM GROWS UP", 3,
+             0.080, 1, "System Default", 0, 4)
+    add_text("P1C_TEXT_OVER_BLANKING", "TEXT OVER BLANKING", 1,
+             0.040, 0, "System Default", 1, 5)
+    add_text("P1C_FONT_FALLBACK", "FONT FALLBACK", 2,
+             0.040, 0, "WIPReview Font That Does Not Exist 7F3A", 0, 6)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(blanking_opaque)
+    comp:SetActiveTool(text_top_left)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P1B_BLANK_2_00_OPAQUE")
+    print("active_tool=P1C_UTF8_TOP_LEFT")
     print("chart=" .. chart_path)
 end)
 
