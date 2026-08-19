@@ -64,10 +64,23 @@ La composición visual añade:
 - tokens dinámicos;
 - transformaciones OCIO de píxeles, GPU y presets.
 
-## Resultado automático
+## Resultado automático — aprobado
 
-Pendiente de ejecutar con el bundle universal 0.7.0 instalado en Fusion Studio
-21.0.4 para macOS.
+Ejecutado el 19 de agosto de 2026 con el bundle universal 0.7.0 instalado en
+Fusion Studio 21.0.4 para macOS:
+
+- 23 de 23 renderizaciones completadas;
+- el default resuelve offset `0.0015, 0.0020` a `3, 2 px`, softness `0.0020`
+  a sigma `2.16 px`, RGBA negro y opacity `0.60`;
+- la máscara compartida del caso default mide `[337, 38]` y registra
+  `shadow=true`;
+- el caso duro resuelve offset `-0.01, -0.01` a `-19, -11 px`, sigma `0`,
+  RGBA azul y opacity `1.0`;
+- la máscara compartida del caso duro mide `[377, 35]` y registra
+  `shadow=true`;
+- no se registraron fallos de rasterización, outline ni shadow;
+- los 21 escenarios acumulativos anteriores continúan aprobados con shadow
+  desactivado explícitamente para mantener su aislamiento.
 
 ## Validación visual
 
