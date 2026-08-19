@@ -1,16 +1,28 @@
-# WIP Review OFX — P0 Probe + P1 Formatter + P2d Overflow
+# WIP Review OFX — P0 Probe + P1 Formatter + P3 Dynamic Tokens
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
 resampling CPU de referencia. P1b añade blanking editorial independiente, P2a
 incorpora seis zonas simultáneas, P2b añade outline global, P2c añade drop
-shadow global y P2d limita cada zona a una celda lógica con políticas de
-overflow.
+shadow global, P2d limita cada zona a una celda lógica y P3 resuelve tokens
+temporales sin semántica de producción.
 
-Este repositorio **no implementa** todavía tokens dinámicos,
-transformaciones OCIO de píxeles, GPU ni presets de estado.
+Este repositorio **no implementa** todavía transformaciones OCIO de píxeles,
+GPU ni presets de estado.
 El probe anuncia y registra la
 negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
+
+## P3 — Dynamic Tokens
+
+P3 resuelve `{frame_rel}`, `{frame}` y `{timecode}` dentro de cualquiera de las
+seis strings. `{frame_rel}` suma **Frame Relative Base** a `round(effectTime)`;
+`{frame}` suma **Frame Start**, sin fingir conocer el frame absoluto de Resolve.
+Los tokens desconocidos permanecen literales.
+
+Timecode usa FPS del host o **FPS Override**, un start explícito y modos
+`Auto`, `NonDrop` o `Drop`. Auto activa drop-frame únicamente para 29.97/59.94.
+El output se declara frame-varying solo cuando una string contiene un token
+soportado. Véase [P3_DYNAMIC_TOKENS_RESULTS.md](P3_DYNAMIC_TOKENS_RESULTS.md).
 
 ## P2d — Overflow
 
@@ -117,8 +129,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P2d)`: anuncia Filter y General;
-- `WIP Review Probe (P2d Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P3)`: anuncia Filter y General;
+- `WIP Review Probe (P3 Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -211,8 +223,8 @@ Cada línea contiene timestamp, PID, evento y pares `clave=valor`. Los eventos
 `INSTANCE_CREATE`, `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`,
 `RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`,
 `TEMPORAL_STRING_PROBE`, `STATIC_FORMATTER`, `EDITORIAL_BLANKING`,
-`TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW` y `TEXT_ZONE` forman el registro
-tipográfico principal.
+`TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW`, `DYNAMIC_TEXT`, `TOKEN_ZONE` y
+`TEXT_ZONE` forman el registro tipográfico principal.
 
 Para usar otra ruta, inicia el host desde un entorno que contenga:
 
@@ -238,8 +250,8 @@ pillarbox Custom 1.33. El mismo runner mantiene toda la cobertura P1a.
 
 La cobertura tipográfica valida UTF-8, crecimiento desde anclajes
 superior/inferior, fuente ausente, texto sobre blanking, seis zonas simultáneas,
-overrides, offsets, outline, shadow, las tres políticas de overflow, celdas y
-escala mínima.
+overrides, offsets, outline, shadow, las tres políticas de overflow, celdas,
+escala mínima, tokens, timecode y frame-varying.
 
 Con el bundle ya instalado:
 
@@ -262,14 +274,14 @@ sistema sigue siendo una condición externa al harness.
 
 Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
 deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
-1:1, Host Raster, los casos de blanking y la matriz tipográfica P2d:
+1:1, Host Raster, los casos de blanking y la matriz tipográfica P3:
 
 ```sh
 scripts/open_fusion_visual.sh
 ```
 
-Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*` o
-`P2D_*` y pulsa `1` o `2`.
+Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
+`P2D_*` o `P3_*` y pulsa `1` o `2`.
 La composición se llama `WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE`; es
 intencionadamente temporal y no modifica la composición que estuviera activa.
 
