@@ -179,6 +179,20 @@ El script abre Fusion si no está ejecutándose y conecta mediante el `fuscript`
 incluido en Fusion 21. Un crash, bloqueo de licencia o diálogo excepcional del
 sistema sigue siendo una condición externa al harness.
 
+### Composición de validación visual
+
+Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
+deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
+1:1 y Host Raster:
+
+```sh
+scripts/open_fusion_p1a_visual.sh
+```
+
+Selecciona cada nodo `P1A_*` y pulsa `1` o `2` para verlo. La composición se
+llama `WIPReview_P1A_VISUAL_VALIDATION_DO_NOT_SAVE`; es intencionadamente
+temporal y no modifica la composición que estuviera activa.
+
 ## Protocolo P0-Raster obligatorio
 
 1. Usa una entrada real `4608 × 3164` con PAR 1.0. Evita que un nodo upstream

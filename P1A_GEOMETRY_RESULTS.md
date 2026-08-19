@@ -76,6 +76,22 @@ Fit/Lanczos3 antialiased `4608×3164 → 1920×1080` empleó aproximadamente 7,1
 en CPU. La matriz completa de siete renders empleó 29,2 s. Es un renderer CPU
 de referencia; esta cifra no se presenta como objetivo de rendimiento final.
 
+## Validación visual — Fusion Studio 21.0.4
+
+Validación humana completada el 19 de agosto de 2026 con la carta automatizada
+`4608×3164`:
+
+- Fit: carta completa, pillarbox negro a izquierda y derecha.
+- Fill/Crop: canvas completo, sin bandas, crop vertical centrado.
+- Stretch: canvas completo con deformación no uniforme esperada.
+- 1:1: crop físico `1920×1080` centrado, sin escala.
+- Identity: crop físico `1920×1080` por coordenadas, alineado abajo a la
+  izquierda y claramente distinto de 1:1.
+- Host Raster + Identity: Viewer `4608×3164`, carta completa.
+
+Resultado: la semántica visual de los cinco placements y los dos modos de
+canvas coincide con el contrato P1a documentado.
+
 ## Resultado arquitectónico heredado de P0
 
 - Fusion General/Filter permite `Full-res → OFX → Review Raster`, con la opción
