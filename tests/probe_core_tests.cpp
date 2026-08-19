@@ -251,6 +251,25 @@ void testBlankingPillarboxPARAndFractionalEdge() {
   assert(red(fractional.data(), 10, 0, 3) == 1.0F);
 }
 
+void testBlankingStraightAlphaAndRenderWindow() {
+  std::array<float, 4 * 2 * 4> pixels{};
+  for (std::size_t offset = 0; offset < pixels.size(); offset += 4) {
+    pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = 1.0F;
+    pixels[offset + 3] = 0.5F;
+  }
+  const ImageView dst = rgbaFloatView(pixels.data(), {0, 0, 4, 2}, 4 * 4 * sizeof(float));
+  BlankingOptions blanking;
+  blanking.enabled = true;
+  blanking.editorialAspect = 1.0;
+  blanking.opacity = 0.5F;
+  blanking.outputPremultiplied = false;
+  wipreview::probe::applyBlanking(dst, {0, 0, 1, 1}, blanking);
+  assert(std::abs(red(pixels.data(), 4, 0, 0) - (1.0F / 3.0F)) < 1.0e-6F);
+  assert(std::abs(pixels[3] - 0.75F) < 1.0e-6F);
+  assert(red(pixels.data(), 4, 0, 1) == 1.0F);  // outside renderWindow
+  assert(red(pixels.data(), 4, 3, 0) == 1.0F);  // outside renderWindow
+}
+
 }  // namespace
 
 int main() {
@@ -265,5 +284,6 @@ int main() {
   testDownsampleAntialias();
   testBlankingLetterboxAndOpacity();
   testBlankingPillarboxPARAndFractionalEdge();
+  testBlankingStraightAlphaAndRenderWindow();
   return 0;
 }

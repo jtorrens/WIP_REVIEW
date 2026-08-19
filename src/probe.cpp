@@ -50,6 +50,11 @@ constexpr char kParamCanvasMode[] = "canvasMode";
 constexpr char kParamPlacement[] = "placementMode";
 constexpr char kParamResample[] = "resampleFilter";
 constexpr char kParamCanvasColour[] = "canvasColour";
+constexpr char kParamBlankingEnabled[] = "blankingEnabled";
+constexpr char kParamBlankingAspectPreset[] = "blankingAspectPreset";
+constexpr char kParamBlankingAspectCustom[] = "blankingAspectCustom";
+constexpr char kParamBlankingColour[] = "blankingColor";
+constexpr char kParamBlankingOpacity[] = "blankingOpacity";
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
 
@@ -291,6 +296,11 @@ struct InstanceData {
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
   OfxParamHandle canvasColour = nullptr;
+  OfxParamHandle blankingEnabled = nullptr;
+  OfxParamHandle blankingAspectPreset = nullptr;
+  OfxParamHandle blankingAspectCustom = nullptr;
+  OfxParamHandle blankingColour = nullptr;
+  OfxParamHandle blankingOpacity = nullptr;
   std::string context;
   std::uint64_t id = 0;
 };
@@ -531,6 +541,43 @@ wipreview::probe::RenderOptions readRenderOptions(const InstanceData* instance,
   return options;
 }
 
+wipreview::probe::BlankingOptions readBlankingOptions(
+    const InstanceData* instance, OfxTime time, OfxPropertySetHandle outputImage) {
+  wipreview::probe::BlankingOptions options;
+  int enabled = 0;
+  int preset = 3;
+  double customAspect = 2.0;
+  double colour[4] = {0.0, 0.0, 0.0, 1.0};
+  double opacity = 1.0;
+  if (instance->blankingEnabled) {
+    gParameterSuite->paramGetValueAtTime(instance->blankingEnabled, time, &enabled);
+  }
+  if (instance->blankingAspectPreset) {
+    gParameterSuite->paramGetValueAtTime(instance->blankingAspectPreset, time, &preset);
+  }
+  if (instance->blankingAspectCustom) {
+    gParameterSuite->paramGetValueAtTime(instance->blankingAspectCustom, time, &customAspect);
+  }
+  if (instance->blankingColour) {
+    gParameterSuite->paramGetValueAtTime(instance->blankingColour, time,
+                                         &colour[0], &colour[1], &colour[2], &colour[3]);
+  }
+  if (instance->blankingOpacity) {
+    gParameterSuite->paramGetValueAtTime(instance->blankingOpacity, time, &opacity);
+  }
+  constexpr std::array<double, 4> presetAspects{1.78, 1.85, 2.00, 2.39};
+  options.enabled = enabled != 0;
+  options.editorialAspect = preset >= 0 && preset < 4
+      ? presetAspects[static_cast<std::size_t>(preset)] : std::max(0.01, customAspect);
+  options.outputPixelAspect = imagePAR(outputImage);
+  options.outputPremultiplied = imageIsPremultiplied(outputImage);
+  options.opacity = static_cast<float>(opacity);
+  for (int channel = 0; channel < 4; ++channel) {
+    options.colour[channel] = static_cast<float>(colour[channel]);
+  }
+  return options;
+}
+
 OfxStatus load() {
   if (!gHost || !gHost->fetchSuite) return kOfxStatErrMissingHostFeature;
   gImageSuite = static_cast<const OfxImageEffectSuiteV1*>(
@@ -573,15 +620,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P1a Filter Only)"
-                                          : "WIP Review Probe (P1a)");
+                               filterOnly ? "WIP Review Probe (P1b Filter Only)"
+                                          : "WIP Review Probe (P1b)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Geometry Probe P1a — Filter Only"
-                                          : "WIP Review Geometry Probe P1a");
+                               filterOnly ? "WIP Review Static Formatter P1b — Filter Only"
+                                          : "WIP Review Static Formatter P1b");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P1a geometry probe: custom review raster, static placement and CPU resampling, with host diagnostics.");
+      "P1b static formatter: review raster, placement, CPU resampling and editorial blanking, with host diagnostics.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -682,6 +729,41 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
       "RGBA canvas outside the placed source; defaults to opaque black.");
 
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamBlankingEnabled, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Enabled");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
+      "Composites editorial blanking outside the centred aperture without changing the raster.");
+
+  defineChoiceParam(params, kParamBlankingAspectPreset, "Blanking Aspect",
+                    {"1.78", "1.85", "2.00", "2.39", "Custom"}, 3,
+                    "Editorial display aspect. Wider than the canvas creates letterbox; narrower creates pillarbox.");
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeDouble, kParamBlankingAspectCustom, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Custom Aspect");
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDefault, 0, 2.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMin, 0, 0.1);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMax, 0, 10.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMin, 0, 1.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 3.0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamBlankingColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Colour");
+  const double blankingColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, blankingColourDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeDouble, kParamBlankingOpacity, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Opacity");
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDefault, 0, 1.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMin, 0, 0.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMax, 0, 1.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMin, 0, 0.0);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 1.0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1920);
@@ -736,6 +818,11 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamBlankingEnabled, &instance->blankingEnabled, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamBlankingAspectPreset, &instance->blankingAspectPreset, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamBlankingAspectCustom, &instance->blankingAspectCustom, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamBlankingColour, &instance->blankingColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamBlankingOpacity, &instance->blankingOpacity, nullptr);
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
 
   Logger::instance().write("INSTANCE_CREATE",
@@ -945,6 +1032,10 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     wipreview::probe::renderStaticFrame(
         sourceView, outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
         options);
+    const auto blanking = readBlankingOptions(instance, time, outputImage);
+    wipreview::probe::applyBlanking(
+        outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]}, blanking);
+    const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
     Logger::instance().write("STATIC_FORMATTER",
         instancePrefix(instance) +
         " placement=" + std::to_string(static_cast<int>(options.placement)) +
@@ -957,6 +1048,20 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                          std::to_string(options.canvas[1]) + ',' +
                          std::to_string(options.canvas[2]) + ',' +
                          std::to_string(options.canvas[3]) + ']');
+    Logger::instance().write("EDITORIAL_BLANKING",
+        instancePrefix(instance) +
+        " enabled=" + (blanking.enabled ? "true" : "false") +
+        " aspect=" + std::to_string(blanking.editorialAspect) +
+        " output_PAR=" + std::to_string(blanking.outputPixelAspect) +
+        " aperture=[" + std::to_string(aperture.x1) + ',' +
+                          std::to_string(aperture.y1) + ',' +
+                          std::to_string(aperture.x2) + ',' +
+                          std::to_string(aperture.y2) + ']' +
+        " colour=[" + std::to_string(blanking.colour[0]) + ',' +
+                        std::to_string(blanking.colour[1]) + ',' +
+                        std::to_string(blanking.colour[2]) + ',' +
+                        std::to_string(blanking.colour[3]) + ']' +
+        " opacity=" + std::to_string(blanking.opacity));
     if (outputView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_output_pixel_format=true");
