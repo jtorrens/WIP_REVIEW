@@ -317,4 +317,65 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   }
 }
 
+RectD computeBlankingAperture(RectI outputBounds,
+                              const BlankingOptions& options) noexcept {
+  const double width = std::max(0, outputBounds.x2 - outputBounds.x1);
+  const double height = std::max(0, outputBounds.y2 - outputBounds.y1);
+  if (width == 0.0 || height == 0.0 || options.editorialAspect <= 0.0) {
+    return {static_cast<double>(outputBounds.x1), static_cast<double>(outputBounds.y1),
+            static_cast<double>(outputBounds.x2), static_cast<double>(outputBounds.y2)};
+  }
+  const double outputPAR = options.outputPixelAspect > 0.0
+      ? options.outputPixelAspect : 1.0;
+  const double canvasAspect = width * outputPAR / height;
+  RectD aperture{static_cast<double>(outputBounds.x1),
+                 static_cast<double>(outputBounds.y1),
+                 static_cast<double>(outputBounds.x2),
+                 static_cast<double>(outputBounds.y2)};
+  if (options.editorialAspect > canvasAspect) {
+    const double apertureHeight = width * outputPAR / options.editorialAspect;
+    const double centre = (outputBounds.y1 + outputBounds.y2) * 0.5;
+    aperture.y1 = centre - apertureHeight * 0.5;
+    aperture.y2 = centre + apertureHeight * 0.5;
+  } else if (options.editorialAspect < canvasAspect) {
+    const double apertureWidth = height * options.editorialAspect / outputPAR;
+    const double centre = (outputBounds.x1 + outputBounds.x2) * 0.5;
+    aperture.x1 = centre - apertureWidth * 0.5;
+    aperture.x2 = centre + apertureWidth * 0.5;
+  }
+  return aperture;
+}
+
+void applyBlanking(const ImageView& destination, RectI renderWindow,
+                   const BlankingOptions& options) noexcept {
+  if (!options.enabled || !destination.data || destination.pixelBytes == 0 ||
+      destination.channels <= 0 || options.editorialAspect <= 0.0) return;
+  const RectI writable = intersect(renderWindow, destination.bounds);
+  if (empty(writable)) return;
+  const RectD aperture = computeBlankingAperture(destination.bounds, options);
+  const float colourAlpha = std::clamp(options.colour[3], 0.0F, 1.0F);
+  const float opacity = std::clamp(options.opacity, 0.0F, 1.0F);
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    const double overlapY = std::max(0.0, std::min(static_cast<double>(y + 1), aperture.y2)
+                                         - std::max(static_cast<double>(y), aperture.y1));
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      const double overlapX = std::max(0.0, std::min(static_cast<double>(x + 1), aperture.x2)
+                                           - std::max(static_cast<double>(x), aperture.x1));
+      const float coverage = static_cast<float>(1.0 - overlapX * overlapY);
+      const float alpha = std::clamp(coverage * opacity * colourAlpha, 0.0F, 1.0F);
+      if (alpha <= 0.0F) continue;
+      auto base = readRGBA(destination, x, y, options.outputPremultiplied, true);
+      std::array<float, 4> result{};
+      for (std::size_t channel = 0; channel < 3; ++channel) {
+        result[channel] = options.colour[channel] * alpha + base[channel] * (1.0F - alpha);
+      }
+      result[3] = alpha + base[3] * (1.0F - alpha);
+      if (!options.outputPremultiplied && result[3] > 1.0e-8F) {
+        for (std::size_t channel = 0; channel < 3; ++channel) result[channel] /= result[3];
+      }
+      writePixel(destination, x, y, result);
+    }
+  }
+}
+
 }  // namespace wipreview::probe

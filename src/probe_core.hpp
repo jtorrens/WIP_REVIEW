@@ -61,6 +61,22 @@ struct PlacementTransform {
   double outputCenterY = 0.0;
 };
 
+struct RectD {
+  double x1 = 0.0;
+  double y1 = 0.0;
+  double x2 = 0.0;
+  double y2 = 0.0;
+};
+
+struct BlankingOptions {
+  bool enabled = false;
+  double editorialAspect = 2.0;
+  double outputPixelAspect = 1.0;
+  bool outputPremultiplied = true;
+  float colour[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+  float opacity = 1.0F;
+};
+
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
 
@@ -83,5 +99,16 @@ void renderStaticFrame(const ImageView& source,
                        const ImageView& destination,
                        RectI renderWindow,
                        const RenderOptions& options) noexcept;
+
+[[nodiscard]] RectD computeBlankingAperture(
+    RectI outputBounds,
+    const BlankingOptions& options) noexcept;
+
+// Composites the editorial blanking outside the centred aperture. Fractional
+// aperture edges use pixel-area coverage. The destination is interpreted and
+// written according to outputPremultiplied.
+void applyBlanking(const ImageView& destination,
+                   RectI renderWindow,
+                   const BlankingOptions& options) noexcept;
 
 }  // namespace wipreview::probe

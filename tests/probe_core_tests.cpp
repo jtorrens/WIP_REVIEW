@@ -11,6 +11,7 @@
 
 using wipreview::probe::ImageView;
 using wipreview::probe::ChannelType;
+using wipreview::probe::BlankingOptions;
 using wipreview::probe::PlacementMode;
 using wipreview::probe::RectI;
 using wipreview::probe::RenderOptions;
@@ -191,6 +192,65 @@ void testDownsampleAntialias() {
   assert(std::abs(destination[0] - 0.5F) < 1.0e-6F);
 }
 
+template <std::size_t N>
+void fillOpaqueWhite(std::array<float, N>& pixels) {
+  static_assert(N % 4 == 0);
+  for (std::size_t offset = 0; offset < N; offset += 4) {
+    pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = pixels[offset + 3] = 1.0F;
+  }
+}
+
+void testBlankingLetterboxAndOpacity() {
+  std::array<float, 16 * 10 * 4> pixels{};
+  fillOpaqueWhite(pixels);
+  const ImageView dst = rgbaFloatView(pixels.data(), {0, 0, 16, 10}, 16 * 4 * sizeof(float));
+  BlankingOptions blanking;
+  blanking.enabled = true;
+  blanking.editorialAspect = 2.0;
+  wipreview::probe::applyBlanking(dst, {0, 0, 16, 10}, blanking);
+  assert(red(pixels.data(), 16, 0, 0) == 0.0F);
+  assert(red(pixels.data(), 16, 0, 1) == 1.0F);
+  assert(red(pixels.data(), 16, 15, 9) == 0.0F);
+
+  fillOpaqueWhite(pixels);
+  blanking.opacity = 0.5F;
+  wipreview::probe::applyBlanking(dst, {0, 0, 16, 10}, blanking);
+  assert(std::abs(red(pixels.data(), 16, 0, 0) - 0.5F) < 1.0e-6F);
+  assert(red(pixels.data(), 16, 0, 1) == 1.0F);
+
+  fillOpaqueWhite(pixels);
+  blanking.enabled = false;
+  wipreview::probe::applyBlanking(dst, {0, 0, 16, 10}, blanking);
+  assert(red(pixels.data(), 16, 0, 0) == 1.0F);
+}
+
+void testBlankingPillarboxPARAndFractionalEdge() {
+  std::array<float, 20 * 10 * 4> pixels{};
+  fillOpaqueWhite(pixels);
+  const ImageView dst = rgbaFloatView(pixels.data(), {0, 0, 20, 10}, 20 * 4 * sizeof(float));
+  BlankingOptions blanking;
+  blanking.enabled = true;
+  blanking.editorialAspect = 2.0;
+  blanking.outputPixelAspect = 2.0;
+  const auto aperture = wipreview::probe::computeBlankingAperture(dst.bounds, blanking);
+  assert(aperture.x1 == 5.0 && aperture.x2 == 15.0);
+  wipreview::probe::applyBlanking(dst, {0, 0, 20, 10}, blanking);
+  assert(red(pixels.data(), 20, 4, 5) == 0.0F);
+  assert(red(pixels.data(), 20, 5, 5) == 1.0F);
+  assert(red(pixels.data(), 20, 15, 5) == 0.0F);
+
+  std::array<float, 10 * 10 * 4> fractional{};
+  fillOpaqueWhite(fractional);
+  const ImageView fractionalDst = rgbaFloatView(
+      fractional.data(), {0, 0, 10, 10}, 10 * 4 * sizeof(float));
+  blanking.outputPixelAspect = 1.0;
+  blanking.editorialAspect = 2.0;
+  wipreview::probe::applyBlanking(fractionalDst, {0, 0, 10, 10}, blanking);
+  assert(red(fractional.data(), 10, 0, 1) == 0.0F);
+  assert(std::abs(red(fractional.data(), 10, 0, 2) - 0.5F) < 1.0e-6F);
+  assert(red(fractional.data(), 10, 0, 3) == 1.0F);
+}
+
 }  // namespace
 
 int main() {
@@ -203,5 +263,7 @@ int main() {
   testIdentityAndUInt16Canvas();
   testPremultiplication();
   testDownsampleAntialias();
+  testBlankingLetterboxAndOpacity();
+  testBlankingPillarboxPARAndFractionalEdge();
   return 0;
 }
