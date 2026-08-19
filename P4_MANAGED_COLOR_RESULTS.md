@@ -90,7 +90,36 @@ efectiva, Graphics White, peak HLG, working premultiplicado y
 
 Fusion 21 General no publicó colourspace durante P0. En ese contexto Auto debe
 activar el warning y Manual es el contrato operativo después del CST nativo.
+Fusion Studio 21.0.4 tampoco invoca `GetOutputColourspace`; por ello el smoke
+valida la preferencia de Source y el espacio efectivo del render, pero no exige
+una callback que el host no realiza.
 
 ## Pendiente
 
-- smoke automático y validación visual en Fusion Studio 21.0.4.
+- validación visual en Fusion Studio 21.0.4.
+
+## Resultado automático
+
+**Aprobado el 19 de agosto de 2026** con el bundle universal 1.0.0 instalado en
+Fusion Studio 21.0.4 para macOS.
+
+- matriz local warnings/Release/universal: **3/3 suites** en cada build;
+- smoke acumulativo de Fusion: **36/36 renders aprobados**;
+- los 32 renders acumulados P1–P3 continúan aprobados;
+- Rec.709 Manual: Graphics White automático `100` nits, working
+  display-light linear premultiplicado y `encode_count=1`;
+- PQ Manual: preferencia Source `rec2100_pq_display` aceptada por
+  Clip Preferences, Graphics White automático `203` nits y `encode_count=1`;
+- HLG Manual: preferencia Source `rec2100_hlg_display`, peak `1000` nits,
+  Graphics White derivado `203` nits y `encode_count=1`;
+- Auto en Fusion: host colourspace `<ErrUnknown>`, sin preferencia Source,
+  interpretación manual determinista Rec.709 y `RENDER_WARNING` explícito;
+- Fusion no invocó `GetOutputColourspace`, coherente con P0.
+
+La segunda ejecución completa tardó aproximadamente 5 min 36 s. Se conserva
+como baseline del CPU reference renderer para P5; P4 no introduce atajos que
+alteren el resultado cromático.
+
+## Validación visual
+
+Pendiente de validación humana de los cuatro escenarios P4.

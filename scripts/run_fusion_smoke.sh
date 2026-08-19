@@ -125,6 +125,8 @@ require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 HLG" graphi
 require_record 'MANAGED_COLOR .*mode=0 .*host_recognized=false used_manual_interpretation=true display_encoding="Rec\.709 Gamma 2\.4"' 'P4 Auto unknown deterministic interpretation'
 require_record 'RENDER_WARNING .*unknown_host_colourspace=.*manual_interpretation="Rec\.709 Gamma 2\.4"' 'P4 Auto unknown warning'
 require_record 'GET_CLIP_PREFERENCES .*color_space_mode=1 manual_color_space="Rec\.2100 PQ" requested_source_colourspace="rec2100_pq_display" preferred_colourspace_status=OK' 'P4 manual PQ OFX preference'
-require_record 'GET_OUTPUT_COLOURSPACE .*requested_output="OfxColourspace_Source" status=OK' 'P4 Output follows Source colourspace'
+# Fusion Studio 21.0.4 does not invoke GetOutputColourspace. P0 already
+# records that host limitation; the action remains implemented for hosts that
+# negotiate OFX 1.5.1 output colourspace.
 
 echo "Automated Fusion cumulative P1/P4 smoke test passed"
