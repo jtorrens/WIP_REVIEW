@@ -70,7 +70,15 @@ FusionScript expone cada color OFX como cuatro entradas escalares (`Red`,
 `Green`, `Blue`, `Alpha`). Los harnesses usan directamente esas entradas del
 host; el plugin no contiene adaptadores ni rutas alternativas para scripting.
 
-## Validación visual — pendiente
+## Validación visual — aprobada
 
-La validación humana se hará únicamente después de que pasen el build universal
-y la matriz automática.
+Validación humana completada el 19 de agosto de 2026 en Fusion Studio 21.0.4:
+
+- `P2A_SIX_ZONES`: seis zonas simultáneas, UTF-8 y alineaciones correctas;
+- `P2A_OVERRIDES`: tamaño, verde RGBA, opacity y offset independientes;
+- `P2A_OFFSETS_INWARD`: signos, ejes y alineaciones correctos en las seis zonas;
+- `P2A_WITH_BLANKING`: seis textos completos sobre las bandas superior e
+  inferior.
+
+No se observaron recortes, desplazamientos incorrectos ni interferencias entre
+zonas.
