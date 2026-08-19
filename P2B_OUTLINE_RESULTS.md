@@ -71,7 +71,15 @@ Fusion Studio 21.0.4 para macOS:
 - los 19 escenarios acumulativos anteriores continúan aprobados con outline
   desactivado explícitamente para mantener su aislamiento.
 
-## Validación visual — pendiente
+## Validación visual — aprobada
 
-Se comprobarán el default negro, width/color/opacity y las seis zonas sobre
-blanking después de aprobar la matriz automática.
+Validación humana completada el 19 de agosto de 2026 en Fusion Studio 21.0.4:
+
+- `P2B_OUTLINE_DEFAULT`: fill blanco y outline negro fino, continuo y centrado;
+- `P2B_OUTLINE_WIDE_RED_HALF`: outline rojo ancho al 50 %, sin desplazar el
+  fill ni el ancla;
+- `P2B_OUTLINE_SIX_ZONES`: seis fills blancos con outline rojo opaco sobre las
+  bandas superior e inferior, sin recortes ni desplazamientos.
+
+No se observaron duplicaciones del texto, huecos en la máscara ni bordes
+anómalos.
