@@ -63,8 +63,23 @@ La composición visual añade:
 
 ## Resultado automático
 
-Pendiente de ejecutar con el bundle universal 0.9.0 instalado en Fusion Studio
-21.0.4 para macOS.
+**Aprobado el 19 de agosto de 2026** con el bundle universal 0.9.0 instalado en
+Fusion Studio 21.0.4 para macOS.
+
+- smoke acumulativo: **32/32 renders aprobados**;
+- las 27 pruebas acumuladas de P1/P2 continúan aprobadas;
+- las instancias sin tokens declaran `output_frame_varying=false`;
+- las instancias con tokens V1 declaran `output_frame_varying=true`;
+- frame 0: `REL 1 ABS 1001 TC 00:00:00:00 UNKNOWN {shot}`;
+- frame 1: `REL 2 ABS 1002 TC 00:00:00:01 UNKNOWN {shot}`;
+- 29.97 DF, frame 1799: `DF 00:00:59;29`;
+- 29.97 DF, frame 1800: `DF 00:01:00;02`;
+- start inválido con Drop incompatible: salida controlada
+  `INVALID TC 00:00:00:01`, con `used_timecode_fallback=true` y
+  `RENDER_WARNING timecode_resolution_fallback=true` en el log.
+
+El token desconocido `{shot}` se conserva literalmente, sin sustitución ni
+ruta de compatibilidad.
 
 ## Validación visual
 
