@@ -29,7 +29,12 @@ if [ -f "$PROBE_LOG" ]; then
     before=$(wc -c < "$PROBE_LOG" | tr -d ' ')
 fi
 
-"$FUSCRIPT" -l lua "$SCRIPT_DIR/fusion_p1a_smoke.lua"
+script_output=$("$FUSCRIPT" -l lua "$SCRIPT_DIR/fusion_p1a_smoke.lua" 2>&1)
+printf '%s\n' "$script_output"
+if ! printf '%s\n' "$script_output" | grep -F 'WIPREVIEW_AUTOMATION_OK' >/dev/null; then
+    echo "FusionScript did not report a successful automated render" >&2
+    exit 1
+fi
 
 if [ ! -f "$PROBE_LOG" ]; then
     echo "Probe log was not created: $PROBE_LOG" >&2

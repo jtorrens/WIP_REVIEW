@@ -2,7 +2,14 @@
 -- Creates and closes a private unsaved composition; it never modifies the
 -- composition that was active when the script started.
 
-local fusion = bmd.scriptapp("Fusion", "localhost")
+local fusion = nil
+for attempt = 1, 60 do
+    fusion = bmd.scriptapp("Fusion", "localhost")
+    if fusion ~= nil then
+        break
+    end
+    bmd.wait(1)
+end
 if fusion == nil then
     error("Fusion Standalone is not reachable through FusionScript")
 end
