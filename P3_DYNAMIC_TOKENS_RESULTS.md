@@ -83,4 +83,18 @@ ruta de compatibilidad.
 
 ## Validación visual
 
-Pendiente de validación humana en Fusion Studio 21.0.4.
+**Aprobada el 19 de agosto de 2026** en Fusion Studio 21.0.4:
+
+- `P3_TOKENS_24_NDF`, frame 0: se observan `REL 1`, `ABS 1001`,
+  `TC 00:00:00:00` y `UNKNOWN REMAINS {shot}`;
+- la misma instancia, frame 1: se observan `REL 2`, `ABS 1002` y
+  `TC 00:00:00:01`, mientras `{shot}` permanece literal;
+- `P3_TIMECODE_DF`, frame 1799: se observa `29.97 DF 00:00:59;29`;
+- `P3_TIMECODE_DF`, frame 1800: se observa `29.97 DF 00:01:00;02`;
+- `P3_INVALID_TIMECODE`, frame 0: se observa
+  `CONTROLLED FALLBACK 00:00:00:01`, estable sobre blanking y sin artefactos
+  ni texto fuera de su zona.
+
+Con ello quedan validados visualmente la sustitución y el incremento temporal,
+la conservación literal de tokens desconocidos, el salto de minuto drop-frame
+y la salida controlada ante configuración inválida.
