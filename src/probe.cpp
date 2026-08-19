@@ -1,4 +1,5 @@
 #include "probe_core.hpp"
+#include "text_rasterizer.hpp"
 
 #include <ofxColour.h>
 #include <ofxCore.h>
@@ -55,6 +56,18 @@ constexpr char kParamBlankingAspectPreset[] = "blankingAspectPreset";
 constexpr char kParamBlankingAspectCustom[] = "blankingAspectCustom";
 constexpr char kParamBlankingColour[] = "blankingColor";
 constexpr char kParamBlankingOpacity[] = "blankingOpacity";
+constexpr char kParamStaticTextEnabled[] = "staticTextEnabled";
+constexpr char kParamStaticText[] = "staticText";
+constexpr char kParamStaticTextAnchor[] = "staticTextAnchor";
+constexpr char kParamFontFamily[] = "fontFamily";
+constexpr char kParamFontStyle[] = "fontStyle";
+constexpr char kParamFontSize[] = "fontSize";
+constexpr char kParamTextColour[] = "textColor";
+constexpr char kParamTextOpacity[] = "textOpacity";
+constexpr char kParamPaddingLeft[] = "paddingLeft";
+constexpr char kParamPaddingRight[] = "paddingRight";
+constexpr char kParamPaddingTop[] = "paddingTop";
+constexpr char kParamPaddingBottom[] = "paddingBottom";
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
 
@@ -301,6 +314,18 @@ struct InstanceData {
   OfxParamHandle blankingAspectCustom = nullptr;
   OfxParamHandle blankingColour = nullptr;
   OfxParamHandle blankingOpacity = nullptr;
+  OfxParamHandle staticTextEnabled = nullptr;
+  OfxParamHandle staticText = nullptr;
+  OfxParamHandle staticTextAnchor = nullptr;
+  OfxParamHandle fontFamily = nullptr;
+  OfxParamHandle fontStyle = nullptr;
+  OfxParamHandle fontSize = nullptr;
+  OfxParamHandle textColour = nullptr;
+  OfxParamHandle textOpacity = nullptr;
+  OfxParamHandle paddingLeft = nullptr;
+  OfxParamHandle paddingRight = nullptr;
+  OfxParamHandle paddingTop = nullptr;
+  OfxParamHandle paddingBottom = nullptr;
   std::string context;
   std::uint64_t id = 0;
 };
@@ -578,6 +603,79 @@ wipreview::probe::BlankingOptions readBlankingOptions(
   return options;
 }
 
+struct TextRenderSettings {
+  wipreview::probe::TextOverlayOptions overlay;
+  std::string text;
+  std::string fontFamily;
+  wipreview::text::FontStyle fontStyle = wipreview::text::FontStyle::Regular;
+  double normalizedSize = 0.028;
+  double pixelSize = 0.0;
+};
+
+TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
+                                    OfxPropertySetHandle outputImage,
+                                    const wipreview::probe::ImageView& outputView) {
+  TextRenderSettings settings;
+  int enabled = 0;
+  int anchor = 0;
+  int style = 0;
+  char* text = nullptr;
+  char* family = nullptr;
+  double fontSize = 0.028;
+  double colour[4] = {1.0, 1.0, 1.0, 1.0};
+  double opacity = 1.0;
+  double paddingLeft = 0.015;
+  double paddingRight = 0.015;
+  double paddingTop = 0.020;
+  double paddingBottom = 0.020;
+  if (instance->staticTextEnabled) gParameterSuite->paramGetValueAtTime(instance->staticTextEnabled, time, &enabled);
+  if (instance->staticText) gParameterSuite->paramGetValueAtTime(instance->staticText, time, &text);
+  if (instance->staticTextAnchor) gParameterSuite->paramGetValueAtTime(instance->staticTextAnchor, time, &anchor);
+  if (instance->fontFamily) gParameterSuite->paramGetValueAtTime(instance->fontFamily, time, &family);
+  if (instance->fontStyle) gParameterSuite->paramGetValueAtTime(instance->fontStyle, time, &style);
+  if (instance->fontSize) gParameterSuite->paramGetValueAtTime(instance->fontSize, time, &fontSize);
+  if (instance->textColour) {
+    gParameterSuite->paramGetValueAtTime(instance->textColour, time,
+                                         &colour[0], &colour[1], &colour[2], &colour[3]);
+  }
+  if (instance->textOpacity) gParameterSuite->paramGetValueAtTime(instance->textOpacity, time, &opacity);
+  if (instance->paddingLeft) gParameterSuite->paramGetValueAtTime(instance->paddingLeft, time, &paddingLeft);
+  if (instance->paddingRight) gParameterSuite->paramGetValueAtTime(instance->paddingRight, time, &paddingRight);
+  if (instance->paddingTop) gParameterSuite->paramGetValueAtTime(instance->paddingTop, time, &paddingTop);
+  if (instance->paddingBottom) gParameterSuite->paramGetValueAtTime(instance->paddingBottom, time, &paddingBottom);
+
+  const auto anchors = std::array{
+      wipreview::probe::TextAnchor::TopLeft,
+      wipreview::probe::TextAnchor::TopCenter,
+      wipreview::probe::TextAnchor::TopRight,
+      wipreview::probe::TextAnchor::BottomLeft,
+      wipreview::probe::TextAnchor::BottomCenter,
+      wipreview::probe::TextAnchor::BottomRight};
+  const auto styles = std::array{
+      wipreview::text::FontStyle::Regular,
+      wipreview::text::FontStyle::Bold,
+      wipreview::text::FontStyle::Italic,
+      wipreview::text::FontStyle::BoldItalic};
+  settings.overlay.enabled = enabled != 0;
+  settings.overlay.anchor = anchors[static_cast<std::size_t>(std::clamp(anchor, 0, 5))];
+  settings.overlay.outputPremultiplied = imageIsPremultiplied(outputImage);
+  settings.overlay.opacity = static_cast<float>(opacity);
+  settings.overlay.paddingLeft = paddingLeft;
+  settings.overlay.paddingRight = paddingRight;
+  settings.overlay.paddingTop = paddingTop;
+  settings.overlay.paddingBottom = paddingBottom;
+  for (int channel = 0; channel < 4; ++channel) {
+    settings.overlay.colour[channel] = static_cast<float>(colour[channel]);
+  }
+  settings.text = text ? text : "";
+  settings.fontFamily = family ? family : "System Default";
+  settings.fontStyle = styles[static_cast<std::size_t>(std::clamp(style, 0, 3))];
+  settings.normalizedSize = std::clamp(fontSize, 0.001, 1.0);
+  settings.pixelSize = settings.normalizedSize
+                     * std::max(0, outputView.bounds.y2 - outputView.bounds.y1);
+  return settings;
+}
+
 OfxStatus load() {
   if (!gHost || !gHost->fetchSuite) return kOfxStatErrMissingHostFeature;
   gImageSuite = static_cast<const OfxImageEffectSuiteV1*>(
@@ -620,15 +718,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P1b Filter Only)"
-                                          : "WIP Review Probe (P1b)");
+                               filterOnly ? "WIP Review Probe (P1c Filter Only)"
+                                          : "WIP Review Probe (P1c)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Static Formatter P1b — Filter Only"
-                                          : "WIP Review Static Formatter P1b");
+                               filterOnly ? "WIP Review Static Formatter P1c — Filter Only"
+                                          : "WIP Review Static Formatter P1c");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P1b static formatter: review raster, placement, CPU resampling and editorial blanking, with host diagnostics.");
+      "P1c static formatter: review raster, placement, editorial blanking and one static UTF-8 text, with host diagnostics.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -677,6 +775,22 @@ void defineStringParam(OfxParamSetHandle params, const char* name, const char* l
   gPropertySuite->propSetString(properties, kOfxParamPropStringMode, 0, kOfxParamStringIsSingleLine);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, animates ? 1 : 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+}
+
+void defineDoubleParam(OfxParamSetHandle params, const char* name, const char* label,
+                       double defaultValue, double minimum, double maximum,
+                       double displayMinimum, double displayMaximum,
+                       const char* hint) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(params, kOfxParamTypeDouble, name, &properties) != kOfxStatOK) return;
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDefault, 0, defaultValue);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMin, 0, minimum);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropMax, 0, maximum);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMin, 0, displayMinimum);
+  gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, displayMaximum);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  if (hint) gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
 }
 
 OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
@@ -764,6 +878,45 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 1.0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
 
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamStaticTextEnabled, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Static Text Enabled");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
+      "P1c draws one static UTF-8 text after placement and blanking.");
+
+  defineStringParam(params, kParamStaticText, "Static Text",
+                    "SECUENCIA ÁRTICO — VERSIÓN 03", false,
+                    "Single UTF-8 validation string; dynamic tokens are not expanded in P1c.");
+  defineChoiceParam(params, kParamStaticTextAnchor, "Static Text Anchor",
+                    {"Top Left", "Top Center", "Top Right",
+                     "Bottom Left", "Bottom Center", "Bottom Right"}, 0,
+                    "Visible text bounds are anchored to normalized output padding.");
+  defineStringParam(params, kParamFontFamily, "Font Family", "System Default", false,
+                    "CoreText font family. Missing fonts fall back to the macOS system font.");
+  defineChoiceParam(params, kParamFontStyle, "Font Style",
+                    {"Regular", "Bold", "Italic", "Bold Italic"}, 0,
+                    "Requested CoreText symbolic style; unavailable traits fall back safely.");
+  defineDoubleParam(params, kParamFontSize, "Font Size", 0.028, 0.001, 1.0, 0.005, 0.10,
+                    "Normalized to output pixel height; 0.028 is approximately 2.8 percent.");
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamTextColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Text Colour");
+  const double textColourDefault[4] = {1.0, 1.0, 1.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, textColourDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+
+  defineDoubleParam(params, kParamTextOpacity, "Text Opacity", 1.0, 0.0, 1.0, 0.0, 1.0,
+                    "Multiplies text alpha.");
+  defineDoubleParam(params, kParamPaddingLeft, "Padding Left", 0.015, 0.0, 1.0, 0.0, 0.25,
+                    "Normalized to output width.");
+  defineDoubleParam(params, kParamPaddingRight, "Padding Right", 0.015, 0.0, 1.0, 0.0, 0.25,
+                    "Normalized to output width.");
+  defineDoubleParam(params, kParamPaddingTop, "Padding Top", 0.020, 0.0, 1.0, 0.0, 0.25,
+                    "Normalized to output height.");
+  defineDoubleParam(params, kParamPaddingBottom, "Padding Bottom", 0.020, 0.0, 1.0, 0.0, 0.25,
+                    "Normalized to output height.");
+
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1920);
@@ -823,13 +976,24 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamBlankingAspectCustom, &instance->blankingAspectCustom, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingColour, &instance->blankingColour, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingOpacity, &instance->blankingOpacity, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamStaticTextEnabled, &instance->staticTextEnabled, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamStaticText, &instance->staticText, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamStaticTextAnchor, &instance->staticTextAnchor, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFontFamily, &instance->fontFamily, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFontStyle, &instance->fontStyle, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamFontSize, &instance->fontSize, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamTextColour, &instance->textColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamTextOpacity, &instance->textOpacity, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamPaddingLeft, &instance->paddingLeft, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamPaddingRight, &instance->paddingRight, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamPaddingTop, &instance->paddingTop, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamPaddingBottom, &instance->paddingBottom, nullptr);
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
 
   Logger::instance().write("INSTANCE_CREATE",
       instancePrefix(instance) + " log_path=" + quoted(Logger::instance().path().c_str()));
   logEffectProperties(instance, effectProperties);
   logClip(instance, "Source", instance->source, 0.0);
-  logClip(instance, "Output", instance->output, 0.0);
   return kOfxStatOK;
 }
 
@@ -1036,6 +1200,16 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     wipreview::probe::applyBlanking(
         outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]}, blanking);
     const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
+    const auto textSettings = readTextSettings(instance, time, outputImage, outputView);
+    const auto glyphs = textSettings.overlay.enabled
+        ? wipreview::text::rasterizeUTF8(textSettings.text, textSettings.fontFamily,
+                                        textSettings.fontStyle, textSettings.pixelSize)
+        : wipreview::text::GlyphMask{};
+    wipreview::probe::compositeTextMask(
+        outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+        glyphs.view(), textSettings.overlay);
+    const auto textOrigin = wipreview::probe::computeTextOrigin(
+        outputView.bounds, glyphs.width, glyphs.height, textSettings.overlay);
     Logger::instance().write("STATIC_FORMATTER",
         instancePrefix(instance) +
         " placement=" + std::to_string(static_cast<int>(options.placement)) +
@@ -1062,6 +1236,27 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                         std::to_string(blanking.colour[2]) + ',' +
                         std::to_string(blanking.colour[3]) + ']' +
         " opacity=" + std::to_string(blanking.opacity));
+    Logger::instance().write("STATIC_TEXT",
+        instancePrefix(instance) +
+        " enabled=" + (textSettings.overlay.enabled ? "true" : "false") +
+        " text=" + quoted(textSettings.text.c_str()) +
+        " anchor=" + std::to_string(static_cast<int>(textSettings.overlay.anchor)) +
+        " requested_font=" + quoted(textSettings.fontFamily.c_str()) +
+        " resolved_font=" + quoted(glyphs.resolvedFont.c_str()) +
+        " fallback=" + (glyphs.usedFallback ? "true" : "false") +
+        " normalized_size=" + std::to_string(textSettings.normalizedSize) +
+        " pixel_size=" + std::to_string(textSettings.pixelSize) +
+        " mask=[" + std::to_string(glyphs.width) + ',' + std::to_string(glyphs.height) + ']' +
+        " origin=[" + std::to_string(textOrigin.x) + ',' + std::to_string(textOrigin.y) + ']' +
+        " padding=[" + std::to_string(textSettings.overlay.paddingLeft) + ',' +
+                         std::to_string(textSettings.overlay.paddingRight) + ',' +
+                         std::to_string(textSettings.overlay.paddingTop) + ',' +
+                         std::to_string(textSettings.overlay.paddingBottom) + ']' +
+        " colour=[" + std::to_string(textSettings.overlay.colour[0]) + ',' +
+                        std::to_string(textSettings.overlay.colour[1]) + ',' +
+                        std::to_string(textSettings.overlay.colour[2]) + ',' +
+                        std::to_string(textSettings.overlay.colour[3]) + ']' +
+        " opacity=" + std::to_string(textSettings.overlay.opacity));
     if (outputView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_output_pixel_format=true");
@@ -1069,6 +1264,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (sourceImage && sourceView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_source_pixel_format=true output_canvas_only=true");
+    } else if (textSettings.overlay.enabled && !textSettings.text.empty() && glyphs.pixels.empty()) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " text_rasterization_failed=true output_continues=true");
     } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
                (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
                 sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {
