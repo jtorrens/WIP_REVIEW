@@ -57,10 +57,19 @@ La composición visual añade:
 - tokens dinámicos;
 - transformaciones OCIO de píxeles, GPU y presets.
 
-## Resultado automático — pendiente
+## Resultado automático — aprobado
 
-Se completará tras construir e instalar el bundle universal 0.6.0 y ejecutar
-el smoke acumulativo en Fusion Studio 21.
+Ejecutado el 19 de agosto de 2026 con el bundle universal 0.6.0 instalado en
+Fusion Studio 21.0.4 para macOS:
+
+- 21 de 21 renderizaciones completadas;
+- el default resuelve width `0.001` a radio `1 px`, RGBA negro opaco y máscara
+  `[316, 26]`;
+- el caso ancho resuelve width `0.006` a radio `6 px`, RGBA rojo, opacity
+  `0.5` y máscara `[326, 36]`;
+- ambos eventos `TEXT_ZONE` registran `outline=true`;
+- los 19 escenarios acumulativos anteriores continúan aprobados con outline
+  desactivado explícitamente para mantener su aislamiento.
 
 ## Validación visual — pendiente
 
