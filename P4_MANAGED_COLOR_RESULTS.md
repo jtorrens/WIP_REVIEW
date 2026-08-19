@@ -76,8 +76,21 @@ El estado `MANAGED_COLOR` registra espacio del host, reconocimiento, selección
 efectiva, Graphics White, peak HLG, working premultiplicado y
 `encode_count=1`.
 
+## Negociación OFX 1.5.1
+
+- Auto no publica una preferencia de Source que pueda contradecir el CST
+  upstream;
+- Manual solicita al host el espacio display seleccionado mediante
+  `OfxImageClipPropPreferredColourspaces_Source`;
+- el render comprueba siempre `kOfxImageClipPropColourspace` en la imagen y,
+  si no está disponible, en el clip;
+- Output se declara `OfxColourspace_Source`, porque WIPReview devuelve el mismo
+  espacio que interpreta;
+- `colorSpaceMode` y `manualColorSpace` invalidan Clip Preferences.
+
+Fusion 21 General no publicó colourspace durante P0. En ese contexto Auto debe
+activar el warning y Manual es el contrato operativo después del CST nativo.
+
 ## Pendiente
 
-- negociación OFX de Source/Output;
-- log y warning visible para espacio desconocido;
 - smoke automático y validación visual en Fusion Studio 21.0.4.

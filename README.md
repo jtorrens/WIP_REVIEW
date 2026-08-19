@@ -1,16 +1,27 @@
-# WIP Review OFX — P0 Probe + P1 Formatter + P3 Dynamic Tokens
+# WIP Review OFX — P0 Probe + P1 Formatter + P4 Managed Color
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
 resampling CPU de referencia. P1b añade blanking editorial independiente, P2a
 incorpora seis zonas simultáneas, P2b añade outline global, P2c añade drop
-shadow global, P2d limita cada zona a una celda lógica y P3 resuelve tokens
-temporales sin semántica de producción.
+shadow global, P2d limita cada zona a una celda lógica, P3 resuelve tokens
+temporales sin semántica de producción y P4 compone gráficos en luz de display.
 
-Este repositorio **no implementa** todavía transformaciones OCIO de píxeles,
-GPU ni presets de estado.
-El probe anuncia y registra la
-negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
+P4 delega la transformación fotográfica al Color Space Transform nativo del
+host. WIPReview decodifica Rec.709/PQ/HLG, compone blanking y texto en
+display-light linear y codifica una sola vez. No implementa un segundo tone
+mapper, GPU ni presets semánticos.
+
+## P4 — Managed Color
+
+Input y Output usan el mismo espacio display-referred, seleccionado mediante
+**Auto from Host** o **Manual Override**. Auto no fuerza conversiones; Manual
+puede solicitar Rec.709 Gamma 2.4, Rec.2100 PQ o Rec.2100 HLG mediante OFX
+1.5.1, pero el plugin siempre verifica lo realmente entregado. `Raw`, vacío o
+un espacio no reconocido activa la interpretación manual y un warning visible.
+
+Graphics White automático usa 100 nits en SDR, 203 nits en PQ y el 20.3 % del
+peak HLG. Véase [P4_MANAGED_COLOR_RESULTS.md](P4_MANAGED_COLOR_RESULTS.md).
 
 ## P3 — Dynamic Tokens
 
@@ -129,8 +140,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P3)`: anuncia Filter y General;
-- `WIP Review Probe (P3 Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P4)`: anuncia Filter y General;
+- `WIP Review Probe (P4 Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada

@@ -3,6 +3,7 @@
 #include "token_resolver.hpp"
 
 #include <ofxColour.h>
+#include <ofx-native-v1.5_aces-v1.3_ocio-v2.3.h>
 #include <ofxCore.h>
 #include <ofxImageEffect.h>
 #include <ofxMessage.h>
@@ -135,6 +136,8 @@ constexpr std::array<ZoneParamNames, 6> kZoneParams{{
 }};
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
+constexpr char kSourcePreferredColourspaces[] =
+    "OfxImageClipPropPreferredColourspaces_Source";
 
 OfxHost* gHost = nullptr;
 const OfxImageEffectSuiteV1* gImageSuite = nullptr;
@@ -644,6 +647,19 @@ const char* displayEncodingName(wipreview::color::DisplayEncoding encoding) noex
   return "Unknown";
 }
 
+const char* ofxDisplayColourspace(
+    wipreview::color::DisplayEncoding encoding) noexcept {
+  switch (encoding) {
+    case wipreview::color::DisplayEncoding::Rec709Gamma24:
+      return kOfxColourspaceRec1886Rec709Display;
+    case wipreview::color::DisplayEncoding::Rec2100PQ:
+      return kOfxColourspaceRec2100PqDisplay;
+    case wipreview::color::DisplayEncoding::Rec2100HLG:
+      return kOfxColourspaceRec2100HlgDisplay;
+  }
+  return kOfxColourspaceRec1886Rec709Display;
+}
+
 bool identifyHostDisplayEncoding(
     const std::string& colourspace,
     wipreview::color::DisplayEncoding& encoding) {
@@ -1146,15 +1162,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P3 Filter Only)"
-                                          : "WIP Review Probe (P3)");
+                               filterOnly ? "WIP Review Probe (P4 Filter Only)"
+                                          : "WIP Review Probe (P4)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Dynamic Tokens P3 — Filter Only"
-                                          : "WIP Review Dynamic Tokens P3");
+                               filterOnly ? "WIP Review Managed Color P4 — Filter Only"
+                                          : "WIP Review Managed Color P4");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P3 overlay: six bounded UTF-8 zones with geometry, blanking, styling, overflow and temporal tokens.");
+      "P4 managed-color overlay: review-raster geometry, display-light linear blanking and six styled dynamic text zones.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -1184,6 +1200,12 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
         properties, kOfxImageEffectPropClipPreferencesSlaveParam,
         static_cast<int>(index), kZoneParams[index].text);
   }
+  gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropClipPreferencesSlaveParam,
+      static_cast<int>(kZoneParams.size()), kParamColorSpaceMode);
+  gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropClipPreferencesSlaveParam,
+      static_cast<int>(kZoneParams.size() + 1), kParamManualColorSpace);
 
   const OfxStatus colourStyleStatus = gPropertySuite->propSetString(
       properties, kOfxImageEffectPropColourManagementStyle, 0,
@@ -1774,6 +1796,26 @@ OfxStatus getClipPreferences(OfxImageEffectHandle effect,
   if (premultStatus == kOfxStatOK) {
     gPropertySuite->propSetString(outArgs, kOfxImageEffectPropPreMultiplication, 0, premultiplication);
   }
+  int colorSpaceMode = 0;
+  int manualColorSpace = 0;
+  if (instance->colorSpaceMode) {
+    gParameterSuite->paramGetValue(instance->colorSpaceMode, &colorSpaceMode);
+  }
+  if (instance->manualColorSpace) {
+    gParameterSuite->paramGetValue(instance->manualColorSpace, &manualColorSpace);
+  }
+  OfxStatus preferredColourspaceStatus = kOfxStatReplyDefault;
+  const auto manualEncodings = std::array{
+      wipreview::color::DisplayEncoding::Rec709Gamma24,
+      wipreview::color::DisplayEncoding::Rec2100PQ,
+      wipreview::color::DisplayEncoding::Rec2100HLG};
+  const auto manualEncoding = manualEncodings[static_cast<std::size_t>(
+      std::clamp(manualColorSpace, 0, 2))];
+  if (colorSpaceMode == 1) {
+    preferredColourspaceStatus = gPropertySuite->propSetString(
+        outArgs, kSourcePreferredColourspaces, 0,
+        ofxDisplayColourspace(manualEncoding));
+  }
   const OfxStatus outputPARStatus = gPropertySuite->propSetDouble(
       outArgs, kOutputClipPARPreference, 0, 1.0);
   bool outputFrameVarying = false;
@@ -1792,6 +1834,14 @@ OfxStatus getClipPreferences(OfxImageEffectHandle effect,
       " source_depth=" + quoted(depth) +
       " source_premultiplication=" + quoted(premultiplication) +
       " requested_output_PAR=1 output_PAR_status=" + statusName(outputPARStatus) +
+      " color_space_mode=" + std::to_string(std::clamp(colorSpaceMode, 0, 1)) +
+      " manual_color_space=" + quoted(displayEncodingName(manualEncoding)) +
+      " requested_source_colourspace=" +
+          (colorSpaceMode == 1
+              ? quoted(ofxDisplayColourspace(manualEncoding))
+              : "<none>") +
+      " preferred_colourspace_status=" +
+          statusName(preferredColourspaceStatus) +
       " output_frame_varying=" + (outputFrameVarying ? "true" : "false") +
       " negotiated_style=" +
       getString([&] { OfxPropertySetHandle p = nullptr; gImageSuite->getPropertySet(effect, &p); return p; }(),

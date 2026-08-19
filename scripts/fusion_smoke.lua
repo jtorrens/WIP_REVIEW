@@ -93,6 +93,11 @@ local ok, failure = pcall(function()
         probe.fpsOverride = 24.0
         probe.timecodeStart = "00:00:00:00"
         probe.dropFrameMode = 1
+        probe.colorSpaceMode = 1
+        probe.manualColorSpace = 0
+        probe.graphicsWhiteMode = 0
+        probe.graphicsWhiteNits = 203.0
+        probe.hlgPeakNits = 1000.0
         if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
@@ -246,6 +251,28 @@ local ok, failure = pcall(function()
         p.fpsMode = 1; p.fpsOverride = 25.0
         p.timecodeStart = "invalid"; p.dropFrameMode = 2
         p.brEnabled = 1; p.brText = "INVALID TC {timecode}"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_REC709_LINEAR_BLEND", 0, 1, 1, 8,
+                 1, 2, 2.0, 0.5, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 0
+        p.graphicsWhiteMode = 0
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_PQ_GRAPHICS_WHITE", 0, 1, 2, 8,
+                 0, 2, 2.0, 1.0, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 1
+        p.graphicsWhiteMode = 0
+        p.tcEnabled = 1; p.tcText = "PQ WHITE 203 NITS"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_HLG_GRAPHICS_WHITE", 0, 1, 3, 8,
+                 0, 2, 2.0, 1.0, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 2
+        p.graphicsWhiteMode = 0; p.hlgPeakNits = 1000.0
+        p.tcEnabled = 1; p.tcText = "HLG WHITE 203 NITS"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_AUTO_UNKNOWN", 0, 1, 4, 8,
+                 0, 2, 2.0, 1.0, function(p)
+        p.colorSpaceMode = 0; p.manualColorSpace = 0
+        p.tcEnabled = 1; p.tcText = "AUTO UNKNOWN WARNING"
     end)
 
     print("WIPREVIEW_AUTOMATION_OK")
