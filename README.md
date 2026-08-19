@@ -1,14 +1,27 @@
-# WIP Review OFX — P0 Probe + P1 Formatter + P2a Six Zones
+# WIP Review OFX — P0 Probe + P1 Formatter + P2b Outline
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
-resampling CPU de referencia. P1b añade blanking editorial independiente y P2a
-incorpora el contrato tipográfico vigente de seis zonas simultáneas.
+resampling CPU de referencia. P1b añade blanking editorial independiente, P2a
+incorpora seis zonas simultáneas y P2b añade outline global desde el alpha real
+de los glifos.
 
-Este repositorio **no implementa** todavía tokens dinámicos, outline, shadow,
-overflow, transformaciones OCIO de píxeles, GPU ni presets de estado.
+Este repositorio **no implementa** todavía tokens dinámicos, shadow, overflow,
+transformaciones OCIO de píxeles, GPU ni presets de estado.
 El probe anuncia y registra la
 negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
+
+## P2b — Outline
+
+P2b añade los controles globales **Outline Enabled**, **Outline Width**,
+**Outline Colour** y **Outline Opacity**. El default es negro opaco, activado,
+con radio `0.0010` normalizado a la altura del Output.
+
+El renderer dilata la máscara alfa real de cada glifo con un elemento circular.
+No duplica el texto en varias direcciones. Fill y outline comparten un único
+canvas expandido y una única ancla; el outline se compone primero y el fill
+encima, después de placement y blanking. Véase
+[P2B_OUTLINE_RESULTS.md](P2B_OUTLINE_RESULTS.md).
 
 ## P2a — Six Zones
 
@@ -78,8 +91,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P2a)`: anuncia Filter y General;
-- `WIP Review Probe (P2a Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P2b)`: anuncia Filter y General;
+- `WIP Review Probe (P2b Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -171,8 +184,8 @@ Ruta por defecto:
 Cada línea contiene timestamp, PID, evento y pares `clave=valor`. Los eventos
 `INSTANCE_CREATE`, `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`,
 `RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`,
-`TEMPORAL_STRING_PROBE`, `STATIC_FORMATTER`, `EDITORIAL_BLANKING` y
-`TEXT_ZONE` forma el registro tipográfico principal.
+`TEMPORAL_STRING_PROBE`, `STATIC_FORMATTER`, `EDITORIAL_BLANKING`,
+`TEXT_OUTLINE` y `TEXT_ZONE` forman el registro tipográfico principal.
 
 Para usar otra ruta, inicia el host desde un entorno que contenga:
 
@@ -198,7 +211,7 @@ pillarbox Custom 1.33. El mismo runner mantiene toda la cobertura P1a.
 
 La cobertura tipográfica valida UTF-8, crecimiento desde anclajes
 superior/inferior, fuente ausente, texto sobre blanking, seis zonas simultáneas,
-overrides y offsets.
+overrides, offsets y outline con width/color/opacity independientes del fill.
 
 Con el bundle ya instalado:
 
@@ -221,13 +234,14 @@ sistema sigue siendo una condición externa al harness.
 
 Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
 deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
-1:1, Host Raster, los casos de blanking y la matriz tipográfica P2a:
+1:1, Host Raster, los casos de blanking y la matriz tipográfica P2b:
 
 ```sh
 scripts/open_fusion_visual.sh
 ```
 
-Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*` o `P2A_*` y pulsa `1` o `2`.
+Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*` o `P2B_*` y pulsa
+`1` o `2`.
 La composición se llama `WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE`; es
 intencionadamente temporal y no modifica la composición que estuviera activa.
 
