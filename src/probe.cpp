@@ -1222,12 +1222,12 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     "Complete normalized horizontal gap between adjacent logical cells.",
                     kParamTextGroup);
   defineChoiceParam(params, kParamOverflowMode, "Overflow Mode",
-                    {"Clip", "Ellipsis", "Shrink To Fit"}, 2,
+                    {"Clip", "Ellipsis", "ShrinkToFit"}, 2,
                     "Clip at the cell, replace the tail with an ellipsis, or reduce only overflowing text.",
                     kParamTextGroup);
   defineDoubleParam(params, kParamMinimumFontScale, "Minimum Font Scale", 0.60,
                     0.01, 1.0, 0.10, 1.0,
-                    "Lowest scale permitted by Shrink To Fit; remaining overflow is clipped.",
+                    "Lowest scale permitted by ShrinkToFit; remaining overflow is clipped.",
                     kParamTextGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamOutlineGroup, &properties);
