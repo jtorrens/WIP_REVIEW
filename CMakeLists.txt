@@ -36,6 +36,7 @@ target_include_directories(openfx_sdk_headers SYSTEM INTERFACE
   "${openfx_sdk_SOURCE_DIR}/include")
 
 add_library(wipreview_probe_core STATIC
+  src/color_pipeline.cpp
   src/probe_core.cpp
   src/token_resolver.cpp
 )
@@ -129,6 +130,12 @@ if(WIPREVIEW_BUILD_TESTS)
     wipreview_text_rasterizer
   )
   add_test(NAME wipreview_probe_core COMMAND wipreview_probe_tests)
+
+  add_executable(wipreview_color_pipeline_tests tests/color_pipeline_tests.cpp)
+  target_link_libraries(wipreview_color_pipeline_tests PRIVATE
+    wipreview_probe_core
+  )
+  add_test(NAME wipreview_color_pipeline COMMAND wipreview_color_pipeline_tests)
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)
   target_link_libraries(wipreview_bundle_smoke PRIVATE ${CMAKE_DL_LIBS})
