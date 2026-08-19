@@ -41,6 +41,7 @@ display-light/OCIO completa no forma parte de este checkpoint.
 - respeto de `renderWindow`;
 - raster del string `SECUENCIA ÁRTICO — VERSIÓN 03`;
 - incremento de bounds con tamaño/estilo;
+- orientación bottom-up del glyph mask conforme a coordenadas OFX;
 - familia inexistente con fallback verificable;
 - UTF-8 inválido sin crash ni imagen parcial.
 
@@ -92,3 +93,11 @@ desarrollo.
 La composición visual incorpora nodos `P1C_*` para UTF-8 en anclajes opuestos,
 crecimiento top/bottom, fallback y texto sobre blanking. La validación humana se
 hará después de completar el smoke automático; no se infiere de los logs.
+
+Un precheck mediante Saver detectó que la primera versión del raster CoreText
+exponía sus filas top-down mientras el compositor OFX espera coordenadas
+bottom-up, por lo que los glyphs aparecían invertidos verticalmente. Se corrigió
+la normalización de filas y se añadió una regresión asimétrica con el glyph `F`.
+Tras reinstalar y repetir el smoke, los exports Top Left, Bottom Right y Text
+Over Blanking muestran texto legible, UTF-8 correcto y los paddings esperados.
+La revisión humana de los seis nodos permanece deliberadamente pendiente.
