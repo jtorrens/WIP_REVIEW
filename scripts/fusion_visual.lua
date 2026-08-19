@@ -51,6 +51,8 @@ local ok, failure = pcall(function()
         probe.requestedHeight = 1080
         probe.placementMode = placement
         probe.resampleFilter = 2
+        probe.colorSpaceMode = 1
+        probe.manualColorSpace = 0
         probe.scenarioLabel = "VISUAL_GEOMETRY_" .. names[placement + 1]
         probe.AllowResize = 1
         probes[placement + 1] = probe
@@ -64,6 +66,8 @@ local ok, failure = pcall(function()
     host.canvasMode = 0
     host.placementMode = 0
     host.resampleFilter = 2
+    host.colorSpaceMode = 1
+    host.manualColorSpace = 0
     host.scenarioLabel = "VISUAL_GEOMETRY_HOST_RASTER"
     host.AllowResize = 1
 
@@ -80,6 +84,8 @@ local ok, failure = pcall(function()
         -- visual check isolates blanking from Fit's own pillar/letterbox.
         probe.placementMode = 2
         probe.resampleFilter = 2
+        probe.colorSpaceMode = 1
+        probe.manualColorSpace = 0
         probe.blankingEnabled = enabled
         probe.blankingAspectPreset = preset
         probe.blankingAspectCustom = custom_aspect
@@ -106,6 +112,8 @@ local ok, failure = pcall(function()
         probe.requestedHeight = 1080
         probe.placementMode = 2
         probe.resampleFilter = 2
+        probe.colorSpaceMode = 1
+        probe.manualColorSpace = 0
         probe.blankingEnabled = blanking_enabled
         probe.blankingAspectPreset = 2
         probe.blankingAspectCustom = 2.0
@@ -125,6 +133,11 @@ local ok, failure = pcall(function()
         probe.fpsOverride = 24.0
         probe.timecodeStart = "00:00:00:00"
         probe.dropFrameMode = 1
+        probe.colorSpaceMode = 1
+        probe.manualColorSpace = 0
+        probe.graphicsWhiteMode = 0
+        probe.graphicsWhiteNits = 203.0
+        probe.hlgPeakNits = 1000.0
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -340,11 +353,31 @@ local ok, failure = pcall(function()
         p.tcEnabled = 1; p.tcText = "CONTROLLED FALLBACK {timecode}"
     end, 17)
 
+    local managed_color = add_zones("P4_REC709_LINEAR_HALF", 1, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 0
+        p.graphicsWhiteMode = 0; p.blankingOpacity = 0.5
+        p.tcEnabled = 1; p.tcText = "REC709 LINEAR 50% BLANKING"
+    end, 18)
+    add_zones("P4_PQ_GRAPHICS_WHITE_203", 0, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 1
+        p.graphicsWhiteMode = 0
+        p.tcEnabled = 1; p.tcText = "PQ GRAPHICS WHITE 203 NITS"
+    end, 19)
+    add_zones("P4_HLG_GRAPHICS_WHITE_203", 0, function(p)
+        p.colorSpaceMode = 1; p.manualColorSpace = 2
+        p.graphicsWhiteMode = 0; p.hlgPeakNits = 1000.0
+        p.tcEnabled = 1; p.tcText = "HLG GRAPHICS WHITE 203 NITS"
+    end, 20)
+    add_zones("P4_AUTO_UNKNOWN_WARNING", 0, function(p)
+        p.colorSpaceMode = 0; p.manualColorSpace = 0
+        p.tcEnabled = 1; p.tcText = "AUTO UNKNOWN USES MANUAL REC709"
+    end, 21)
+
     comp.CurrentTime = 0
-    comp:SetActiveTool(dynamic_tokens)
+    comp:SetActiveTool(managed_color)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P3_TOKENS_24_NDF")
+    print("active_tool=P4_REC709_LINEAR_HALF")
     print("chart=" .. chart_path)
 end)
 
