@@ -82,6 +82,16 @@ Fusion Studio 21.0.4 para macOS:
 - los 21 escenarios acumulativos anteriores continúan aprobados con shadow
   desactivado explícitamente para mantener su aislamiento.
 
-## Validación visual
+## Validación visual — aprobada
 
-Pendiente de validación humana en Fusion Studio 21.0.4.
+Validación humana completada el 19 de agosto de 2026 en Fusion Studio 21.0.4:
+
+- `P2C_SHADOW_DEFAULT`: fill blanco y sombra negra suave, ligeramente
+  desplazada abajo y a la derecha;
+- `P2C_SHADOW_HARD_BLUE`: fill blanco intacto y sombra azul dura con offset
+  positivo claramente visible;
+- `P2C_SHADOW_SIX_ZONES`: seis zonas completas con fill blanco y sombra cyan
+  suave sobre blanking.
+
+No se observaron recortes, desplazamientos incorrectos en los bordes, blur del
+RGB compuesto ni alteraciones del fill.
