@@ -12,11 +12,51 @@ struct RectI {
   int y2 = 0;
 };
 
+enum class ChannelType {
+  UInt8,
+  UInt16,
+  Half,
+  Float32,
+};
+
+enum class PlacementMode {
+  Identity,
+  Fit,
+  Fill,
+  Stretch,
+  OneToOne,
+};
+
+enum class ResampleFilter {
+  Bilinear,
+  Bicubic,
+  Lanczos3,
+};
+
 struct ImageView {
   std::byte* data = nullptr;
   RectI bounds{};
   std::ptrdiff_t rowBytes = 0;
   std::size_t pixelBytes = 0;
+  int channels = 0;
+  ChannelType channelType = ChannelType::UInt8;
+};
+
+struct RenderOptions {
+  PlacementMode placement = PlacementMode::Fit;
+  ResampleFilter filter = ResampleFilter::Lanczos3;
+  double sourcePixelAspect = 1.0;
+  double outputPixelAspect = 1.0;
+  float canvas[4] = {0.0F, 0.0F, 0.0F, 1.0F};
+};
+
+struct PlacementTransform {
+  double scaleX = 1.0;
+  double scaleY = 1.0;
+  double sourceCenterX = 0.0;
+  double sourceCenterY = 0.0;
+  double outputCenterX = 0.0;
+  double outputCenterY = 0.0;
 };
 
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
@@ -29,5 +69,17 @@ void copyProbeFrame(const ImageView& source,
                     const ImageView& destination,
                     RectI renderWindow) noexcept;
 
-}  // namespace wipreview::probe
+[[nodiscard]] PlacementTransform computePlacement(
+    RectI sourceBounds,
+    RectI outputBounds,
+    const RenderOptions& options) noexcept;
 
+// Renders a static formatter pass into renderWindow. Pixels outside the placed
+// source are filled with canvas. Identity is coordinate-aligned and never
+// introduces a resize; all other modes are centred in the output bounds.
+void renderStaticFrame(const ImageView& source,
+                       const ImageView& destination,
+                       RectI renderWindow,
+                       const RenderOptions& options) noexcept;
+
+}  // namespace wipreview::probe
