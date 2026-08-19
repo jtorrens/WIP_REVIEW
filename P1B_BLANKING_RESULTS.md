@@ -41,7 +41,9 @@ El smoke acumulativo P1a/P1b añade cuatro escenarios sobre Output `1920×1080`:
 - `AUTOMATED_P1B_B04_PILLAR`.
 
 Valida en el log `EDITORIAL_BLANKING` el aspect, Output PAR, aperture físico y
-opacity. La composición visual añade nodos `P1B_*` con los mismos casos.
+opacity. La composición visual añade nodos `P1B_*` con los mismos casos y usa
+Fill/Crop upstream para que el blanking se observe aislado de las bandas que
+produciría Fit con una fuente de aspect distinto.
 
 ```sh
 scripts/run_fusion_p1a_smoke.sh

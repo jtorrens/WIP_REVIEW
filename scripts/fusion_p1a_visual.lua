@@ -76,7 +76,9 @@ local ok, failure = pcall(function()
         probe.canvasMode = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
-        probe.placementMode = 1
+        -- Fill/Crop ensures the picture occupies the entire canvas so the
+        -- visual check isolates blanking from Fit's own pillar/letterbox.
+        probe.placementMode = 2
         probe.resampleFilter = 2
         probe.blankingEnabled = enabled
         probe.blankingAspectPreset = preset
