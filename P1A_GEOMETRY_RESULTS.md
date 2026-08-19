@@ -64,7 +64,7 @@ evento `STATIC_FORMATTER`.
 ```sh
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
-scripts/run_fusion_p1a_smoke.sh
+scripts/run_fusion_smoke.sh
 ```
 
 El smoke de host requiere que el bundle recién construido esté instalado y que

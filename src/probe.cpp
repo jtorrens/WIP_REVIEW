@@ -56,9 +56,6 @@ constexpr char kParamBlankingAspectPreset[] = "blankingAspectPreset";
 constexpr char kParamBlankingAspectCustom[] = "blankingAspectCustom";
 constexpr char kParamBlankingColour[] = "blankingColor";
 constexpr char kParamBlankingOpacity[] = "blankingOpacity";
-constexpr char kParamStaticTextEnabled[] = "staticTextEnabled";
-constexpr char kParamStaticText[] = "staticText";
-constexpr char kParamStaticTextAnchor[] = "staticTextAnchor";
 constexpr char kParamFontFamily[] = "fontFamily";
 constexpr char kParamFontStyle[] = "fontStyle";
 constexpr char kParamFontSize[] = "fontSize";
@@ -363,9 +360,6 @@ struct InstanceData {
   OfxParamHandle blankingAspectCustom = nullptr;
   OfxParamHandle blankingColour = nullptr;
   OfxParamHandle blankingOpacity = nullptr;
-  OfxParamHandle staticTextEnabled = nullptr;
-  OfxParamHandle staticText = nullptr;
-  OfxParamHandle staticTextAnchor = nullptr;
   OfxParamHandle fontFamily = nullptr;
   OfxParamHandle fontStyle = nullptr;
   OfxParamHandle fontSize = nullptr;
@@ -663,14 +657,11 @@ struct TextRenderSettings {
   double pixelSize = 0.0;
 };
 
-TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
-                                    OfxPropertySetHandle outputImage,
-                                    const wipreview::probe::ImageView& outputView) {
+TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime time,
+                                          OfxPropertySetHandle outputImage,
+                                          const wipreview::probe::ImageView& outputView) {
   TextRenderSettings settings;
-  int enabled = 0;
-  int anchor = 0;
   int style = 0;
-  char* text = nullptr;
   char* family = nullptr;
   double fontSize = 0.028;
   double colour[4] = {1.0, 1.0, 1.0, 1.0};
@@ -679,9 +670,6 @@ TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
   double paddingRight = 0.015;
   double paddingTop = 0.020;
   double paddingBottom = 0.020;
-  if (instance->staticTextEnabled) gParameterSuite->paramGetValueAtTime(instance->staticTextEnabled, time, &enabled);
-  if (instance->staticText) gParameterSuite->paramGetValueAtTime(instance->staticText, time, &text);
-  if (instance->staticTextAnchor) gParameterSuite->paramGetValueAtTime(instance->staticTextAnchor, time, &anchor);
   if (instance->fontFamily) gParameterSuite->paramGetValueAtTime(instance->fontFamily, time, &family);
   if (instance->fontStyle) gParameterSuite->paramGetValueAtTime(instance->fontStyle, time, &style);
   if (instance->fontSize) gParameterSuite->paramGetValueAtTime(instance->fontSize, time, &fontSize);
@@ -695,20 +683,13 @@ TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
   if (instance->paddingTop) gParameterSuite->paramGetValueAtTime(instance->paddingTop, time, &paddingTop);
   if (instance->paddingBottom) gParameterSuite->paramGetValueAtTime(instance->paddingBottom, time, &paddingBottom);
 
-  const auto anchors = std::array{
-      wipreview::probe::TextAnchor::TopLeft,
-      wipreview::probe::TextAnchor::TopCenter,
-      wipreview::probe::TextAnchor::TopRight,
-      wipreview::probe::TextAnchor::BottomLeft,
-      wipreview::probe::TextAnchor::BottomCenter,
-      wipreview::probe::TextAnchor::BottomRight};
   const auto styles = std::array{
       wipreview::text::FontStyle::Regular,
       wipreview::text::FontStyle::Bold,
       wipreview::text::FontStyle::Italic,
       wipreview::text::FontStyle::BoldItalic};
-  settings.overlay.enabled = enabled != 0;
-  settings.overlay.anchor = anchors[static_cast<std::size_t>(std::clamp(anchor, 0, 5))];
+  settings.overlay.enabled = false;
+  settings.overlay.anchor = wipreview::probe::TextAnchor::TopLeft;
   settings.overlay.outputPremultiplied = imageIsPremultiplied(outputImage);
   settings.overlay.opacity = static_cast<float>(opacity);
   settings.overlay.paddingLeft = paddingLeft;
@@ -718,7 +699,7 @@ TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
   for (int channel = 0; channel < 4; ++channel) {
     settings.overlay.colour[channel] = static_cast<float>(colour[channel]);
   }
-  settings.text = text ? text : "";
+  settings.text.clear();
   settings.fontFamily = family ? family : "System Default";
   settings.fontStyle = styles[static_cast<std::size_t>(std::clamp(style, 0, 3))];
   settings.normalizedSize = std::clamp(fontSize, 0.001, 1.0);
@@ -842,7 +823,7 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
                                filterOnly ? "WIP Review Six Zone Overlay P2a — Filter Only"
                                           : "WIP Review Six Zone Overlay P2a");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P2a overlay: review raster, placement, blanking and six independent static UTF-8 text zones, with P1c compatibility and host diagnostics.");
+      "P2a overlay: review raster, placement, blanking and six independent static UTF-8 text zones with host diagnostics.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -1055,20 +1036,6 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 1.0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
 
-  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamStaticTextEnabled, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Legacy P1c Text Enabled");
-  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
-  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
-      "Compatibility control for saved P1c compositions; P2a zones render after it.");
-
-  defineStringParam(params, kParamStaticText, "Legacy P1c Text",
-                    "SECUENCIA ÁRTICO — VERSIÓN 03", false,
-                    "Single UTF-8 validation string; dynamic tokens are not expanded in P1c.");
-  defineChoiceParam(params, kParamStaticTextAnchor, "Legacy P1c Anchor",
-                    {"Top Left", "Top Center", "Top Right",
-                     "Bottom Left", "Bottom Center", "Bottom Right"}, 0,
-                    "Visible text bounds are anchored to normalized output padding.");
   defineStringParam(params, kParamFontFamily, "Font Family", "System Default", false,
                     "CoreText font family. Missing fonts fall back to the macOS system font.");
   defineChoiceParam(params, kParamFontStyle, "Font Style",
@@ -1155,9 +1122,6 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamBlankingAspectCustom, &instance->blankingAspectCustom, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingColour, &instance->blankingColour, nullptr);
   gParameterSuite->paramGetHandle(params, kParamBlankingOpacity, &instance->blankingOpacity, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamStaticTextEnabled, &instance->staticTextEnabled, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamStaticText, &instance->staticText, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamStaticTextAnchor, &instance->staticTextAnchor, nullptr);
   gParameterSuite->paramGetHandle(params, kParamFontFamily, &instance->fontFamily, nullptr);
   gParameterSuite->paramGetHandle(params, kParamFontStyle, &instance->fontStyle, nullptr);
   gParameterSuite->paramGetHandle(params, kParamFontSize, &instance->fontSize, nullptr);
@@ -1393,23 +1357,14 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     wipreview::probe::applyBlanking(
         outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]}, blanking);
     const auto aperture = wipreview::probe::computeBlankingAperture(outputView.bounds, blanking);
-    const auto textSettings = readTextSettings(instance, time, outputImage, outputView);
-    const auto glyphs = textSettings.overlay.enabled
-        ? wipreview::text::rasterizeUTF8(textSettings.text, textSettings.fontFamily,
-                                        textSettings.fontStyle, textSettings.pixelSize)
-        : wipreview::text::GlyphMask{};
-    wipreview::probe::compositeTextMask(
-        outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
-        glyphs.view(), textSettings.overlay);
-    const auto textOrigin = wipreview::probe::computeTextOrigin(
-        outputView.bounds, glyphs.width, glyphs.height, textSettings.overlay);
+    const auto globalText = readGlobalTextSettings(instance, time, outputImage, outputView);
     std::array<ZoneTextSettings, 6> zoneSettings{};
     std::array<wipreview::text::GlyphMask, 6> zoneGlyphs{};
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
-          instance, index, time, textSettings, outputView);
+          instance, index, time, globalText, outputView);
       const auto& layer = zoneSettings[index].layer;
       if (layer.overlay.enabled) {
         zoneGlyphs[index] = wipreview::text::rasterizeUTF8(
@@ -1450,27 +1405,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                         std::to_string(blanking.colour[2]) + ',' +
                         std::to_string(blanking.colour[3]) + ']' +
         " opacity=" + std::to_string(blanking.opacity));
-    Logger::instance().write("STATIC_TEXT",
-        instancePrefix(instance) +
-        " enabled=" + (textSettings.overlay.enabled ? "true" : "false") +
-        " text=" + quoted(textSettings.text.c_str()) +
-        " anchor=" + std::to_string(static_cast<int>(textSettings.overlay.anchor)) +
-        " requested_font=" + quoted(textSettings.fontFamily.c_str()) +
-        " resolved_font=" + quoted(glyphs.resolvedFont.c_str()) +
-        " fallback=" + (glyphs.usedFallback ? "true" : "false") +
-        " normalized_size=" + std::to_string(textSettings.normalizedSize) +
-        " pixel_size=" + std::to_string(textSettings.pixelSize) +
-        " mask=[" + std::to_string(glyphs.width) + ',' + std::to_string(glyphs.height) + ']' +
-        " origin=[" + std::to_string(textOrigin.x) + ',' + std::to_string(textOrigin.y) + ']' +
-        " padding=[" + std::to_string(textSettings.overlay.paddingLeft) + ',' +
-                         std::to_string(textSettings.overlay.paddingRight) + ',' +
-                         std::to_string(textSettings.overlay.paddingTop) + ',' +
-                         std::to_string(textSettings.overlay.paddingBottom) + ']' +
-        " colour=[" + std::to_string(textSettings.overlay.colour[0]) + ',' +
-                        std::to_string(textSettings.overlay.colour[1]) + ',' +
-                        std::to_string(textSettings.overlay.colour[2]) + ',' +
-                        std::to_string(textSettings.overlay.colour[3]) + ']' +
-        " opacity=" + std::to_string(textSettings.overlay.opacity));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
@@ -1507,9 +1441,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (sourceImage && sourceView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_source_pixel_format=true output_canvas_only=true");
-    } else if (textSettings.overlay.enabled && !textSettings.text.empty() && glyphs.pixels.empty()) {
-      Logger::instance().write("RENDER_WARNING",
-          instancePrefix(instance) + " text_rasterization_failed=true output_continues=true");
     } else if (zoneRasterizationFailed) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " zone_text_rasterization_failed=true output_continues=true");

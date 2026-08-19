@@ -11,7 +11,7 @@ if fusion == nil then
 end
 
 local chart_path = os.getenv("WIPREVIEW_VISUAL_CHART") or
-                   "/private/tmp/wipreview-p1a-chart.png"
+                   "/private/tmp/wipreview-visual-chart.png"
 local previous = fusion.CurrentComp
 local comp = nil
 for attempt = 1, 30 do
@@ -20,13 +20,13 @@ for attempt = 1, 30 do
     bmd.wait(1)
 end
 if comp == nil then
-    error("Fusion failed to create the P1a visual-validation composition")
+    error("Fusion failed to create the visual-validation composition")
 end
 
 local ok, failure = pcall(function()
     comp:Lock()
     comp:SetAttrs({
-        COMPS_Name = "WIPReview_P1A_VISUAL_VALIDATION_DO_NOT_SAVE",
+        COMPS_Name = "WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE",
         COMPN_GlobalStart = 0,
         COMPN_GlobalEnd = 0,
         COMPN_RenderStart = 0,
@@ -42,8 +42,8 @@ local ok, failure = pcall(function()
     local probes = {}
     for placement = 0, 4 do
         local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", placement + 1, 0)
-        if probe == nil then error("Unable to create P1a probe " .. names[placement + 1]) end
-        probe:SetAttrs({TOOLS_Name = "P1A_" .. names[placement + 1]})
+        if probe == nil then error("Unable to create geometry probe " .. names[placement + 1]) end
+        probe:SetAttrs({TOOLS_Name = "GEOMETRY_" .. names[placement + 1]})
         probe.Source = loader.Output
         probe.requestCustomRoD = 1
         probe.canvasMode = 1
@@ -51,20 +51,20 @@ local ok, failure = pcall(function()
         probe.requestedHeight = 1080
         probe.placementMode = placement
         probe.resampleFilter = 2
-        probe.scenarioLabel = "VISUAL_P1A_" .. names[placement + 1]
+        probe.scenarioLabel = "VISUAL_GEOMETRY_" .. names[placement + 1]
         probe.AllowResize = 1
         probes[placement + 1] = probe
     end
 
     local host = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", 3, 1)
     if host == nil then error("Unable to create Host Raster probe") end
-    host:SetAttrs({TOOLS_Name = "P1A_HOST_RASTER_IDENTITY"})
+    host:SetAttrs({TOOLS_Name = "GEOMETRY_HOST_RASTER_IDENTITY"})
     host.Source = loader.Output
     host.requestCustomRoD = 1
     host.canvasMode = 0
     host.placementMode = 0
     host.resampleFilter = 2
-    host.scenarioLabel = "VISUAL_P1A_HOST_RASTER"
+    host.scenarioLabel = "VISUAL_GEOMETRY_HOST_RASTER"
     host.AllowResize = 1
 
     local function add_blanking(name, preset, custom_aspect, opacity, enabled, x)
@@ -89,10 +89,10 @@ local ok, failure = pcall(function()
         return probe
     end
 
-    local blanking_opaque = add_blanking("P1B_BLANK_2_00_OPAQUE", 2, 2.0, 1.0, 1, 1)
-    add_blanking("P1B_BLANK_2_00_HALF", 2, 2.0, 0.5, 1, 2)
-    add_blanking("P1B_BLANK_OFF", 2, 2.0, 1.0, 0, 3)
-    add_blanking("P1B_PILLAR_1_33", 4, 1.33, 1.0, 1, 4)
+    add_blanking("BLANKING_2_00_OPAQUE", 2, 2.0, 1.0, 1, 1)
+    add_blanking("BLANKING_2_00_HALF", 2, 2.0, 0.5, 1, 2)
+    add_blanking("BLANKING_OFF", 2, 2.0, 1.0, 0, 3)
+    add_blanking("BLANKING_PILLAR_1_33", 4, 1.33, 1.0, 1, 4)
 
     local function add_text(name, text, anchor, font_size, font_style,
                             font_family, blanking_enabled, x)
@@ -110,9 +110,6 @@ local ok, failure = pcall(function()
         probe.blankingAspectPreset = 2
         probe.blankingAspectCustom = 2.0
         probe.blankingOpacity = 1.0
-        probe.staticTextEnabled = 1
-        probe.staticText = text
-        probe.staticTextAnchor = anchor
         probe.fontFamily = font_family
         probe.fontStyle = font_style
         probe.fontSize = font_size
@@ -121,23 +118,29 @@ local ok, failure = pcall(function()
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
         probe.paddingBottom = 0.020
+        if anchor == 0 then probe.tlEnabled = 1; probe.tlText = text
+        elseif anchor == 1 then probe.tcEnabled = 1; probe.tcText = text
+        elseif anchor == 2 then probe.trEnabled = 1; probe.trText = text
+        elseif anchor == 3 then probe.blEnabled = 1; probe.blText = text
+        elseif anchor == 4 then probe.bcEnabled = 1; probe.bcText = text
+        else probe.brEnabled = 1; probe.brText = text end
         probe.scenarioLabel = "VISUAL_" .. name
         probe.AllowResize = 1
         return probe
     end
 
-    local text_top_left = add_text(
-        "P1C_UTF8_TOP_LEFT", "SECUENCIA ÁRTICO — VERSIÓN 03", 0,
+    add_text(
+        "P2A_TEXT_UTF8_TOP_LEFT", "SECUENCIA ÁRTICO — VERSIÓN 03", 0,
         0.040, 0, "System Default", 0, 1)
-    add_text("P1C_UTF8_BOTTOM_RIGHT", "SECUENCIA ÁRTICO — VERSIÓN 03", 5,
+    add_text("P2A_TEXT_UTF8_BOTTOM_RIGHT", "SECUENCIA ÁRTICO — VERSIÓN 03", 5,
              0.040, 0, "System Default", 0, 2)
-    add_text("P1C_TOP_LARGE", "TOP GROWS DOWN", 0,
+    add_text("P2A_TEXT_TOP_LARGE", "TOP GROWS DOWN", 0,
              0.080, 1, "System Default", 0, 3)
-    add_text("P1C_BOTTOM_LARGE", "BOTTOM GROWS UP", 3,
+    add_text("P2A_TEXT_BOTTOM_LARGE", "BOTTOM GROWS UP", 3,
              0.080, 1, "System Default", 0, 4)
-    add_text("P1C_TEXT_OVER_BLANKING", "TEXT OVER BLANKING", 1,
+    add_text("P2A_TEXT_OVER_BLANKING", "TEXT OVER BLANKING", 1,
              0.040, 0, "System Default", 1, 5)
-    add_text("P1C_FONT_FALLBACK", "FONT FALLBACK", 2,
+    add_text("P2A_TEXT_FONT_FALLBACK", "FONT FALLBACK", 2,
              0.040, 0, "WIPReview Font That Does Not Exist 7F3A", 0, 6)
 
     local function add_zones(name, blanking_enabled, configure, x)
@@ -155,7 +158,6 @@ local ok, failure = pcall(function()
         probe.blankingAspectPreset = 2
         probe.blankingAspectCustom = 2.0
         probe.blankingOpacity = 1.0
-        probe.staticTextEnabled = 0
         probe.fontFamily = "System Default"
         probe.fontStyle = 0
         probe.fontSize = 0.040

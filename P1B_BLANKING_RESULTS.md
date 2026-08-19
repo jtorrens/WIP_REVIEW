@@ -33,25 +33,24 @@ tal como permite el P1 de la especificación para aislar geometría.
 
 ## Automatización Fusion
 
-El smoke acumulativo P1a/P1b añade cuatro escenarios sobre Output `1920×1080`:
+El smoke acumulativo añade cuatro escenarios de blanking sobre Output `1920×1080`:
 
-- `AUTOMATED_P1B_B01_2_00`;
-- `AUTOMATED_P1B_B02_HALF`;
-- `AUTOMATED_P1B_B03_OFF`;
-- `AUTOMATED_P1B_B04_PILLAR`.
+- `AUTOMATED_BLANKING_B01_2_00`;
+- `AUTOMATED_BLANKING_B02_HALF`;
+- `AUTOMATED_BLANKING_B03_OFF`;
+- `AUTOMATED_BLANKING_B04_PILLAR`.
 
 Valida en el log `EDITORIAL_BLANKING` el aspect, Output PAR, aperture físico y
-opacity. La composición visual añade nodos `P1B_*` con los mismos casos y usa
+opacity. La composición visual añade nodos `BLANKING_*` con los mismos casos y usa
 Fill/Crop upstream para que el blanking se observe aislado de las bandas que
 produciría Fit con una fuente de aspect distinto.
 
 ```sh
-scripts/run_fusion_p1a_smoke.sh
-scripts/open_fusion_p1a_visual.sh
+scripts/run_fusion_smoke.sh
+scripts/open_fusion_visual.sh
 ```
 
-Los nombres de los scripts conservan `p1a` para no romper el harness publicado;
-desde 0.3.0 su cobertura es acumulativa P1a/P1b.
+La cobertura del harness es acumulativa para geometría, blanking y texto.
 
 ## Resultado automático — Fusion Studio 21.0.4
 

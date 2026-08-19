@@ -1,25 +1,28 @@
-# WIP Review OFX — P0 Probe + P1 Static Formatter
+# WIP Review OFX — P0 Probe + P1 Formatter + P2a Six Zones
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
-resampling CPU de referencia. P1b añade blanking editorial independiente y P1c
-un único texto estático UTF-8.
+resampling CPU de referencia. P1b añade blanking editorial independiente y P2a
+incorpora el contrato tipográfico vigente de seis zonas simultáneas.
 
-Este repositorio **no implementa** seis zonas, tokens dinámicos, outline,
-shadow, overflow, transformaciones OCIO de píxeles, GPU ni presets de estado.
+Este repositorio **no implementa** todavía tokens dinámicos, outline, shadow,
+overflow, transformaciones OCIO de píxeles, GPU ni presets de estado.
 El probe anuncia y registra la
 negociación de color OFX 1.5.1/OCIO, pero no transforma píxeles por color.
 
-## P1c — Static Text
+## P2a — Six Zones
 
-P1c compone un único string estático después de placement y blanking. Admite
-UTF-8, seis anclajes, familia/estilo/tamaño globales, color, opacity y padding
-normalizado. El tamaño se expresa como fracción de la altura física del Output;
-los anclajes superiores crecen hacia abajo y los inferiores hacia arriba.
+P2a añade las zonas estáticas `TL`, `TC`, `TR`, `BL`, `BC` y `BR`. Cada zona
+tiene enabled, string UTF-8, offsets normalizados y overrides opcionales de
+tamaño, color y opacity. La alineación se deduce de la zona; fuente, estilo,
+padding y valores base siguen siendo globales.
 
-En macOS el raster aislado usa CoreText/CoreGraphics. Una familia ausente cae a
-la fuente de sistema, nunca aborta el render, y el fallback queda registrado.
-Véase [P1C_STATIC_TEXT_RESULTS.md](P1C_STATIC_TEXT_RESULTS.md).
+Las zonas se componen en orden `TL → TC → TR → BL → BC → BR` después del
+blanking. El contrato es clean-forward: no conserva parámetros ni rutas de
+render de versiones anteriores. En macOS el raster usa CoreText/CoreGraphics,
+admite UTF-8 y cae a la fuente de sistema si la familia vigente no está
+disponible. Véase
+[P2A_SIX_ZONE_RESULTS.md](P2A_SIX_ZONE_RESULTS.md).
 
 ## P1b — Editorial Blanking
 
@@ -75,8 +78,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P1c)`: anuncia Filter y General;
-- `WIP Review Probe (P1c Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P2a)`: anuncia Filter y General;
+- `WIP Review Probe (P2a Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -169,7 +172,7 @@ Cada línea contiene timestamp, PID, evento y pares `clave=valor`. Los eventos
 `INSTANCE_CREATE`, `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`,
 `RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`,
 `TEMPORAL_STRING_PROBE`, `STATIC_FORMATTER`, `EDITORIAL_BLANKING` y
-`STATIC_TEXT` forman el registro principal.
+`TEXT_ZONE` forma el registro tipográfico principal.
 
 Para usar otra ruta, inicia el host desde un entorno que contenga:
 
@@ -193,13 +196,14 @@ se modifica.
 P1b añade los escenarios B01–B04: aspect 2.00, opacity 0.5, blanking off y
 pillarbox Custom 1.33. El mismo runner mantiene toda la cobertura P1a.
 
-P1c añade UTF-8, crecimiento desde anclajes superior/inferior, fallback de
-familia ausente y texto compuesto después del blanking.
+La cobertura tipográfica valida UTF-8, crecimiento desde anclajes
+superior/inferior, fuente ausente, texto sobre blanking, seis zonas simultáneas,
+overrides y offsets.
 
 Con el bundle ya instalado:
 
 ```sh
-scripts/run_fusion_p1a_smoke.sh
+scripts/run_fusion_smoke.sh
 ```
 
 También está disponible como target explícito, fuera de `ctest` porque necesita
@@ -217,14 +221,14 @@ sistema sigue siendo una condición externa al harness.
 
 Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
 deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
-1:1, Host Raster, los cuatro casos visuales P1b y seis casos P1c:
+1:1, Host Raster, los casos de blanking y la matriz tipográfica P2a:
 
 ```sh
-scripts/open_fusion_p1a_visual.sh
+scripts/open_fusion_visual.sh
 ```
 
-Selecciona cada nodo `P1A_*`, `P1B_*` o `P1C_*` y pulsa `1` o `2` para verlo.
-La composición se llama `WIPReview_P1A_VISUAL_VALIDATION_DO_NOT_SAVE`; es
+Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*` o `P2A_*` y pulsa `1` o `2`.
+La composición se llama `WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE`; es
 intencionadamente temporal y no modifica la composición que estuviera activa.
 
 ## Protocolo P0-Raster obligatorio

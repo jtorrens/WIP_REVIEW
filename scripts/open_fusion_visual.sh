@@ -4,7 +4,7 @@ set -eu
 FUSION_APP="/Applications/Blackmagic Fusion 21/Fusion.app"
 FUSCRIPT="$FUSION_APP/Contents/Libraries/fuscript"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-CHART_PATH="/private/tmp/wipreview-p1a-chart.png"
+CHART_PATH="/private/tmp/wipreview-visual-chart.png"
 
 if [ ! -x "$FUSCRIPT" ]; then
     echo "FusionScript not found: $FUSCRIPT" >&2
@@ -25,7 +25,7 @@ if ! pgrep -f "$FUSION_APP/Contents/MacOS/Fusion" >/dev/null; then
 fi
 
 script_output=$(WIPREVIEW_VISUAL_CHART="$CHART_PATH" \
-    "$FUSCRIPT" -l lua "$SCRIPT_DIR/fusion_p1a_visual.lua" 2>&1)
+    "$FUSCRIPT" -l lua "$SCRIPT_DIR/fusion_visual.lua" 2>&1)
 printf '%s\n' "$script_output"
 if ! printf '%s\n' "$script_output" | grep -F 'WIPREVIEW_VISUAL_READY' >/dev/null; then
     echo "Fusion visual-validation composition was not created" >&2

@@ -38,7 +38,7 @@ end
 local ok, failure = pcall(function()
     comp:Lock()
     comp:SetAttrs({
-        COMPS_Name = "WIPReview_Automated_P1A_Smoke",
+        COMPS_Name = "WIPReview_Automated_Cumulative_Smoke",
         COMPN_GlobalStart = 0,
         COMPN_GlobalEnd = 1,
         COMPN_RenderStart = 0,
@@ -61,10 +61,7 @@ local ok, failure = pcall(function()
 
     local function render_probe(reg_id, name, placement, canvas_mode, x, y,
                                 blanking_enabled, blanking_preset,
-                                blanking_custom, blanking_opacity,
-                                text_enabled, text_value, text_anchor,
-                                font_family, font_style, font_size, text_opacity,
-                                configure_zones)
+                                blanking_custom, blanking_opacity, configure_zones)
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -80,13 +77,10 @@ local ok, failure = pcall(function()
         probe.blankingAspectPreset = blanking_preset or 3
         probe.blankingAspectCustom = blanking_custom or 2.0
         probe.blankingOpacity = blanking_opacity or 1.0
-        probe.staticTextEnabled = text_enabled or 0
-        probe.staticText = text_value or "SECUENCIA ÁRTICO — VERSIÓN 03"
-        probe.staticTextAnchor = text_anchor or 0
-        probe.fontFamily = font_family or "System Default"
-        probe.fontStyle = font_style or 0
-        probe.fontSize = font_size or 0.028
-        probe.textOpacity = text_opacity or 1.0
+        probe.fontFamily = "System Default"
+        probe.fontStyle = 0
+        probe.fontSize = 0.028
+        probe.textOpacity = 1.0
         if configure_zones ~= nil then configure_zones(probe) end
         -- Fusion may reset string values while subsequent geometry parameters
         -- invalidate the OFX node, so the diagnostic marker is assigned last.
@@ -106,45 +100,51 @@ local ok, failure = pcall(function()
     for placement = 0, 4 do
         probe = render_probe(
             "ofx.com.jtorrens.WIPReviewProbe.Filter",
-            "AUTOMATED_P1A_FILTER_" .. placement_names[placement + 1],
+            "AUTOMATED_GEOMETRY_FILTER_" .. placement_names[placement + 1],
             placement, 1, placement + 1, 0)
     end
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P1A_GENERAL_FIT", 1, 1, 1, 1)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1A_HOST_RASTER", 0, 0, 2, 1)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B01_2_00", 0, 1, 1, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_GEOMETRY_GENERAL_FIT", 1, 1, 1, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_GEOMETRY_HOST_RASTER", 0, 0, 2, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B01_2_00", 0, 1, 1, 2,
                  1, 2, 2.0, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B02_HALF", 0, 1, 2, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B02_HALF", 0, 1, 2, 2,
                  1, 2, 2.0, 0.5)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B03_OFF", 0, 1, 3, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B03_OFF", 0, 1, 3, 2,
                  0, 2, 2.0, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1B_B04_PILLAR", 0, 1, 4, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B04_PILLAR", 0, 1, 4, 2,
                  1, 4, 1.33, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_UTF8_TL", 0, 1, 1, 3,
-                 0, 2, 2.0, 1.0, 1, "SECUENCIA ÁRTICO — VERSIÓN 03", 0,
-                 "System Default", 0, 0.028, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_TOP_LARGE", 0, 1, 2, 3,
-                 0, 2, 2.0, 1.0, 1, "TOP GROWS DOWN", 0,
-                 "System Default", 1, 0.056, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_BOTTOM_LARGE", 0, 1, 3, 3,
-                 0, 2, 2.0, 1.0, 1, "BOTTOM GROWS UP", 3,
-                 "System Default", 1, 0.056, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_FONT_FALLBACK", 0, 1, 4, 3,
-                 0, 2, 2.0, 1.0, 1, "FONT FALLBACK", 2,
-                 "WIPReview Font That Does Not Exist 7F3A", 0, 0.028, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P1C_OVER_BLANKING", 0, 1, 5, 3,
-                 1, 2, 2.0, 1.0, 1, "TEXT OVER BLANKING", 1,
-                 "System Default", 0, 0.028, 1.0)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_UTF8_TL", 0, 1, 1, 3,
+                 0, 2, 2.0, 1.0, function(p)
+        p.tlEnabled = 1; p.tlText = "SECUENCIA ÁRTICO — VERSIÓN 03"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_TOP_LARGE", 0, 1, 2, 3,
+                 0, 2, 2.0, 1.0, function(p)
+        p.fontStyle = 1; p.fontSize = 0.056
+        p.tlEnabled = 1; p.tlText = "TOP GROWS DOWN"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_BOTTOM_LARGE", 0, 1, 3, 3,
+                 0, 2, 2.0, 1.0, function(p)
+        p.fontStyle = 1; p.fontSize = 0.056
+        p.blEnabled = 1; p.blText = "BOTTOM GROWS UP"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_FONT_FALLBACK", 0, 1, 4, 3,
+                 0, 2, 2.0, 1.0, function(p)
+        p.fontFamily = "WIPReview Font That Does Not Exist 7F3A"
+        p.trEnabled = 1; p.trText = "FONT FALLBACK"
+    end)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_OVER_BLANKING", 0, 1, 5, 3,
+                 1, 2, 2.0, 1.0, function(p)
+        p.tcEnabled = 1; p.tcText = "TEXT OVER BLANKING"
+    end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_SIX_ZONES", 2, 1, 1, 4,
-                 0, 2, 2.0, 1.0, 0, nil, 0,
-                 "System Default", 0, 0.028, 1.0, function(p)
+                 0, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
         p.tlText = "TL Á"; p.tcText = "TC —"; p.trText = "TR Ó"
         p.blText = "BL"; p.bcText = "BC"; p.brText = "BR"
     end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_OVERRIDES", 2, 1, 2, 4,
-                 0, 2, 2.0, 1.0, 0, nil, 0,
-                 "System Default", 0, 0.028, 1.0, function(p)
+                 0, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.tcEnabled = 1; p.brEnabled = 1; p.blEnabled = 1
         p.tlUseSizeOverride = 1; p.tlSize = 0.056
         p.tcUseColorOverride = 1; p.tcColor = {0.0, 1.0, 0.0, 1.0}
@@ -154,8 +154,7 @@ local ok, failure = pcall(function()
         p.brText = "BR 25%"; p.blText = "BL OFFSET"
     end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_WITH_BLANKING", 2, 1, 3, 4,
-                 1, 2, 2.0, 1.0, 0, nil, 0,
-                 "System Default", 0, 0.028, 1.0, function(p)
+                 1, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.brEnabled = 1
         p.tlText = "TL OVER BLANKING"; p.brText = "BR OVER BLANKING"
     end)
