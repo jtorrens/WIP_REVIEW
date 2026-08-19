@@ -335,6 +335,21 @@ void testSystemTextRasterizerUTF8() {
   assert(!larger.pixels.empty());
   assert(larger.height > regular.height);
 
+  const auto orientation = wipreview::text::rasterizeUTF8(
+      "F", "System Default", wipreview::text::FontStyle::Regular, 96.0);
+  assert(!orientation.pixels.empty() && orientation.height >= 3);
+  std::uint64_t bottomInk = 0;
+  std::uint64_t topInk = 0;
+  for (int y = 0; y < orientation.height / 3; ++y) {
+    for (int x = 0; x < orientation.width; ++x) {
+      bottomInk += orientation.pixels[static_cast<std::size_t>(
+          y * orientation.width + x)];
+      topInk += orientation.pixels[static_cast<std::size_t>(
+          (orientation.height - 1 - y) * orientation.width + x)];
+    }
+  }
+  assert(topInk > bottomInk);  // Mask rows use OFX's bottom-up coordinates.
+
   const auto fallback = wipreview::text::rasterizeUTF8(
       "FALLBACK", "WIPReview Font That Does Not Exist 7F3A",
       wipreview::text::FontStyle::Regular, 32.0);

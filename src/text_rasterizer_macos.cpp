@@ -131,6 +131,7 @@ GlyphMask rasterizeUTF8(const std::string& text, const std::string& fontFamily,
     CGContextSetShouldSmoothFonts(context.get(), true);
     CGContextSetGrayFillColor(context.get(), 1.0, 1.0);
     CGContextSetTextDrawingMode(context.get(), kCGTextFill);
+    CGContextSetTextMatrix(context.get(), CGAffineTransformIdentity);
     CGContextSetTextPosition(context.get(), static_cast<CGFloat>(-minX),
                              static_cast<CGFloat>(-minY));
     CTLineDraw(line.get(), context.get());
@@ -154,8 +155,11 @@ GlyphMask rasterizeUTF8(const std::string& text, const std::string& fontFamily,
     result.pixels.resize(static_cast<std::size_t>(result.width)
                        * static_cast<std::size_t>(result.height));
     for (int y = 0; y < result.height; ++y) {
+      // CGBitmapContext stores its first row at the visual top. OFX image
+      // coordinates grow upward, so expose the glyph mask bottom-up as well.
+      const int sourceY = cropY2 - 1 - y;
       std::memcpy(result.pixels.data() + static_cast<std::size_t>(y * result.width),
-                  raw.data() + static_cast<std::size_t>((y + cropY1) * width + cropX1),
+                  raw.data() + static_cast<std::size_t>(sourceY * width + cropX1),
                   static_cast<std::size_t>(result.width));
     }
     return result;
