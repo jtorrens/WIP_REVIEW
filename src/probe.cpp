@@ -68,6 +68,42 @@ constexpr char kParamPaddingLeft[] = "paddingLeft";
 constexpr char kParamPaddingRight[] = "paddingRight";
 constexpr char kParamPaddingTop[] = "paddingTop";
 constexpr char kParamPaddingBottom[] = "paddingBottom";
+
+struct ZoneParamNames {
+  const char* label;
+  const char* group;
+  const char* enabled;
+  const char* text;
+  const char* useSize;
+  const char* size;
+  const char* useColour;
+  const char* colour;
+  const char* useOpacity;
+  const char* opacity;
+  const char* offsetX;
+  const char* offsetY;
+};
+
+constexpr std::array<ZoneParamNames, 6> kZoneParams{{
+    {"TL", "tlZone", "tlEnabled", "tlText", "tlUseSizeOverride", "tlSize",
+     "tlUseColorOverride", "tlColor", "tlUseOpacityOverride", "tlOpacity",
+     "tlOffsetX", "tlOffsetY"},
+    {"TC", "tcZone", "tcEnabled", "tcText", "tcUseSizeOverride", "tcSize",
+     "tcUseColorOverride", "tcColor", "tcUseOpacityOverride", "tcOpacity",
+     "tcOffsetX", "tcOffsetY"},
+    {"TR", "trZone", "trEnabled", "trText", "trUseSizeOverride", "trSize",
+     "trUseColorOverride", "trColor", "trUseOpacityOverride", "trOpacity",
+     "trOffsetX", "trOffsetY"},
+    {"BL", "blZone", "blEnabled", "blText", "blUseSizeOverride", "blSize",
+     "blUseColorOverride", "blColor", "blUseOpacityOverride", "blOpacity",
+     "blOffsetX", "blOffsetY"},
+    {"BC", "bcZone", "bcEnabled", "bcText", "bcUseSizeOverride", "bcSize",
+     "bcUseColorOverride", "bcColor", "bcUseOpacityOverride", "bcOpacity",
+     "bcOffsetX", "bcOffsetY"},
+    {"BR", "brZone", "brEnabled", "brText", "brUseSizeOverride", "brSize",
+     "brUseColorOverride", "brColor", "brUseOpacityOverride", "brOpacity",
+     "brOffsetX", "brOffsetY"},
+}};
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
 
@@ -297,6 +333,19 @@ void logHostCapabilities() {
 }
 
 struct InstanceData {
+  struct ZoneHandles {
+    OfxParamHandle enabled = nullptr;
+    OfxParamHandle text = nullptr;
+    OfxParamHandle useSize = nullptr;
+    OfxParamHandle size = nullptr;
+    OfxParamHandle useColour = nullptr;
+    OfxParamHandle colour = nullptr;
+    OfxParamHandle useOpacity = nullptr;
+    OfxParamHandle opacity = nullptr;
+    OfxParamHandle offsetX = nullptr;
+    OfxParamHandle offsetY = nullptr;
+  };
+
   OfxImageEffectHandle effect = nullptr;
   OfxImageClipHandle source = nullptr;
   OfxImageClipHandle output = nullptr;
@@ -326,6 +375,7 @@ struct InstanceData {
   OfxParamHandle paddingRight = nullptr;
   OfxParamHandle paddingTop = nullptr;
   OfxParamHandle paddingBottom = nullptr;
+  std::array<ZoneHandles, 6> zones{};
   std::string context;
   std::uint64_t id = 0;
 };
@@ -434,7 +484,7 @@ bool readRodRequest(const InstanceData* instance, bool& enabled, int& width, int
 
 void defineChoiceParam(OfxParamSetHandle params, const char* name, const char* label,
                        const std::vector<const char*>& choices, int defaultValue,
-                       const char* hint) {
+                       const char* hint, const char* parent = nullptr) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeChoice, name, &properties) != kOfxStatOK) return;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
@@ -445,6 +495,7 @@ void defineChoiceParam(OfxParamSetHandle params, const char* name, const char* l
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, defaultValue);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+  if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
 }
 
 std::size_t pixelBytes(OfxPropertySetHandle image) {
@@ -676,6 +727,71 @@ TextRenderSettings readTextSettings(const InstanceData* instance, OfxTime time,
   return settings;
 }
 
+struct ZoneTextSettings {
+  TextRenderSettings layer;
+  bool useSizeOverride = false;
+  bool useColourOverride = false;
+  bool useOpacityOverride = false;
+};
+
+ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t index,
+                                      OfxTime time, const TextRenderSettings& global,
+                                      const wipreview::probe::ImageView& outputView) {
+  ZoneTextSettings settings;
+  settings.layer = global;
+  settings.layer.overlay.enabled = false;
+  settings.layer.overlay.anchor = static_cast<wipreview::probe::TextAnchor>(index);
+  settings.layer.overlay.offsetX = 0.0;
+  settings.layer.overlay.offsetY = 0.0;
+  settings.layer.text.clear();
+  if (!instance || index >= instance->zones.size()) return settings;
+
+  const auto& handles = instance->zones[index];
+  int enabled = 0;
+  int useSize = 0;
+  int useColour = 0;
+  int useOpacity = 0;
+  char* text = nullptr;
+  double size = global.normalizedSize;
+  double colour[4] = {
+      global.overlay.colour[0], global.overlay.colour[1],
+      global.overlay.colour[2], global.overlay.colour[3]};
+  double opacity = global.overlay.opacity;
+  double offsetX = 0.0;
+  double offsetY = 0.0;
+  if (handles.enabled) gParameterSuite->paramGetValueAtTime(handles.enabled, time, &enabled);
+  if (handles.text) gParameterSuite->paramGetValueAtTime(handles.text, time, &text);
+  if (handles.useSize) gParameterSuite->paramGetValueAtTime(handles.useSize, time, &useSize);
+  if (handles.size) gParameterSuite->paramGetValueAtTime(handles.size, time, &size);
+  if (handles.useColour) gParameterSuite->paramGetValueAtTime(handles.useColour, time, &useColour);
+  if (handles.colour) {
+    gParameterSuite->paramGetValueAtTime(handles.colour, time,
+                                         &colour[0], &colour[1], &colour[2], &colour[3]);
+  }
+  if (handles.useOpacity) gParameterSuite->paramGetValueAtTime(handles.useOpacity, time, &useOpacity);
+  if (handles.opacity) gParameterSuite->paramGetValueAtTime(handles.opacity, time, &opacity);
+  if (handles.offsetX) gParameterSuite->paramGetValueAtTime(handles.offsetX, time, &offsetX);
+  if (handles.offsetY) gParameterSuite->paramGetValueAtTime(handles.offsetY, time, &offsetY);
+
+  settings.useSizeOverride = useSize != 0;
+  settings.useColourOverride = useColour != 0;
+  settings.useOpacityOverride = useOpacity != 0;
+  settings.layer.overlay.enabled = enabled != 0;
+  settings.layer.text = text ? text : "";
+  settings.layer.overlay.offsetX = std::clamp(offsetX, -1.0, 1.0);
+  settings.layer.overlay.offsetY = std::clamp(offsetY, -1.0, 1.0);
+  if (settings.useSizeOverride) settings.layer.normalizedSize = std::clamp(size, 0.001, 1.0);
+  if (settings.useColourOverride) {
+    for (int channel = 0; channel < 4; ++channel) {
+      settings.layer.overlay.colour[channel] = static_cast<float>(colour[channel]);
+    }
+  }
+  if (settings.useOpacityOverride) settings.layer.overlay.opacity = static_cast<float>(opacity);
+  settings.layer.pixelSize = settings.layer.normalizedSize
+                           * std::max(0, outputView.bounds.y2 - outputView.bounds.y1);
+  return settings;
+}
+
 OfxStatus load() {
   if (!gHost || !gHost->fetchSuite) return kOfxStatErrMissingHostFeature;
   gImageSuite = static_cast<const OfxImageEffectSuiteV1*>(
@@ -718,15 +834,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P1c Filter Only)"
-                                          : "WIP Review Probe (P1c)");
+                               filterOnly ? "WIP Review Probe (P2a Filter Only)"
+                                          : "WIP Review Probe (P2a)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Static Formatter P1c — Filter Only"
-                                          : "WIP Review Static Formatter P1c");
+                               filterOnly ? "WIP Review Six Zone Overlay P2a — Filter Only"
+                                          : "WIP Review Six Zone Overlay P2a");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P1c static formatter: review raster, placement, editorial blanking and one static UTF-8 text, with host diagnostics.");
+      "P2a overlay: review raster, placement, blanking and six independent static UTF-8 text zones, with P1c compatibility and host diagnostics.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -767,7 +883,8 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 }
 
 void defineStringParam(OfxParamSetHandle params, const char* name, const char* label,
-                       const char* defaultValue, bool animates, const char* hint) {
+                       const char* defaultValue, bool animates, const char* hint,
+                       const char* parent = nullptr) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeString, name, &properties) != kOfxStatOK) return;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
@@ -775,12 +892,13 @@ void defineStringParam(OfxParamSetHandle params, const char* name, const char* l
   gPropertySuite->propSetString(properties, kOfxParamPropStringMode, 0, kOfxParamStringIsSingleLine);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, animates ? 1 : 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+  if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
 }
 
 void defineDoubleParam(OfxParamSetHandle params, const char* name, const char* label,
                        double defaultValue, double minimum, double maximum,
                        double displayMinimum, double displayMaximum,
-                       const char* hint) {
+                       const char* hint, const char* parent = nullptr) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeDouble, name, &properties) != kOfxStatOK) return;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
@@ -791,6 +909,65 @@ void defineDoubleParam(OfxParamSetHandle params, const char* name, const char* l
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, displayMaximum);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   if (hint) gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+  if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
+}
+
+void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(params, kOfxParamTypeGroup, zone.group,
+                                   &properties) != kOfxStatOK) return;
+  const std::string groupLabel = std::string(zone.label) + " Zone";
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, groupLabel.c_str());
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.enabled, &properties);
+  const std::string enabledLabel = std::string(zone.label) + " Enabled";
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, enabledLabel.c_str());
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
+
+  const std::string textLabel = std::string(zone.label) + " Text";
+  defineStringParam(params, zone.text, textLabel.c_str(), "", false,
+                    "Static UTF-8 zone text. Dynamic tokens are added in P3.", zone.group);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.useSize, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Use Size Override");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
+  defineDoubleParam(params, zone.size, "Size Override", 0.028,
+                    0.001, 1.0, 0.005, 0.10,
+                    "Normalized to output height; used only when override is enabled.",
+                    zone.group);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.useColour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Use Color Override");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, zone.colour, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Color Override");
+  const double colourDefault[4] = {1.0, 1.0, 1.0, 1.0};
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, colourDefault);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
+
+  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.useOpacity, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Use Opacity Override");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
+  defineDoubleParam(params, zone.opacity, "Opacity Override", 1.0,
+                    0.0, 1.0, 0.0, 1.0,
+                    "Replaces global text opacity when override is enabled.", zone.group);
+
+  defineDoubleParam(params, zone.offsetX, "Offset X", 0.0,
+                    -1.0, 1.0, -0.25, 0.25,
+                    "Normalized to output width; positive values move right.", zone.group);
+  defineDoubleParam(params, zone.offsetY, "Offset Y", 0.0,
+                    -1.0, 1.0, -0.25, 0.25,
+                    "Normalized to output height; positive values move up.", zone.group);
 }
 
 OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
@@ -879,16 +1056,16 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamStaticTextEnabled, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Static Text Enabled");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Legacy P1c Text Enabled");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
-      "P1c draws one static UTF-8 text after placement and blanking.");
+      "Compatibility control for saved P1c compositions; P2a zones render after it.");
 
-  defineStringParam(params, kParamStaticText, "Static Text",
+  defineStringParam(params, kParamStaticText, "Legacy P1c Text",
                     "SECUENCIA ÁRTICO — VERSIÓN 03", false,
                     "Single UTF-8 validation string; dynamic tokens are not expanded in P1c.");
-  defineChoiceParam(params, kParamStaticTextAnchor, "Static Text Anchor",
+  defineChoiceParam(params, kParamStaticTextAnchor, "Legacy P1c Anchor",
                     {"Top Left", "Top Center", "Top Right",
                      "Bottom Left", "Bottom Center", "Bottom Right"}, 0,
                     "Visible text bounds are anchored to normalized output padding.");
@@ -916,6 +1093,8 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     "Normalized to output height.");
   defineDoubleParam(params, kParamPaddingBottom, "Padding Bottom", 0.020, 0.0, 1.0, 0.0, 0.25,
                     "Normalized to output height.");
+
+  for (const auto& zone : kZoneParams) defineZoneParams(params, zone);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
@@ -988,6 +1167,20 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamPaddingRight, &instance->paddingRight, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingTop, &instance->paddingTop, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPaddingBottom, &instance->paddingBottom, nullptr);
+  for (std::size_t index = 0; index < kZoneParams.size(); ++index) {
+    const auto& names = kZoneParams[index];
+    auto& handles = instance->zones[index];
+    gParameterSuite->paramGetHandle(params, names.enabled, &handles.enabled, nullptr);
+    gParameterSuite->paramGetHandle(params, names.text, &handles.text, nullptr);
+    gParameterSuite->paramGetHandle(params, names.useSize, &handles.useSize, nullptr);
+    gParameterSuite->paramGetHandle(params, names.size, &handles.size, nullptr);
+    gParameterSuite->paramGetHandle(params, names.useColour, &handles.useColour, nullptr);
+    gParameterSuite->paramGetHandle(params, names.colour, &handles.colour, nullptr);
+    gParameterSuite->paramGetHandle(params, names.useOpacity, &handles.useOpacity, nullptr);
+    gParameterSuite->paramGetHandle(params, names.opacity, &handles.opacity, nullptr);
+    gParameterSuite->paramGetHandle(params, names.offsetX, &handles.offsetX, nullptr);
+    gParameterSuite->paramGetHandle(params, names.offsetY, &handles.offsetY, nullptr);
+  }
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
 
   Logger::instance().write("INSTANCE_CREATE",
@@ -1210,6 +1403,27 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         glyphs.view(), textSettings.overlay);
     const auto textOrigin = wipreview::probe::computeTextOrigin(
         outputView.bounds, glyphs.width, glyphs.height, textSettings.overlay);
+    std::array<ZoneTextSettings, 6> zoneSettings{};
+    std::array<wipreview::text::GlyphMask, 6> zoneGlyphs{};
+    std::array<wipreview::probe::PointI, 6> zoneOrigins{};
+    bool zoneRasterizationFailed = false;
+    for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
+      zoneSettings[index] = readZoneTextSettings(
+          instance, index, time, textSettings, outputView);
+      const auto& layer = zoneSettings[index].layer;
+      if (layer.overlay.enabled) {
+        zoneGlyphs[index] = wipreview::text::rasterizeUTF8(
+            layer.text, layer.fontFamily, layer.fontStyle, layer.pixelSize);
+      }
+      wipreview::probe::compositeTextMask(
+          outputView, {renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]},
+          zoneGlyphs[index].view(), layer.overlay);
+      zoneOrigins[index] = wipreview::probe::computeTextOrigin(
+          outputView.bounds, zoneGlyphs[index].width, zoneGlyphs[index].height,
+          layer.overlay);
+      zoneRasterizationFailed = zoneRasterizationFailed ||
+          (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].pixels.empty());
+    }
     Logger::instance().write("STATIC_FORMATTER",
         instancePrefix(instance) +
         " placement=" + std::to_string(static_cast<int>(options.placement)) +
@@ -1257,6 +1471,35 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                         std::to_string(textSettings.overlay.colour[2]) + ',' +
                         std::to_string(textSettings.overlay.colour[3]) + ']' +
         " opacity=" + std::to_string(textSettings.overlay.opacity));
+    for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
+      const auto& zone = zoneSettings[index];
+      const auto& layer = zone.layer;
+      const auto& zoneMask = zoneGlyphs[index];
+      const auto& origin = zoneOrigins[index];
+      Logger::instance().write("TEXT_ZONE",
+          instancePrefix(instance) +
+          " zone=" + quoted(kZoneParams[index].label) +
+          " enabled=" + (layer.overlay.enabled ? "true" : "false") +
+          " text=" + quoted(layer.text.c_str()) +
+          " use_size_override=" + (zone.useSizeOverride ? "true" : "false") +
+          " use_color_override=" + (zone.useColourOverride ? "true" : "false") +
+          " use_opacity_override=" + (zone.useOpacityOverride ? "true" : "false") +
+          " requested_font=" + quoted(layer.fontFamily.c_str()) +
+          " resolved_font=" + quoted(zoneMask.resolvedFont.c_str()) +
+          " fallback=" + (zoneMask.usedFallback ? "true" : "false") +
+          " normalized_size=" + std::to_string(layer.normalizedSize) +
+          " pixel_size=" + std::to_string(layer.pixelSize) +
+          " mask=[" + std::to_string(zoneMask.width) + ',' +
+                       std::to_string(zoneMask.height) + ']' +
+          " origin=[" + std::to_string(origin.x) + ',' + std::to_string(origin.y) + ']' +
+          " offset=[" + std::to_string(layer.overlay.offsetX) + ',' +
+                         std::to_string(layer.overlay.offsetY) + ']' +
+          " colour=[" + std::to_string(layer.overlay.colour[0]) + ',' +
+                          std::to_string(layer.overlay.colour[1]) + ',' +
+                          std::to_string(layer.overlay.colour[2]) + ',' +
+                          std::to_string(layer.overlay.colour[3]) + ']' +
+          " opacity=" + std::to_string(layer.overlay.opacity));
+    }
     if (outputView.pixelBytes == 0) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " unsupported_output_pixel_format=true");
@@ -1267,6 +1510,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     } else if (textSettings.overlay.enabled && !textSettings.text.empty() && glyphs.pixels.empty()) {
       Logger::instance().write("RENDER_WARNING",
           instancePrefix(instance) + " text_rasterization_failed=true output_continues=true");
+    } else if (zoneRasterizationFailed) {
+      Logger::instance().write("RENDER_WARNING",
+          instancePrefix(instance) + " zone_text_rasterization_failed=true output_continues=true");
     } else if (options.placement == wipreview::probe::PlacementMode::Identity &&
                (sourceView.bounds.x2 - sourceView.bounds.x1 != outputView.bounds.x2 - outputView.bounds.x1 ||
                 sourceView.bounds.y2 - sourceView.bounds.y1 != outputView.bounds.y2 - outputView.bounds.y1)) {
