@@ -49,9 +49,20 @@ relación a Graphics White. No atraviesan el CST fotográfico del host.
 Estado del checkpoint matemático: **3/3 suites aprobadas con warnings como
 errores**.
 
+El core dispone ya del recorrido de imagen gestionado:
+
+1. convierte Source premultiplicado a RGB straight;
+2. decodifica el RGB display-referred;
+3. vuelve a premultiplicar para resampling y composición lineal;
+4. mantiene un working image RGBA float;
+5. des-premultiplica, codifica una sola vez y aplica la convención alpha del
+   Output.
+
+Las pruebas confirman tanto Output straight como premultiplicado y descartan
+explícitamente la mezcla directa en valores Gamma 2.4.
+
 ## Pendiente
 
-- buffer intermedio float y una única codificación final;
 - parámetros P4 y resolución Auto/Manual;
 - negociación OFX de Source/Output;
 - log y warning visible para espacio desconocido;

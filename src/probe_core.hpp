@@ -1,5 +1,7 @@
 #pragma once
 
+#include "color_pipeline.hpp"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -136,6 +138,26 @@ void renderStaticFrame(const ImageView& source,
                        const ImageView& destination,
                        RectI renderWindow,
                        const RenderOptions& options) noexcept;
+
+// Decodes straight RGB from the display-referred Source, resamples in
+// display-light linear premultiplied float, and writes that representation to
+// a Float32 RGBA working image. Canvas colours are already relative to
+// Graphics White and therefore do not pass through the image transform.
+void renderManagedDisplayFrame(
+    const ImageView& source,
+    const ImageView& displayLinearDestination,
+    RectI renderWindow,
+    const RenderOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept;
+
+// Encodes the premultiplied display-light working image exactly once into the
+// negotiated Output representation, preserving its alpha convention.
+void encodeManagedDisplayFrame(
+    const ImageView& displayLinearSource,
+    const ImageView& destination,
+    RectI renderWindow,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool outputPremultiplied) noexcept;
 
 [[nodiscard]] RectD computeBlankingAperture(
     RectI outputBounds,

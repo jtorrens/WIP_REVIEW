@@ -155,6 +155,36 @@ std::array<float, 4> readRGBA(const ImageView& source, int x, int y,
   return rgba;
 }
 
+std::array<float, 4> readManagedRGBA(
+    const ImageView& source, int x, int y, bool sourcePremultiplied,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept {
+  const std::byte* pixel = pixelAddress(source, x, y);
+  std::array<float, 4> rgba{0.0F, 0.0F, 0.0F, 1.0F};
+  if (source.channels == 1) {
+    rgba[3] = readChannel(pixel, 0, source.channelType);
+    return rgba;
+  }
+  for (int channel = 0; channel < source.channels; ++channel) {
+    rgba[static_cast<std::size_t>(channel)] =
+        readChannel(pixel, channel, source.channelType);
+  }
+  if (sourcePremultiplied) {
+    if (rgba[3] <= 1.0e-8F) {
+      rgba[0] = rgba[1] = rgba[2] = 0.0F;
+      return rgba;
+    }
+    for (std::size_t channel = 0; channel < 3; ++channel) {
+      rgba[channel] /= rgba[3];
+    }
+  }
+  const auto decoded = wipreview::color::decodeDisplay(
+      {rgba[0], rgba[1], rgba[2]}, colorConfig);
+  for (std::size_t channel = 0; channel < 3; ++channel) {
+    rgba[channel] = decoded[channel] * rgba[3];
+  }
+  return rgba;
+}
+
 std::array<float, 4> sample(const ImageView& source, double x, double y,
                             double scaleX, double scaleY,
                             ResampleFilter filter, bool sourcePremultiplied,
@@ -192,6 +222,45 @@ std::array<float, 4> sample(const ImageView& source, double x, double y,
   }
   if (!outputPremultiplied && result[3] > 1.0e-8F) {
     for (std::size_t channel = 0; channel < 3; ++channel) result[channel] /= result[3];
+  }
+  return result;
+}
+
+std::array<float, 4> sampleManaged(
+    const ImageView& source, double x, double y, double scaleX, double scaleY,
+    ResampleFilter filter, bool sourcePremultiplied,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept {
+  std::array<double, 4> sum{};
+  double weightSum = 0.0;
+  const double radius = filter == ResampleFilter::Bilinear ? 1.0
+                      : filter == ResampleFilter::Bicubic ? 2.0 : 3.0;
+  const double filterScaleX = std::max(1.0, 1.0 / std::abs(scaleX));
+  const double filterScaleY = std::max(1.0, 1.0 / std::abs(scaleY));
+  const int firstX = static_cast<int>(std::ceil(x - radius * filterScaleX));
+  const int lastX = static_cast<int>(std::floor(x + radius * filterScaleX));
+  const int firstY = static_cast<int>(std::ceil(y - radius * filterScaleY));
+  const int lastY = static_cast<int>(std::floor(y + radius * filterScaleY));
+  for (int iy = firstY; iy <= lastY; ++iy) {
+    const double wy = kernel((y - static_cast<double>(iy)) / filterScaleY, filter);
+    if (wy == 0.0) continue;
+    const int sy = std::clamp(iy, source.bounds.y1, source.bounds.y2 - 1);
+    for (int ix = firstX; ix <= lastX; ++ix) {
+      const double weight = wy * kernel(
+          (x - static_cast<double>(ix)) / filterScaleX, filter);
+      if (weight == 0.0) continue;
+      const int sx = std::clamp(ix, source.bounds.x1, source.bounds.x2 - 1);
+      const auto rgba = readManagedRGBA(
+          source, sx, sy, sourcePremultiplied, colorConfig);
+      for (std::size_t channel = 0; channel < 4; ++channel) {
+        sum[channel] += static_cast<double>(rgba[channel]) * weight;
+      }
+      weightSum += weight;
+    }
+  }
+  std::array<float, 4> result{};
+  if (std::abs(weightSum) < std::numeric_limits<double>::epsilon()) return result;
+  for (std::size_t channel = 0; channel < 4; ++channel) {
+    result[channel] = static_cast<float>(sum[channel] / weightSum);
   }
   return result;
 }
@@ -313,6 +382,90 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
                           options.filter, options.sourcePremultiplied,
                           options.outputPremultiplied));
       }
+    }
+  }
+}
+
+void renderManagedDisplayFrame(
+    const ImageView& source, const ImageView& destination,
+    RectI renderWindow, const RenderOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept {
+  if (!destination.data || destination.pixelBytes != sizeof(float) * 4 ||
+      destination.channels != 4 ||
+      destination.channelType != ChannelType::Float32) return;
+  const RectI writable = intersect(renderWindow, destination.bounds);
+  if (empty(writable)) return;
+  std::array<float, 4> canvas{options.canvas[0], options.canvas[1],
+                              options.canvas[2], options.canvas[3]};
+  for (std::size_t channel = 0; channel < 3; ++channel) {
+    canvas[channel] *= canvas[3];
+  }
+  if (!source.data || source.pixelBytes == 0 || source.channels <= 0 ||
+      empty(source.bounds)) {
+    for (int y = writable.y1; y < writable.y2; ++y)
+      for (int x = writable.x1; x < writable.x2; ++x)
+        writePixel(destination, x, y, canvas);
+    return;
+  }
+
+  const PlacementTransform transform = computePlacement(
+      source.bounds, destination.bounds, options);
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      double sourceX = static_cast<double>(x) + 0.5;
+      double sourceY = static_cast<double>(y) + 0.5;
+      if (options.placement != PlacementMode::Identity) {
+        sourceX = transform.sourceCenterX +
+            (static_cast<double>(x) + 0.5 - transform.outputCenterX) /
+                transform.scaleX;
+        sourceY = transform.sourceCenterY +
+            (static_cast<double>(y) + 0.5 - transform.outputCenterY) /
+                transform.scaleY;
+      }
+      if (sourceX < source.bounds.x1 || sourceX >= source.bounds.x2 ||
+          sourceY < source.bounds.y1 || sourceY >= source.bounds.y2) {
+        writePixel(destination, x, y, canvas);
+        continue;
+      }
+      if (options.placement == PlacementMode::Identity) {
+        writePixel(destination, x, y, readManagedRGBA(
+            source, x, y, options.sourcePremultiplied, colorConfig));
+      } else {
+        writePixel(destination, x, y, sampleManaged(
+            source, sourceX - 0.5, sourceY - 0.5,
+            transform.scaleX, transform.scaleY, options.filter,
+            options.sourcePremultiplied, colorConfig));
+      }
+    }
+  }
+}
+
+void encodeManagedDisplayFrame(
+    const ImageView& source, const ImageView& destination,
+    RectI renderWindow, const wipreview::color::DisplayConfig& colorConfig,
+    bool outputPremultiplied) noexcept {
+  if (!source.data || source.pixelBytes != sizeof(float) * 4 ||
+      source.channels != 4 || source.channelType != ChannelType::Float32 ||
+      !destination.data || destination.pixelBytes == 0 ||
+      destination.channels <= 0) return;
+  const RectI writable = intersect(
+      intersect(renderWindow, source.bounds), destination.bounds);
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      auto rgba = readRGBA(source, x, y, true, true);
+      const float alpha = rgba[3];
+      wipreview::color::RGB straight{};
+      if (alpha > 1.0e-8F) {
+        for (std::size_t channel = 0; channel < 3; ++channel) {
+          straight[channel] = rgba[channel] / alpha;
+        }
+      }
+      const auto encoded = wipreview::color::encodeDisplay(straight, colorConfig);
+      for (std::size_t channel = 0; channel < 3; ++channel) {
+        rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
+                                           : encoded[channel];
+      }
+      writePixel(destination, x, y, rgba);
     }
   }
 }

@@ -201,6 +201,76 @@ void testDownsampleAntialias() {
   assert(std::abs(destination[0] - 0.5F) < 1.0e-6F);
 }
 
+void testManagedDisplayLinearRenderAndSingleEncode() {
+  wipreview::color::DisplayConfig color;
+  color.encoding = wipreview::color::DisplayEncoding::Rec709Gamma24;
+
+  std::array<float, 4> source{1.0F, 1.0F, 1.0F, 1.0F};
+  std::array<float, 4> working{};
+  std::array<float, 4> output{};
+  const ImageView sourceView = rgbaFloatView(
+      source.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  const ImageView workingView = rgbaFloatView(
+      working.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  const ImageView outputView = rgbaFloatView(
+      output.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  RenderOptions options;
+  options.placement = PlacementMode::Identity;
+  options.sourcePremultiplied = false;
+  wipreview::probe::renderManagedDisplayFrame(
+      sourceView, workingView, {0, 0, 1, 1}, options, color);
+  assert(nearbyint(working[0]) == 1.0F && working[3] == 1.0F);
+
+  const std::array<std::uint8_t, 1> halfMask{128};
+  TextOverlayOptions overlay;
+  overlay.enabled = true;
+  overlay.anchor = TextAnchor::BottomLeft;
+  overlay.paddingLeft = overlay.paddingBottom = 0.0;
+  overlay.colour[0] = overlay.colour[1] = overlay.colour[2] = 0.0F;
+  wipreview::probe::compositeTextMask(
+      workingView, {0, 0, 1, 1}, {halfMask.data(), 1, 1, 1}, overlay);
+  const double expectedLinear = 127.0 / 255.0;
+  assert(std::abs(working[0] - expectedLinear) < 1.0e-6);
+
+  wipreview::probe::encodeManagedDisplayFrame(
+      workingView, outputView, {0, 0, 1, 1}, color, false);
+  const double expectedEncoded = std::pow(expectedLinear, 1.0 / 2.4);
+  assert(std::abs(output[0] - expectedEncoded) < 1.0e-6);
+  assert(std::abs(output[0] - expectedLinear) > 0.20);  // Not gamma-domain blend.
+}
+
+void testManagedPremultiplicationAroundColorTransform() {
+  wipreview::color::DisplayConfig color;
+  color.encoding = wipreview::color::DisplayEncoding::Rec709Gamma24;
+  std::array<float, 4> source{0.25F, 0.0F, 0.0F, 0.5F};
+  std::array<float, 4> working{};
+  std::array<float, 4> straightOutput{};
+  std::array<float, 4> premultOutput{};
+  const ImageView sourceView = rgbaFloatView(
+      source.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  const ImageView workingView = rgbaFloatView(
+      working.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  const ImageView straightView = rgbaFloatView(
+      straightOutput.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  const ImageView premultView = rgbaFloatView(
+      premultOutput.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  RenderOptions options;
+  options.placement = PlacementMode::Identity;
+  options.sourcePremultiplied = true;
+  wipreview::probe::renderManagedDisplayFrame(
+      sourceView, workingView, {0, 0, 1, 1}, options, color);
+  assert(std::abs(working[0] - std::pow(0.5, 2.4) * 0.5) < 1.0e-6);
+  assert(working[3] == 0.5F);
+
+  wipreview::probe::encodeManagedDisplayFrame(
+      workingView, straightView, {0, 0, 1, 1}, color, false);
+  wipreview::probe::encodeManagedDisplayFrame(
+      workingView, premultView, {0, 0, 1, 1}, color, true);
+  assert(std::abs(straightOutput[0] - 0.5F) < 1.0e-6F);
+  assert(std::abs(premultOutput[0] - 0.25F) < 1.0e-6F);
+  assert(straightOutput[3] == 0.5F && premultOutput[3] == 0.5F);
+}
+
 template <std::size_t N>
 void fillOpaqueWhite(std::array<float, N>& pixels) {
   static_assert(N % 4 == 0);
@@ -609,6 +679,8 @@ int main() {
   testIdentityAndUInt16Canvas();
   testPremultiplication();
   testDownsampleAntialias();
+  testManagedDisplayLinearRenderAndSingleEncode();
+  testManagedPremultiplicationAroundColorTransform();
   testBlankingLetterboxAndOpacity();
   testBlankingPillarboxPARAndFractionalEdge();
   testBlankingStraightAlphaAndRenderWindow();
