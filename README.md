@@ -292,7 +292,11 @@ scripts/open_fusion_visual.sh
 ```
 
 Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
-`P2D_*` o `P3_*` y pulsa `1` o `2`.
+`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. La salida Rec.709 P4 se visualiza
+directamente. Para comprobar PQ o HLG en un viewer SDR, conecta después un
+Color Space Transform nativo `Rec.2100 ST2084 → Rec.709` o
+`Rec.2100 HLG EOTF → Rec.709`, respectivamente, con
+`HDR 203 Nits Diffuse White` activo.
 La composición se llama `WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE`; es
 intencionadamente temporal y no modifica la composición que estuviera activa.
 

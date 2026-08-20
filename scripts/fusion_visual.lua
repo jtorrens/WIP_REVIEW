@@ -353,10 +353,10 @@ local ok, failure = pcall(function()
         p.tcEnabled = 1; p.tcText = "CONTROLLED FALLBACK {timecode}"
     end, 17)
 
-    local managed_color = add_zones("P4_REC709_LINEAR_HALF", 1, function(p)
+    local managed_color = add_zones("P4_REC709_DISPLAY_LINEAR_COMPOSITE", 1, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 0
         p.graphicsWhiteMode = 0; p.blankingOpacity = 0.5
-        p.tcEnabled = 1; p.tcText = "REC709 LINEAR 50% BLANKING"
+        p.tcEnabled = 1; p.tcText = "REC709 OUTPUT / DISPLAY-LINEAR COMPOSITE"
     end, 18)
     add_zones("P4_PQ_GRAPHICS_WHITE_203", 0, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 1
@@ -377,7 +377,7 @@ local ok, failure = pcall(function()
     comp:SetActiveTool(managed_color)
     comp:Unlock()
     print("WIPREVIEW_VISUAL_READY")
-    print("active_tool=P4_REC709_LINEAR_HALF")
+    print("active_tool=P4_REC709_DISPLAY_LINEAR_COMPOSITE")
     print("chart=" .. chart_path)
 end)
 

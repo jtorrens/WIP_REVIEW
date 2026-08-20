@@ -94,10 +94,6 @@ Fusion Studio 21.0.4 tampoco invoca `GetOutputColourspace`; por ello el smoke
 valida la preferencia de Source y el espacio efectivo del render, pero no exige
 una callback que el host no realiza.
 
-## Pendiente
-
-- validación visual en Fusion Studio 21.0.4.
-
 ## Resultado automático
 
 **Aprobado el 19 de agosto de 2026** con el bundle universal 1.0.0 instalado en
@@ -122,4 +118,23 @@ alteren el resultado cromático.
 
 ## Validación visual
 
-Pendiente de validación humana de los cuatro escenarios P4.
+**Aprobada el 20 de agosto de 2026** en Fusion Studio 21.0.4.
+
+- Rec.709: salida directa al viewer, raster completo, blanking uniforme al
+  50 %, texto estable y ausencia de halos o artefactos;
+- PQ: la salida raw codificada se ve gris en un viewer SDR, como corresponde a
+  `203` nits codificados a `0.5806889`; después del Color Space Transform
+  nativo `Rec.2100 ST2084 → Rec.709`, con `HDR 203 Nits Diffuse White`, el
+  blanco coincide con Rec.709;
+- HLG: después del Color Space Transform nativo
+  `Rec.2100 HLG EOTF → Rec.709`, el blanco de `203` nits coincide con Rec.709;
+- PQ y HLG se compararon contra Rec.709 mediante wipe A/B dentro del mismo
+  viewer. Las conexiones y las EOTF efectivas se verificaron además mediante
+  la API de Fusion;
+- Auto/unknown: salida Rec.709 visualmente correcta y estable; el smoke registra
+  `<ErrUnknown>`, el override manual determinista y `RENDER_WARNING`.
+
+El caso Rec.709 del harness se denomina
+`P4_REC709_DISPLAY_LINEAR_COMPOSITE`: “display-linear” describe el espacio de
+composición interno. La salida del nodo está codificada en Rec.709 Gamma 2.4 y
+se visualiza directamente, sin CST downstream.
