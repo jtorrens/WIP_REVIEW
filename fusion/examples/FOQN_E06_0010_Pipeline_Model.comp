@@ -2,7 +2,7 @@ Composition {
 	CurrentTime = 0,
 	RenderRange = { 0, 1000 },
 	GlobalRange = { 0, 1000 },
-	CurrentID = 347,
+	CurrentID = 459,
 	HiQ = true,
 	PlaybackUpdateMode = 0,
 	StereoMode = false,
@@ -19,7 +19,7 @@ Composition {
 		"_FOQN:/FOQN_E06/RENDERS/FOQN_E06_0010_GFX_v001.mov"
 	},
 	Tools = {
-		Loader_FOQN_E06_0010_Plate = Loader {
+		L_FOQN_E06_0010_Plate = Loader {
 			Clips = {
 				Clip {
 					ID = "Clip1",
@@ -44,7 +44,7 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { -605, 16.197 } },
 		},
-		G_OutputPackager_FOQN_E06_0010_WIP = GroupOperator {
+		S_OutputPackager_FOQN_E06_0010_WIP = GroupOperator {
 			CustomData = {
 				OutputPackager = {
 					Role = "OutputPackager",
@@ -847,15 +847,15 @@ Composition {
 				OP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Output",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
+					LINKID_DataType = "Text",
+					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
 		},
-		Saver_FOQN_E06_0010_WIP = Saver {
+		S_FOQN_E06_0010_WIP = Saver {
 			Inputs = {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
@@ -888,7 +888,7 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 385, -49.803 } },
 		},
-		G_OutputPackager_FOQN_E06_0010_Clean = GroupOperator {
+		S_OutputPackager_FOQN_E06_0010_Clean = GroupOperator {
 			CustomData = {
 				OutputPackager = {
 					Role = "OutputPackager",
@@ -1690,10 +1690,10 @@ Composition {
 				OP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Output",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
+					LINKID_DataType = "Text",
+					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
@@ -1786,7 +1786,7 @@ Composition {
 			CtrlWZoom = false,
 			NameSet = true,
 		},
-		Saver_FOQN_E06_0010_Clean = Saver {
+		S_FOQN_E06_0010_Clean = Saver {
 			Inputs = {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
@@ -1819,12 +1819,12 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { 385, 82.197 } },
 		},
-		G_InputPrep_FOQN_E06_0010 = GroupOperator {
+		L_InputPrep_FOQN_E06_0010 = GroupOperator {
 			CustomData = {
 				InputPrep = {
 					Role = "InputPrep",
 					SchemaVersion = 1
-				}
+				},
 			},
 			Inputs = ordered() {
 				IP_Status = Input { Value = "1920 x 1080  ->  1920 x 1080  |  Depth: 3  |  REC709_COLORSPACE / TWOPOINTFOUR_GAMMA  ->  REC709_COLORSPACE / LINEAR_GAMMA", },
@@ -1951,7 +1951,7 @@ Composition {
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "Loader_FOQN_E06_0010_Plate",
+							SourceOp = "L_FOQN_E06_0010_Plate",
 							Source = "Output",
 						}
 					},
@@ -2185,10 +2185,10 @@ Composition {
 				IP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "InputPrep",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
+					LINKID_DataType = "Text",
+					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
@@ -2213,7 +2213,7 @@ Composition {
 				SC_CropRatio = Input { Value = 1.77777777777778, },
 				SC_RootPathMap = Input { Value = "_FOQN:", },
 				SC_Status = Input { Value = "OK: Updated 3 targets", },
-				SC_LoaderTarget1Node = Input { Value = "Loader_FOQN_E06_0010_Plate", },
+				SC_LoaderTarget1Node = Input { Value = "L_FOQN_E06_0010_Plate", },
 				SC_LoaderTarget1Template = Input { Value = "{root}/{show}_{episode}/BRUTOS/H264/{show}_{episode}_{shot}.mov", },
 				SC_LoaderTarget1Resolved = Input { Expression = ": return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(SC_LoaderTarget1Template.Value,\"{root}\",(string.gsub(SC_RootPathMap.Value,\"/+$\",\"\"))),\"{show}\",SC_Show.Value),\"{episode}\",SC_Episode.Value),\"{shot}\",SC_Shot.Value),\"{version}\",SC_Version.Value),\"{workingWidth}\",(\"\"..math.floor(SC_WorkingResolution.X+0.5))),\"{workingHeight}\",(\"\"..math.floor(SC_WorkingResolution.Y+0.5))),\"{cropX}\",(\"\"..SC_CropRatio)),\"{cropY}\",\"1\"),\"{reviewWidth}\",(\"\"..math.floor(SC_ReviewResolution.X+0.5))),\"{reviewHeight}\",(\"\"..math.floor(SC_ReviewResolution.Y+0.5))),\"{sourceColorSpace}\",(select(math.floor(SC_SourceColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{sourceGamma}\",(select(math.floor(SC_SourceGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{workingColorSpace}\",(select(math.floor(SC_WorkingColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{workingGamma}\",(select(math.floor(SC_WorkingGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{embeddedAlpha}\",iif(SC_EmbeddedAlpha==1,\"true\",\"false\"))", },
 				SC_LoaderTarget2Template = Input { Value = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov", },
@@ -2224,10 +2224,10 @@ Composition {
 				SC_LoaderTarget4Resolved = Input { Expression = ": return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(SC_LoaderTarget4Template.Value,\"{root}\",(string.gsub(SC_RootPathMap.Value,\"/+$\",\"\"))),\"{show}\",SC_Show.Value),\"{episode}\",SC_Episode.Value),\"{shot}\",SC_Shot.Value),\"{version}\",SC_Version.Value),\"{workingWidth}\",(\"\"..math.floor(SC_WorkingResolution.X+0.5))),\"{workingHeight}\",(\"\"..math.floor(SC_WorkingResolution.Y+0.5))),\"{cropX}\",(\"\"..SC_CropRatio)),\"{cropY}\",\"1\"),\"{reviewWidth}\",(\"\"..math.floor(SC_ReviewResolution.X+0.5))),\"{reviewHeight}\",(\"\"..math.floor(SC_ReviewResolution.Y+0.5))),\"{sourceColorSpace}\",(select(math.floor(SC_SourceColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{sourceGamma}\",(select(math.floor(SC_SourceGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{workingColorSpace}\",(select(math.floor(SC_WorkingColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{workingGamma}\",(select(math.floor(SC_WorkingGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{embeddedAlpha}\",iif(SC_EmbeddedAlpha==1,\"true\",\"false\"))", },
 				SC_LoaderTarget5Template = Input { Value = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov", },
 				SC_LoaderTarget5Resolved = Input { Expression = ": return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(SC_LoaderTarget5Template.Value,\"{root}\",(string.gsub(SC_RootPathMap.Value,\"/+$\",\"\"))),\"{show}\",SC_Show.Value),\"{episode}\",SC_Episode.Value),\"{shot}\",SC_Shot.Value),\"{version}\",SC_Version.Value),\"{workingWidth}\",(\"\"..math.floor(SC_WorkingResolution.X+0.5))),\"{workingHeight}\",(\"\"..math.floor(SC_WorkingResolution.Y+0.5))),\"{cropX}\",(\"\"..SC_CropRatio)),\"{cropY}\",\"1\"),\"{reviewWidth}\",(\"\"..math.floor(SC_ReviewResolution.X+0.5))),\"{reviewHeight}\",(\"\"..math.floor(SC_ReviewResolution.Y+0.5))),\"{sourceColorSpace}\",(select(math.floor(SC_SourceColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{sourceGamma}\",(select(math.floor(SC_SourceGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{workingColorSpace}\",(select(math.floor(SC_WorkingColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{workingGamma}\",(select(math.floor(SC_WorkingGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{embeddedAlpha}\",iif(SC_EmbeddedAlpha==1,\"true\",\"false\"))", },
-				SC_SaverTarget1Node = Input { Value = "Saver_FOQN_E06_0010_WIP", },
+				SC_SaverTarget1Node = Input { Value = "S_FOQN_E06_0010_WIP", },
 				SC_SaverTarget1Template = Input { Value = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov", },
 				SC_SaverTarget1Resolved = Input { Expression = ": return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(SC_SaverTarget1Template.Value,\"{root}\",(string.gsub(SC_RootPathMap.Value,\"/+$\",\"\"))),\"{show}\",SC_Show.Value),\"{episode}\",SC_Episode.Value),\"{shot}\",SC_Shot.Value),\"{version}\",SC_Version.Value),\"{workingWidth}\",(\"\"..math.floor(SC_WorkingResolution.X+0.5))),\"{workingHeight}\",(\"\"..math.floor(SC_WorkingResolution.Y+0.5))),\"{cropX}\",(\"\"..SC_CropRatio)),\"{cropY}\",\"1\"),\"{reviewWidth}\",(\"\"..math.floor(SC_ReviewResolution.X+0.5))),\"{reviewHeight}\",(\"\"..math.floor(SC_ReviewResolution.Y+0.5))),\"{sourceColorSpace}\",(select(math.floor(SC_SourceColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{sourceGamma}\",(select(math.floor(SC_SourceGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{workingColorSpace}\",(select(math.floor(SC_WorkingColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{workingGamma}\",(select(math.floor(SC_WorkingGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{embeddedAlpha}\",iif(SC_EmbeddedAlpha==1,\"true\",\"false\"))", },
-				SC_SaverTarget2Node = Input { Value = "Saver_FOQN_E06_0010_Clean", },
+				SC_SaverTarget2Node = Input { Value = "S_FOQN_E06_0010_Clean", },
 				SC_SaverTarget2Template = Input { Value = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov", },
 				SC_SaverTarget2Resolved = Input { Expression = ": return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(SC_SaverTarget2Template.Value,\"{root}\",(string.gsub(SC_RootPathMap.Value,\"/+$\",\"\"))),\"{show}\",SC_Show.Value),\"{episode}\",SC_Episode.Value),\"{shot}\",SC_Shot.Value),\"{version}\",SC_Version.Value),\"{workingWidth}\",(\"\"..math.floor(SC_WorkingResolution.X+0.5))),\"{workingHeight}\",(\"\"..math.floor(SC_WorkingResolution.Y+0.5))),\"{cropX}\",(\"\"..SC_CropRatio)),\"{cropY}\",\"1\"),\"{reviewWidth}\",(\"\"..math.floor(SC_ReviewResolution.X+0.5))),\"{reviewHeight}\",(\"\"..math.floor(SC_ReviewResolution.Y+0.5))),\"{sourceColorSpace}\",(select(math.floor(SC_SourceColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{sourceGamma}\",(select(math.floor(SC_SourceGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{workingColorSpace}\",(select(math.floor(SC_WorkingColorSpaceChoice)+1,\"REC709_COLORSPACE\",\"REC2020_COLORSPACE\",\"REC2100_COLORSPACE\",\"DWG_COLORSPACE\",\"ACES_COLORSPACE\",\"ACES_AP1_COLORSPACE\",\"P3D65_COLORSPACE\",\"SRGB_COLORSPACE\",\"ADOBE_RGB_COLORSPACE\",\"APPLE_WG_COLORSPACE\",\"ALEXA3_COLORSPACE\",\"ARRI_LOGC4_COLORSPACE\",\"BMDFILM_COLORSPACE\",\"BMD4KFILM_COLORSPACE\",\"BMD4KFILMV3_COLORSPACE\",\"BMD4KVIDEOV3_COLORSPACE\",\"BMD46KFILM_COLORSPACE\",\"BMD46KFILMV3_COLORSPACE\",\"BMD46KVIDEOV3_COLORSPACE\",\"BMDPOCKET4KFILM_COLORSPACE\",\"BMD4KBCASTVIDEO_COLORSPACE\",\"BMD4KBCASTFILM_COLORSPACE\",\"BMDVIDEOV5_COLORSPACE\",\"CANONLOG2_COLORSPACE\",\"XYZ_DCI_COLORSPACE\",\"DGAMUT_COLORSPACE\",\"DRAGONCOLOR_COLORSPACE\",\"DRAGONCOLOR2_COLORSPACE\",\"FGAMUT_C_COLORSPACE\",\"HSL_COLORSPACE\",\"HSV_COLORSPACE\",\"LAB_COLORSPACE\",\"VLOG_COLORSPACE\",\"P3D60_COLORSPACE\",\"P3DCI_COLORSPACE\",\"REDCOLOR2_COLORSPACE\",\"REDCOLOR3_COLORSPACE\",\"REDCOLOR4_COLORSPACE\",\"RWG_COLORSPACE\",\"SMPTE_C_COLORSPACE\",\"SGAMUT_COLORSPACE\",\"SGAMUT3_COLORSPACE\",\"SGAMUT3CINE_COLORSPACE\",\"XYZ_COLORSPACE\",\"YUV_COLORSPACE\"))),\"{workingGamma}\",(select(math.floor(SC_WorkingGammaChoice)+1,\"LINEAR_GAMMA\",\"REC709_GAMMA\",\"TWOPOINTTWO_GAMMA\",\"TWOPOINTFOUR_GAMMA\",\"DAV_INTER_OETF_GAMMA\",\"SRGB_GAMMA\",\"LOGC4_EI800_GAMMA\",\"SONY_SLOG3_GAMMA\",\"REC2100_PQ_OETF_GAMMA\",\"REC2100_HLG_OETF_GAMMA\",\"ACESCC_GAMMA\",\"ACESCCT_GAMMA\",\"ADOBE_RGB_GAMMA\",\"APPLE_LOG_GAMMA\",\"HLG_GAMMA\",\"LOGC_EI800_GAMMA\",\"ALOG_OETF_GAMMA\",\"BMDFILM_GAMMA\",\"BMD4KFILM_GAMMA\",\"BMD46KFILM_GAMMA\",\"BMD4KBCAST_FILM_GAMMA\",\"BMDPOCKET4K_FILM_GAMMA\",\"BMDPOCKET6K_FILM_GAMMA\",\"BMDVIDEO_GAMMA\",\"BMD4KBCAST_VIDEO_GAMMA\",\"BMDEXTVIDEO_GAMMA\",\"BMDFILMV5_GAMMA\",\"BMDVIDEOV5_GAMMA\",\"BMDEXTVIDEOV5_GAMMA\",\"CANONLOG_GAMMA\",\"CANONLOG2_GAMMA\",\"CANONLOG3_GAMMA\",\"CINEON_GAMMA\",\"XYZ_DCI_GAMMA\",\"DJI_DLOG_GAMMA\",\"FLOG_OETF_GAMMA\",\"FLOG2_OETF_GAMMA\",\"TWOPOINTFIVE_GAMMA\",\"TWOPOINTSIX_GAMMA\",\"INSTA360_ILOG_GAMMA\",\"LLOG_OETF_GAMMA\",\"NLOG_OETF_GAMMA\",\"PANASONIC_VLOG_GAMMA\",\"REC709_APPLE_GAMMA\",\"REC2100_HLG_EOTF_GAMMA\",\"REC2100_PQ_EOTF_GAMMA\",\"REDGAMMA3_GAMMA\",\"REDGAMMA4_GAMMA\",\"RED_LOG3G10_GAMMA\",\"REDLOGFILM_GAMMA\",\"SAMSUNG_LOG_GAMMA\",\"SONY_SLOG_GAMMA\",\"SONY_SLOG2_GAMMA\",\"STOPS_GAMMA\",\"PQ_GAMMA\",\"PQ300_GAMMA\",\"PQ500_GAMMA\",\"PQ800_GAMMA\",\"PQ1000_GAMMA\",\"PQ2000_GAMMA\",\"PQ3000_GAMMA\",\"PQ4000_GAMMA\"))),\"{embeddedAlpha}\",iif(SC_EmbeddedAlpha==1,\"true\",\"false\"))", },
 				SC_SaverTarget3Template = Input { Value = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov", },
@@ -2253,56 +2253,56 @@ Composition {
 			UserControls = ordered() {
 				SC_IdentitySection = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Identity",
 				},
 				SC_Show = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "Show",
 					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "FOQN",
+					LINKS_Name = "Show",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_Episode = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "Episode",
 					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "E01",
+					LINKS_Name = "Episode",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_Shot = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "Shot",
 					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "0010",
+					LINKS_Name = "Shot",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_Version = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "Version",
 					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "v001",
+					LINKS_Name = "Version",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_FormatSection = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Format",
@@ -2338,8 +2338,8 @@ Composition {
 				},
 				SC_FormatHelp = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Stored only; not applied to image nodes in v0.1.",
@@ -2393,10 +2393,10 @@ Composition {
 					INP_MaxAllowed = 44,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					LINKID_DataType = "Number",
-					LINKS_Name = "Source Color Space",
 					INPID_InputControl = "ComboControl",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Number",
+					LINKS_Name = "Source Color Space",
 					INP_Default = 0,
 				},
 				SC_SourceGammaChoice = {
@@ -2465,10 +2465,10 @@ Composition {
 					INP_MaxAllowed = 61,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					LINKID_DataType = "Number",
-					LINKS_Name = "Source Gamma",
 					INPID_InputControl = "ComboControl",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Number",
+					LINKS_Name = "Source Gamma",
 					INP_Default = 3,
 				},
 				SC_WorkingColorSpaceChoice = {
@@ -2520,10 +2520,10 @@ Composition {
 					INP_MaxAllowed = 44,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					LINKID_DataType = "Number",
-					LINKS_Name = "Working Color Space",
 					INPID_InputControl = "ComboControl",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Number",
+					LINKS_Name = "Working Color Space",
 					INP_Default = 0,
 				},
 				SC_WorkingGammaChoice = {
@@ -2592,77 +2592,91 @@ Composition {
 					INP_MaxAllowed = 61,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					LINKID_DataType = "Number",
-					LINKS_Name = "Working Gamma",
 					INPID_InputControl = "ComboControl",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Number",
+					LINKS_Name = "Working Gamma",
 					INP_Default = 0,
 				},
 				SC_EmbeddedAlpha = {
 					INP_MaxAllowed = 1,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					LINKID_DataType = "Number",
-					LINKS_Name = "Embedded Alpha",
 					INPID_InputControl = "CheckboxControl",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Number",
+					LINKS_Name = "Embedded Alpha",
 					INP_Default = 0,
 				},
 				SC_ColorHelp = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Color",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Stored only; not applied to CST nodes in v0.1.",
 				},
 				SC_PathMapSection = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Path Map",
 				},
 				SC_RootPathMap = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "Root Path Map",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "_FOQN:",
+					LINKS_Name = "Root Path Map",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_PathMapHelp = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Portable Path Map, for example _FOQN:",
 				},
 				SC_Apply = {
-					LINKID_DataType = "Number",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run(comp)",
 					ICS_ControlPage = "Targets",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run(comp)",
+					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
 					LINKS_Name = "Apply / Update",
 				},
+				SC_UpdateSaverVersions = {
+					ICS_ControlPage = "Targets",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run_savers(comp)",
+					LINKID_DataType = "Number",
+					INPID_InputControl = "ButtonControl",
+					LINKS_Name = "Update Saver Versions",
+				},
+				SC_RebuildPipeline = {
+					ICS_ControlPage = "Targets",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/rebuild_managed_pipeline.lua\"); m.run(comp)",
+					LINKID_DataType = "Number",
+					INPID_InputControl = "ButtonControl",
+					LINKS_Name = "Rebuild Managed Pipeline",
+				},
 				SC_Status = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "Status",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "Ready",
+					LINKS_Name = "Status",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_TargetHelp = {
 					INP_External = false,
-					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Text",
 					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "F2 copies the node name. Empty slots are ignored.",
@@ -2680,153 +2694,153 @@ Composition {
 				},
 				SC_LoaderTarget1Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "1 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "1 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget1Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "1 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
+					LINKS_Name = "1 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget1Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "1 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "1 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget2Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "2 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "2 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget2Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "2 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
+					LINKS_Name = "2 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget2Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "2 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "2 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget3Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "3 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "3 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget3Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "3 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
+					LINKS_Name = "3 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget3Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "3 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "3 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget4Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "4 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "4 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget4Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "4 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
+					LINKS_Name = "4 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget4Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "4 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "4 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget5Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "5 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "5 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget5Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "5 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
+					LINKS_Name = "5 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget5Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "5 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "5 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverGroup = {
 					INP_Integer = true,
@@ -2841,153 +2855,153 @@ Composition {
 				},
 				SC_SaverTarget1Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "1 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "1 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget1Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "1 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
+					LINKS_Name = "1 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget1Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "1 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "1 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "2 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "2 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "2 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
+					LINKS_Name = "2 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "2 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "2 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "3 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "3 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "3 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
+					LINKS_Name = "3 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "3 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "3 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "4 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "4 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "4 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
+					LINKS_Name = "4 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "4 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "4 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5Node = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "5 · Node Name",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "5 · Node Name",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5Template = {
 					TEC_ReadOnly = false,
-					LINKS_Name = "5 · Path Template",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
+					LINKS_Name = "5 · Path Template",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5Resolved = {
 					TEC_ReadOnly = true,
-					LINKS_Name = "5 · Resolved Path",
 					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					TEC_Lines = 1,
 					INP_Default = "",
+					LINKS_Name = "5 · Resolved Path",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				}
 			},
 		}
@@ -3003,60 +3017,60 @@ Composition {
 			Width = 3840,
 			Height = 2057,
 			ZoneInfo = {
-				AuxRight = { Expanded = true },
-				Right = { Expanded = true, },
-				Left = { Expanded = false, },
-				AuxLeft = { Expanded = true },
+				["!Right"] = {
+				},
 				["!Left"] = {
 				},
-				["!Right"] = {
-				}
+				AuxLeft = { Expanded = true },
+				Right = { Expanded = true, },
+				Left = { Expanded = false, },
+				AuxRight = { Expanded = true }
 			},
 			ViewInfo = {
-				Keyframes = { Show = false, },
-				LayoutStrip = { Show = true, RatioX = 100, },
-				Inspector = { Show = true, RatioX = 100, RatioY = 1, },
-				Effects = { Show = false, },
-				Viewer2 = { Show = false, Adjust = true, RatioX = 1, RatioY = 0.01, MRU = 0 },
-				Comments = { Show = false },
-				Clips = { Show = false, },
-				ActionStrip = { Show = true, RatioX = 100, },
-				Time = { Show = true, RatioX = 100, },
-				MediaPool = { Show = false, },
-				Nodes = { Show = true, RatioX = 1, RatioY = 100, },
-				Metadata = { Show = false, },
-				Viewer1 = { Show = true, RatioX = 1, RatioY = 0.01, },
-				Spline = { Show = false, },
-				OuterColumns = {
-					RatioX = 100,
-					RatioY = 1,
-				},
-				OuterLeft = {
-				},
-				CenterSplit = {
-					RatioX = 1,
-					RatioY = 100,
-				},
-				OuterRight = {
-					PixelX = 420,
-					RatioY = 100,
-				},
-				InnerColumns = {
-					RatioX = 100,
-					RatioY = 1.99745676500509,
+				Viewer1 = { Show = true, RatioY = 0.01, RatioX = 1, },
+				InnerLeft = {
 				},
 				MainSplit = {
 					RatioX = 100,
 					RatioY = 1.00254323499491,
 				},
-				InnerLeft = {
+				CenterSplit = {
+					RatioX = 1,
+					RatioY = 100,
 				},
+				Viewer2 = { Show = false, Adjust = true, RatioY = 0.01, MRU = 0, RatioX = 1, },
+				Comments = { Show = false },
+				Time = { Show = true, RatioX = 100, },
+				InnerColumns = {
+					RatioX = 100,
+					RatioY = 1.99745676500509,
+				},
+				Keyframes = { Show = false, },
+				LayoutStrip = { Show = true, RatioX = 100, },
+				Inspector = { Show = true, RatioY = 1, RatioX = 100, },
+				ActionStrip = { Show = true, RatioX = 100, },
 				InnerRight = {
+				},
+				OuterColumns = {
+					RatioX = 100,
+					RatioY = 1,
+				},
+				Effects = { Show = false, },
+				Clips = { Show = false, },
+				Metadata = { Show = false, },
+				OuterLeft = {
 				},
 				ViewerSplit = {
 					RatioX = 100,
 					RatioY = 1,
-				}
+				},
+				Nodes = { Show = true, RatioY = 100, RatioX = 1, },
+				OuterRight = {
+					RatioY = 100,
+					PixelX = 420,
+				},
+				MediaPool = { Show = false, },
+				Spline = { Show = false, }
 			},
 			Views = ordered() {
 				Effects = MultiView {
@@ -3080,7 +3094,7 @@ Composition {
 						Direction = "Horizontal",
 						PipeStyle = "Direct",
 						RootScale = 1,
-						RootOffset = { 1161.33, 115.667 }
+						RootOffset = { 720.663, 115.667 }
 					}
 				},
 				Keyframes = MultiView {
@@ -3100,7 +3114,7 @@ Composition {
 						KeyFrameView = {
 							Position = { Left = 232, Bottom = 320 },
 							ScaleX = 2.14424951267057,
-							OffsetX = -49.317738791423,
+							OffsetX = -51.4619883040936,
 							OffsetY = 0,
 							AutoScaling = "scroll",
 							AutoSnapTo = "frame",
@@ -3244,26 +3258,11 @@ Composition {
 	},
 	Prefs = {
 		Comp = {
-			Paths = {
-				Map = {
-					["ResolveCloud:"] = "Fusion:",
-				},
-			},
-			FrameFormat = {
-				GuideRatio = 1.77777777777778,
-				Rate = 25,
-				Name = "Ultra HD 2160",
-			},
-			SpellCheck = {
-				Language = "auto",
-			},
 			Views = {
 				RightView = {
 					Viewer = {
-						Layer = ":Default",
+						Layer = ":Default"
 					},
-				},
-				View1 = {
 				},
 				LeftView = {
 					Viewer = {
@@ -3272,18 +3271,24 @@ Composition {
 						Layer = ":Default",
 						LUTSelected = "Color Space Transform"
 					},
+					SideB = {
+						Viewer = {
+							ScaleMode = 0,
+							Layer = ":Default",
+						},
+					},
 					ViewLUT = {
 						{
 							Tools = ordered() {
 								ColorSpaceTransform = ViewOperator {
-									CtrlWZoom = false,
 									NameSet = true,
 									Inputs = {
-										OutputGamma = Input { Value = FuID { "REC709_GAMMA" }, },
-										ToneMappingMethod = Input { Value = FuID { "TM_NONE" }, },
-										SrcLumMax = Input { Disabled = true, },
-										DstLumMax = Input { Disabled = true, }
+										DstLumMax = Input { Disabled = true },
+										OutputGamma = Input { Value = FuID { "REC709_GAMMA" } },
+										ToneMappingMethod = Input { Value = FuID { "TM_NONE" } },
+										SrcLumMax = Input { Disabled = true }
 									},
+									CtrlWZoom = false
 								}
 							},
 							Version = false,
@@ -3292,12 +3297,8 @@ Composition {
 						SelectedPlugin = "ColorSpaceTransformViewLUT",
 						SelectedName = "Color Space Transform"
 					},
-					SideB = {
-						Viewer = {
-							Layer = ":Default",
-							ScaleMode = 0,
-						}
-					}
+				},
+				View1 = {
 				},
 				Configs = {
 					FOQN_ACESCG = {
@@ -3329,8 +3330,8 @@ Composition {
 										ACESTransform = ViewOperator {
 											NameSet = true,
 											Inputs = {
-												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
 												OutputTransform200 = Input { Value = FuID { "ODT_REC709_100" } },
+												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
 												InputTransform200 = Input { Value = FuID { "IDT_ACESCG" } }
 											},
 											CtrlWZoom = false
@@ -3338,7 +3339,6 @@ Composition {
 									}
 								},
 								SelectedName = "Color Space Transform",
-								SelectedPlugin = "ColorSpaceTransformViewLUT",
 								GamutViewLUT = {
 									Tools = ordered() {
 										GamutViewLUT = ViewOperator {
@@ -3350,7 +3350,8 @@ Composition {
 											CtrlWZoom = false
 										}
 									}
-								}
+								},
+								SelectedPlugin = "ColorSpaceTransformViewLUT"
 							}
 						},
 						PickH = 1,
@@ -3360,10 +3361,10 @@ Composition {
 							Layer = ":Default",
 							NearZ = 0,
 							LUTPlugin = "ColorSpaceTransformViewLUT",
-							FitMarginX = 0,
+							FitMarginY = 0,
 							FitMarginType = 0,
 							FarZ = -1000,
-							FitMarginY = 0
+							FitMarginX = 0
 						},
 						RulersShow = true,
 						SideB = {
@@ -3382,7 +3383,20 @@ Composition {
 							Size = 0
 						}
 					}
+				}
+			},
+			Paths = {
+				Map = {
+					["ResolveCloud:"] = "Fusion:",
 				},
+			},
+			FrameFormat = {
+				Name = "Ultra HD 2160",
+				Rate = 25,
+				GuideRatio = 1.77777777777778,
+			},
+			SpellCheck = {
+				Language = "auto"
 			},
 			QuickTime = {
 			},

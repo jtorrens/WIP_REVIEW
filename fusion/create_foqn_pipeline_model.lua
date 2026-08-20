@@ -60,10 +60,10 @@ local function set(tool, id, value)
 end
 
 model:Lock()
-local plate = add_tool("Loader", "Loader_FOQN_E06_0010_Plate", -6, 0)
+local plate = add_tool("Loader", "L_FOQN_E06_0010_Plate", -6, 0)
 plate.Clip[model.CurrentTime or 0] = PLATE_PATH
-local wip_saver = add_tool("Saver", "Saver_FOQN_E06_0010_WIP", 3, -2)
-local clean_saver = add_tool("Saver", "Saver_FOQN_E06_0010_Clean", 3, 2)
+local wip_saver = add_tool("Saver", "S_FOQN_E06_0010_WIP", 3, -2)
+local clean_saver = add_tool("Saver", "S_FOQN_E06_0010_Clean", 3, 2)
 model:Unlock()
 
 -- Input processing: the only transform path in the model.
@@ -80,7 +80,7 @@ local input_builder = dofile(SCRIPT_DIR .. "input_prep/build_input_prep.lua")
 _G.INPUTPREP_OVERRIDES = nil
 local input_prep = input_builder.last_group
 if input_prep == nil then error("InputPrep was not created") end
-input_prep:SetAttrs({ TOOLS_Name = "G_InputPrep_FOQN_E06_0010" })
+input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_FOQN_E06_0010" })
 input_prep.MainInput1 = plate.Output
 
 -- Output processing: one WIP delivery and one clean delivery from the same prepared image.
@@ -88,8 +88,8 @@ local output_builder = dofile(SCRIPT_DIR .. "output_packager/build_output_packag
 local wip_packager = output_builder.last_group
 local clean_packager = output_builder.run(model)
 if wip_packager == nil or clean_packager == nil then error("OutputPackager was not created") end
-wip_packager:SetAttrs({ TOOLS_Name = "G_OutputPackager_FOQN_E06_0010_WIP" })
-clean_packager:SetAttrs({ TOOLS_Name = "G_OutputPackager_FOQN_E06_0010_Clean" })
+wip_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_WIP" })
+clean_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_Clean" })
 wip_packager.MainInput1 = first_output(input_prep)
 clean_packager.MainInput1 = first_output(input_prep)
 wip_saver.Input:ConnectTo(first_output(wip_packager))
@@ -120,11 +120,11 @@ local function set_shot_target(kind, index, node_name, template)
     set(shot_config, template_control, template)
 end
 
-set_shot_target("Loader", 1, "Loader_FOQN_E06_0010_Plate",
+set_shot_target("Loader", 1, "L_FOQN_E06_0010_Plate",
     "{root}/{show}_{episode}/BRUTOS/H264/{show}_{episode}_{shot}.mov")
-set_shot_target("Saver", 1, "Saver_FOQN_E06_0010_WIP",
+set_shot_target("Saver", 1, "S_FOQN_E06_0010_WIP",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov")
-set_shot_target("Saver", 2, "Saver_FOQN_E06_0010_Clean",
+set_shot_target("Saver", 2, "S_FOQN_E06_0010_Clean",
     "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov")
 local shot_ok, shot_apply_error = shot_apply.run(model)
 if not shot_ok then error(shot_apply_error or "ShotConfig could not apply the FOQN model") end

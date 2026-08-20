@@ -80,7 +80,7 @@ function M.run(comp_override)
         end
         local input_builder = dofile(input_builder_path)
         local input_prep = input_builder.last_group
-        input_prep:SetAttrs({ TOOLS_Name = "G_InputPrep_1" })
+        input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_1" })
         mark(input_prep, "InputPrep")
         input_prep.MainInput1 = loaders[1].Output
 
@@ -88,7 +88,7 @@ function M.run(comp_override)
         local first_packager = output_builder.last_group
         for index, target in ipairs(values.saverTargets) do
             local packager = index == 1 and first_packager or output_builder.run(comp)
-            packager:SetAttrs({ TOOLS_Name = "G_OutputPackager_" .. tostring(index) })
+            packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_" .. tostring(index) })
             mark(packager, "OutputPackager")
             packager.MainInput1 = first_output(input_prep)
             local saver = add_tool(comp, "Saver", target.nodeName, 3, index * 2, "Saver")
