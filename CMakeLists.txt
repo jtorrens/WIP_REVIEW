@@ -68,12 +68,18 @@ if(APPLE)
     "${WIPREVIEW_COREGRAPHICS_FRAMEWORK}"
     "${WIPREVIEW_COREFOUNDATION_FRAMEWORK}"
   )
-else()
+elseif(WIN32)
   add_library(wipreview_text_rasterizer STATIC
     src/text_effects.cpp
-    src/text_rasterizer_stub.cpp
+    src/text_rasterizer_windows.cpp
   )
-  target_link_libraries(wipreview_text_rasterizer PUBLIC wipreview_probe_core)
+  target_link_libraries(wipreview_text_rasterizer PUBLIC
+    wipreview_probe_core
+    dwrite
+    gdi32
+  )
+else()
+  message(FATAL_ERROR "WIP Review currently supports macOS and Windows")
 endif()
 
 target_include_directories(wipreview_text_rasterizer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -125,9 +131,20 @@ if(APPLE)
   install(DIRECTORY "${WIPREVIEW_BUNDLE_DIR}"
           DESTINATION "."
           USE_SOURCE_PERMISSIONS)
+elseif(WIN32)
+  set(WIPREVIEW_BUNDLE_DIR
+      "${CMAKE_BINARY_DIR}/WIPReviewProbe.ofx.bundle")
+  set(WIPREVIEW_BUNDLE_BINARY_DIR
+      "${WIPREVIEW_BUNDLE_DIR}/Contents/Win64")
+  set_target_properties(WIPReviewProbe PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+  )
+  install(DIRECTORY "${WIPREVIEW_BUNDLE_DIR}"
+          DESTINATION "."
+          USE_SOURCE_PERMISSIONS)
 else()
-  message(WARNING "The probe is currently packaged and documented for macOS only")
-  install(TARGETS WIPReviewProbe LIBRARY DESTINATION WIPReviewProbe.ofx.bundle/Contents/Linux-x86-64)
+  message(FATAL_ERROR "Unsupported packaging platform")
 endif()
 
 if(WIPREVIEW_BUILD_TESTS)
@@ -170,7 +187,14 @@ endif()
 set(CPACK_GENERATOR "ZIP")
 set(CPACK_PACKAGE_NAME "WIPReviewProbe")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+if(APPLE)
+  set(WIPREVIEW_PACKAGE_PLATFORM "macOS-universal")
+elseif(WIN32)
+  set(WIPREVIEW_PACKAGE_PLATFORM "Windows-x64")
+else()
+  message(FATAL_ERROR "Unsupported package platform")
+endif()
 set(CPACK_PACKAGE_FILE_NAME
-    "WIPReviewProbe-${PROJECT_VERSION}-macOS-universal")
+    "WIPReviewProbe-${PROJECT_VERSION}-${WIPREVIEW_PACKAGE_PLATFORM}")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 include(CPack)

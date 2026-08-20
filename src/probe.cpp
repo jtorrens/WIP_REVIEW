@@ -3,6 +3,7 @@
 #include "calculated_field_resolver.hpp"
 
 #include <ofxColour.h>
+#include <ofxGPURender.h>
 #include <ofx-native-v1.5_aces-v1.3_ocio-v2.3.h>
 #include <ofxCore.h>
 #include <ofxImageEffect.h>
@@ -107,6 +108,10 @@ constexpr char kParamTypographyPage[] = "typographyPage";
 constexpr char kParamZonesPage[] = "zonesPage";
 constexpr char kParamTimingPage[] = "timingPage";
 constexpr char kParamColorPage[] = "colorPage";
+constexpr char kParamProcessingGroup[] = "processingGroup";
+constexpr char kParamCpuOnly[] = "cpuOnly";
+constexpr char kParamGpuStatus[] = "gpuCapabilityStatus";
+constexpr char kParamProcessingPage[] = "processingPage";
 
 struct ZoneParamNames {
   const char* label;
@@ -412,6 +417,13 @@ void logHostCapabilities() {
   Logger::instance().write("HOST_COLOUR_CAPABILITIES",
       "style=" + getString(host, kOfxImageEffectPropColourManagementStyle) +
       " native_configs=" + joinStrings(host, kOfxImageEffectPropColourManagementAvailableConfigs));
+  Logger::instance().write("HOST_GPU_CAPABILITIES",
+      "metal=" + getString(host, kOfxImageEffectPropMetalRenderSupported) +
+      " cuda=" + getString(host, kOfxImageEffectPropCudaRenderSupported) +
+      " opencl_buffers=" +
+          getString(host, kOfxImageEffectPropOpenCLRenderSupported) +
+      " opencl_images=" +
+          getString(host, kOfxImageEffectPropOpenCLSupported));
 }
 
 struct TextCacheKey {
@@ -475,6 +487,7 @@ struct InstanceData {
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
   OfxParamHandle canvasColour = nullptr;
+  OfxParamHandle cpuOnly = nullptr;
   OfxParamHandle colorSpaceMode = nullptr;
   OfxParamHandle manualColorSpace = nullptr;
   OfxParamHandle graphicsWhiteMode = nullptr;
@@ -1650,6 +1663,36 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
 
   OfxPropertySetHandle properties = nullptr;
   gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamProcessingGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Processing");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeBoolean, kParamCpuOnly, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "CPU Only");
+  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(
+      properties, kOfxParamPropHint, 0,
+      "Disable GPU rendering for diagnosis or deterministic CPU execution.");
+  gPropertySuite->propSetString(
+      properties, kOfxParamPropParent, 0, kParamProcessingGroup);
+
+  std::string gpuStatus = "Metal " +
+      getString(gHost ? gHost->host : nullptr,
+                kOfxImageEffectPropMetalRenderSupported) +
+      "; CUDA " +
+      getString(gHost ? gHost->host : nullptr,
+                kOfxImageEffectPropCudaRenderSupported) +
+      "; OpenCL " +
+      getString(gHost ? gHost->host : nullptr,
+                kOfxImageEffectPropOpenCLRenderSupported);
+  defineReadOnlyString(
+      params, kParamGpuStatus, "Host GPU", gpuStatus.c_str(),
+      "GPU render capabilities published by the current OFX host.",
+      kParamProcessingGroup);
+
+  gParameterSuite->paramDefine(
       params, kOfxParamTypeGroup, kParamCanvasGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
@@ -1927,6 +1970,10 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     kParamColorGroup);
 
   std::vector<const char*> definedPages;
+  if (definePage(params, kParamProcessingPage, "Processing",
+                 {kParamGpuStatus, kParamCpuOnly})) {
+    definedPages.push_back(kParamProcessingPage);
+  }
   if (definePage(params, kParamCanvasPage, "Canvas",
                  {kParamRasterStatus, kParamCanvasMode, kParamRasterPreset,
                   kParamWidth, kParamHeight, kParamPlacement, kParamResample,
@@ -1987,7 +2034,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
       "DESCRIBE_IN_CONTEXT",
       "context=" + context +
           " pages_defined=" + std::to_string(definedPages.size()) +
-          " hierarchy=[Canvas,Editorial Blanking,Typography,Zones,Timing,Managed Color]");
+          " hierarchy=[Processing,Canvas,Editorial Blanking,Typography,Zones,Timing,Managed Color]");
   return kOfxStatOK;
 }
 
@@ -2015,6 +2062,7 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
+  gParameterSuite->paramGetHandle(params, kParamCpuOnly, &instance->cpuOnly, nullptr);
   gParameterSuite->paramGetHandle(
       params, kParamColorSpaceMode, &instance->colorSpaceMode, nullptr);
   gParameterSuite->paramGetHandle(
@@ -2469,6 +2517,31 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   const auto renderStarted = std::chrono::steady_clock::now();
   InstanceData* instance = getInstance(effect);
   if (!instance) return kOfxStatErrBadHandle;
+  int metalEnabled = 0;
+  int cudaEnabled = 0;
+  int openclEnabled = 0;
+  gPropertySuite->propGetInt(
+      inArgs, kOfxImageEffectPropMetalEnabled, 0, &metalEnabled);
+  gPropertySuite->propGetInt(
+      inArgs, kOfxImageEffectPropCudaEnabled, 0, &cudaEnabled);
+  gPropertySuite->propGetInt(
+      inArgs, kOfxImageEffectPropOpenCLEnabled, 0, &openclEnabled);
+  const bool cpuOnly = readIntegerParam(instance->cpuOnly, 0) != 0;
+  const bool gpuRender = metalEnabled != 0 || cudaEnabled != 0 ||
+      openclEnabled != 0;
+  Logger::instance().write(
+      "RENDER_BACKEND",
+      instancePrefix(instance) +
+      " cpu_only=" + (cpuOnly ? "true" : "false") +
+      " metal_enabled=" + std::to_string(metalEnabled) +
+      " cuda_enabled=" + std::to_string(cudaEnabled) +
+      " opencl_enabled=" + std::to_string(openclEnabled));
+  if (gpuRender) {
+    Logger::instance().write(
+        "RENDER_ERROR", instancePrefix(instance) +
+        " gpu_backend_not_dispatched=true request_cpu_retry=true");
+    return kOfxStatGPURenderFailed;
+  }
   double time = 0.0;
   int renderWindow[4]{};
   gPropertySuite->propGetDouble(inArgs, kOfxPropTime, 0, &time);
