@@ -39,7 +39,7 @@ Detalle: [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 |---|---|---|
 | B01–B04 | Automatizado y visual | Letterbox 2.00, opacity 0.5, Off y pillarbox Custom. |
 | T01–T06 | Automatizado y visual | Padding independiente, crecimiento top/bottom, outline, shadow, UTF-8 y overflow por celda. |
-| D01–D03 | Automatizado y visual | Prefijo literal + Frame Relative, Frame y Timecode a 24, 25, 30, 23.976 y 29.97 DF. |
+| D01–D03 | Automatizado y visual | Prefijo literal + Frame Relative, Frame y Timecode no-drop. |
 
 Las evidencias detalladas están en los documentos P1B, P2A–P2D y P3.
 

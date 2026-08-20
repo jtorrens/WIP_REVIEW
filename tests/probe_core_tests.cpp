@@ -650,7 +650,6 @@ void testTextOverflowLayout() {
 
 void testCalculatedFieldsAndTimecode() {
   using wipreview::fields::CalculatedField;
-  using wipreview::fields::DropFrameMode;
   wipreview::fields::Settings settings;
   auto result = wipreview::fields::resolve(
       "FR: ", CalculatedField::Frame, 0.0, settings);
@@ -679,40 +678,30 @@ void testCalculatedFieldsAndTimecode() {
              "FILE: ", CalculatedField::SourceFilename, 0.0, settings).text ==
          "FILE: A001.mov");
 
-  settings.dropFrameMode = DropFrameMode::NonDrop;
   for (const auto rate : {24.0, 25.0, 30.0, 24000.0 / 1001.0}) {
     settings.fps = rate;
     const int nominal = static_cast<int>(std::lround(rate));
     result = wipreview::fields::resolve(
         "", CalculatedField::Timecode, nominal, settings);
     assert(result.text == "00:00:01:00");
-    assert(!result.dropApplied && !result.usedTimecodeFallback);
+    assert(!result.usedTimecodeFallback);
   }
 
   settings.fps = 30000.0 / 1001.0;
-  settings.dropFrameMode = DropFrameMode::Auto;
   result = wipreview::fields::resolve("", CalculatedField::Timecode, 1799.0, settings);
-  assert(result.text == "00:00:59;29");
+  assert(result.text == "00:00:59:29");
   result = wipreview::fields::resolve("", CalculatedField::Timecode, 1800.0, settings);
-  assert(result.text == "00:01:00;02");
-  result = wipreview::fields::resolve("", CalculatedField::Timecode, 17982.0, settings);
-  assert(result.text == "00:10:00;00");
+  assert(result.text == "00:01:00:00");
 
-  settings.timecodeStart = "01:00:00;00";
+  settings.timecodeStart = "01:00:00:00";
   result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
-  assert(result.text == "01:00:00;00");
+  assert(result.text == "01:00:00:00");
 
   settings.timecodeStart = "invalid";
   result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
   assert(!result.timecodeStartValid && result.usedTimecodeFallback);
-  assert(result.text == "00:00:00;01");
-
-  settings.timecodeStart = "00:00:00:00";
-  settings.fps = 25.0;
-  settings.dropFrameMode = DropFrameMode::Drop;
-  result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
-  assert(!result.dropCompatible && !result.dropApplied && result.usedTimecodeFallback);
   assert(result.text == "00:00:00:01");
+
 }
 
 }  // namespace

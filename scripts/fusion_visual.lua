@@ -128,7 +128,6 @@ local ok, failure = pcall(function()
         probe.fpsMode = 1
         probe.fpsOverride = 24.0
         probe.timecodeStart = "00:00:00:00"
-        probe.dropFrameMode = 1
         probe.colorSpaceMode = 1
         probe.manualColorSpace = 0
         probe.graphicsWhiteMode = 0
@@ -191,7 +190,6 @@ local ok, failure = pcall(function()
         probe.fpsMode = 1
         probe.fpsOverride = 24.0
         probe.timecodeStart = "00:00:00:00"
-        probe.dropFrameMode = 1
         probe.paddingLeft = 0.015
         probe.paddingRight = 0.015
         probe.paddingTop = 0.020
@@ -326,27 +324,16 @@ local ok, failure = pcall(function()
         p.tcPrefix = "MINIMUM SCALE CANNOT FIT THIS EXTREMELY LONG STRING SO THE CELL CLIPS IT"
     end, 14)
 
-    local calculated_fields = add_zones("P3_CALCULATED_FIELDS_24_NDF", 0, function(p)
+    local calculated_fields = add_zones("P3_CALCULATED_FIELDS_24", 0, function(p)
         p.frameRelativeBase = 1; p.frameStart = 1001
         p.fpsMode = 1; p.fpsOverride = 24.0
-        p.timecodeStart = "00:00:00:00"; p.dropFrameMode = 1
+        p.timecodeStart = "00:00:00:00"
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.tlPrefix = "REL "; p.tlCalculatedField = 1
         p.tcPrefix = "ABS "; p.tcCalculatedField = 2
         p.trPrefix = "TC "; p.trCalculatedField = 3
         p.bcEnabled = 1; p.bcPrefix = "UNKNOWN REMAINS {shot}"
     end, 15)
-    add_zones("P3_TIMECODE_DF", 0, function(p)
-        p.fpsMode = 1; p.fpsOverride = 30000.0 / 1001.0
-        p.timecodeStart = "00:00:00;00"; p.dropFrameMode = 2
-        p.tcEnabled = 1; p.tcPrefix = "29.97 DF "; p.tcCalculatedField = 3
-    end, 16)
-    add_zones("P3_INVALID_TIMECODE", 1, function(p)
-        p.fpsMode = 1; p.fpsOverride = 25.0
-        p.timecodeStart = "invalid"; p.dropFrameMode = 2
-        p.tcEnabled = 1; p.tcPrefix = "INVALID TC "; p.tcCalculatedField = 3
-    end, 17)
-
     local managed_color = add_zones("P4_REC709_DISPLAY_LINEAR_COMPOSITE", 1, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 0
         p.graphicsWhiteMode = 0; p.blankingOpacity = 0.5

@@ -9,9 +9,6 @@
 namespace wipreview::fields {
 namespace {
 
-constexpr double kFps29_97 = 30000.0 / 1001.0;
-constexpr double kFps59_94 = 60000.0 / 1001.0;
-
 std::int64_t saturatingAdd(std::int64_t left, std::int64_t right) noexcept {
   if (right > 0 && left > std::numeric_limits<std::int64_t>::max() - right) {
     return std::numeric_limits<std::int64_t>::max();
@@ -31,11 +28,6 @@ std::int64_t roundedFrame(double time) noexcept {
   return static_cast<std::int64_t>(std::llround(time));
 }
 
-bool compatibleDropRate(double fps) noexcept {
-  return std::abs(fps - kFps29_97) < 0.01 ||
-         std::abs(fps - kFps59_94) < 0.01;
-}
-
 int nominalRate(double fps) noexcept {
   return std::clamp(static_cast<int>(std::lround(fps)), 1, 240);
 }
@@ -46,7 +38,7 @@ std::int64_t positiveModulo(std::int64_t value, std::int64_t modulus) noexcept {
   return result < 0 ? result + modulus : result;
 }
 
-bool parseTimecode(const std::string& value, int nominalFps, bool drop,
+bool parseTimecode(const std::string& value, int nominalFps,
                    std::int64_t& frames) noexcept {
   int hours = 0;
   int minutes = 0;
@@ -61,47 +53,21 @@ bool parseTimecode(const std::string& value, int nominalFps, bool drop,
                   &frame, &trailing) != 7) {
     return false;
   }
-  if (first != ':' || second != ':' || (third != ':' && third != ';') ||
+  if (first != ':' || second != ':' || third != ':' ||
       hours < 0 || hours > 23 || minutes < 0 || minutes > 59 ||
       seconds < 0 || seconds > 59 || frame < 0 || frame >= nominalFps) {
     return false;
   }
-  const int dropFrames = drop ? nominalFps / 15 : 0;
-  if (drop && minutes % 10 != 0 && seconds == 0 && frame < dropFrames) {
-    return false;
-  }
-  const std::int64_t totalMinutes = static_cast<std::int64_t>(hours) * 60 + minutes;
   frames = (static_cast<std::int64_t>(hours) * 3600 + minutes * 60 + seconds) *
       nominalFps + frame;
-  if (drop) frames -= static_cast<std::int64_t>(dropFrames) *
-      (totalMinutes - totalMinutes / 10);
   return true;
 }
 
-std::string formatTimecode(std::int64_t actualFrames, int nominalFps,
-                           bool drop) {
-  std::int64_t labelledFrames = actualFrames;
-  std::int64_t framesPer24Hours = static_cast<std::int64_t>(nominalFps) * 86400;
-  if (drop) {
-    const int dropFrames = nominalFps / 15;
-    const std::int64_t framesPerHour =
-        static_cast<std::int64_t>(nominalFps) * 3600 - dropFrames * 54;
-    framesPer24Hours = framesPerHour * 24;
-    const std::int64_t framesPer10Minutes =
-        static_cast<std::int64_t>(nominalFps) * 600 - dropFrames * 9;
-    const std::int64_t framesPerMinute =
-        static_cast<std::int64_t>(nominalFps) * 60 - dropFrames;
-    labelledFrames = positiveModulo(actualFrames, framesPer24Hours);
-    const std::int64_t tenMinuteBlocks = labelledFrames / framesPer10Minutes;
-    const std::int64_t remainder = labelledFrames % framesPer10Minutes;
-    labelledFrames += static_cast<std::int64_t>(dropFrames) * 9 * tenMinuteBlocks;
-    if (remainder >= dropFrames) {
-      labelledFrames += static_cast<std::int64_t>(dropFrames) *
-          ((remainder - dropFrames) / framesPerMinute);
-    }
-  } else {
-    labelledFrames = positiveModulo(actualFrames, framesPer24Hours);
-  }
+std::string formatTimecode(std::int64_t actualFrames, int nominalFps) {
+  const std::int64_t framesPer24Hours =
+      static_cast<std::int64_t>(nominalFps) * 86400;
+  const std::int64_t labelledFrames =
+      positiveModulo(actualFrames, framesPer24Hours);
 
   const int frame = static_cast<int>(labelledFrames % nominalFps);
   const std::int64_t totalSeconds = labelledFrames / nominalFps;
@@ -109,8 +75,8 @@ std::string formatTimecode(std::int64_t actualFrames, int nominalFps,
   const int minutes = static_cast<int>((totalSeconds / 60) % 60);
   const int hours = static_cast<int>((totalSeconds / 3600) % 24);
   std::array<char, 16> buffer{};
-  std::snprintf(buffer.data(), buffer.size(), "%02d:%02d:%02d%c%02d",
-                hours, minutes, seconds, drop ? ';' : ':', frame);
+  std::snprintf(buffer.data(), buffer.size(), "%02d:%02d:%02d:%02d",
+                hours, minutes, seconds, frame);
   return buffer.data();
 }
 
@@ -131,21 +97,14 @@ Resolution resolve(const std::string& prefix, CalculatedField field,
         settings.fps >= 1.0 && settings.fps <= 240.0;
     const double effectiveFps = result.fpsValid ? settings.fps : 24.0;
     result.nominalFps = nominalRate(effectiveFps);
-    result.dropCompatible = compatibleDropRate(effectiveFps);
-    result.dropApplied = settings.dropFrameMode == DropFrameMode::Auto
-        ? result.dropCompatible
-        : settings.dropFrameMode == DropFrameMode::Drop && result.dropCompatible;
-
     std::int64_t startFrames = 0;
     result.timecodeStartValid = parseTimecode(
-        settings.timecodeStart, result.nominalFps, result.dropApplied, startFrames);
-    result.usedTimecodeFallback = !result.fpsValid || !result.timecodeStartValid ||
-        (settings.dropFrameMode == DropFrameMode::Drop && !result.dropCompatible);
+        settings.timecodeStart, result.nominalFps, startFrames);
+    result.usedTimecodeFallback = !result.fpsValid || !result.timecodeStartValid;
     const std::int64_t timecodeFrames = result.usedTimecodeFallback
         ? result.frameRelative
         : saturatingAdd(startFrames, result.effectFrame);
-    result.timecode = formatTimecode(
-        timecodeFrames, result.nominalFps, result.dropApplied);
+    result.timecode = formatTimecode(timecodeFrames, result.nominalFps);
 
     switch (field) {
       case CalculatedField::None:

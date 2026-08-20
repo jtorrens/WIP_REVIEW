@@ -83,7 +83,6 @@ constexpr char kParamFpsMode[] = "fpsMode";
 constexpr char kParamFpsOverride[] = "fpsOverride";
 constexpr char kParamTimecodeStart[] = "timecodeStart";
 constexpr char kParamReviewDate[] = "reviewDate";
-constexpr char kParamDropFrameMode[] = "dropFrameMode";
 constexpr char kParamOutlineEnabled[] = "outlineEnabled";
 constexpr char kParamOutlineWidth[] = "outlineWidth";
 constexpr char kParamOutlineColour[] = "outlineColor";
@@ -500,7 +499,6 @@ struct InstanceData {
   OfxParamHandle fpsOverride = nullptr;
   OfxParamHandle timecodeStart = nullptr;
   OfxParamHandle reviewDate = nullptr;
-  OfxParamHandle dropFrameMode = nullptr;
   OfxParamHandle outlineEnabled = nullptr;
   OfxParamHandle outlineWidth = nullptr;
   OfxParamHandle outlineColour = nullptr;
@@ -1243,7 +1241,8 @@ struct CalculatedFieldSettings {
 };
 
 CalculatedFieldSettings readCalculatedFieldSettings(
-    const InstanceData* instance, OfxPropertySetHandle renderInArgs) {
+    const InstanceData* instance, OfxPropertySetHandle renderInArgs,
+    OfxTime time) {
   CalculatedFieldSettings settings;
   int frameRelativeBase = 1;
   int frameStart = 1001;
@@ -1251,7 +1250,6 @@ CalculatedFieldSettings readCalculatedFieldSettings(
   double fpsOverride = 24.0;
   char* timecodeStart = nullptr;
   char* reviewDate = nullptr;
-  int dropFrameMode = 0;
   if (instance->frameRelativeBase) {
     gParameterSuite->paramGetValue(instance->frameRelativeBase, &frameRelativeBase);
   }
@@ -1263,13 +1261,12 @@ CalculatedFieldSettings readCalculatedFieldSettings(
     gParameterSuite->paramGetValue(instance->fpsOverride, &fpsOverride);
   }
   if (instance->timecodeStart) {
-    gParameterSuite->paramGetValue(instance->timecodeStart, &timecodeStart);
+    gParameterSuite->paramGetValueAtTime(
+        instance->timecodeStart, time, &timecodeStart);
   }
   if (instance->reviewDate) {
-    gParameterSuite->paramGetValue(instance->reviewDate, &reviewDate);
-  }
-  if (instance->dropFrameMode) {
-    gParameterSuite->paramGetValue(instance->dropFrameMode, &dropFrameMode);
+    gParameterSuite->paramGetValueAtTime(
+        instance->reviewDate, time, &reviewDate);
   }
   OfxPropertySetHandle effectProperties = nullptr;
   gImageSuite->getPropertySet(instance->effect, &effectProperties);
@@ -1279,7 +1276,10 @@ CalculatedFieldSettings readCalculatedFieldSettings(
   settings.resolver.frameRelativeBase = frameRelativeBase;
   settings.resolver.frameStart = frameStart;
   settings.resolver.fps = settings.fpsMode == 0 ? settings.hostFps : fpsOverride;
-  settings.resolver.timecodeStart = timecodeStart ? timecodeStart : "00:00:00:00";
+  settings.resolver.timecodeStart =
+      timecodeStart && timecodeStart[0] != '\0'
+          ? timecodeStart
+          : "00:00:00:00";
   settings.resolver.reviewDate = reviewDate ? reviewDate : "";
   if (gResolveHost) {
     int sourceFrame = 0;
@@ -1303,12 +1303,6 @@ CalculatedFieldSettings readCalculatedFieldSettings(
       }
     }
   }
-  const auto modes = std::array{
-      wipreview::fields::DropFrameMode::Auto,
-      wipreview::fields::DropFrameMode::NonDrop,
-      wipreview::fields::DropFrameMode::Drop};
-  settings.resolver.dropFrameMode = modes[
-      static_cast<std::size_t>(std::clamp(dropFrameMode, 0, 2))];
   return settings;
 }
 
@@ -1652,6 +1646,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   OfxParamSetHandle params = nullptr;
   status = gImageSuite->getParamSet(effect, &params);
   if (status != kOfxStatOK) return status;
+  const std::string reviewDateDefault = currentLocalDate();
 
   OfxPropertySetHandle properties = nullptr;
   gParameterSuite->paramDefine(
@@ -1889,7 +1884,8 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                      -1000000000, 1000000000, -10000, 100000,
                      "Global absolute frame number at the first frame of the effect.",
                      kParamCalculatedFieldsGroup);
-  defineStringParam(params, kParamReviewDate, "Review Date", "", false,
+  defineStringParam(params, kParamReviewDate, "Review Date",
+                    reviewDateDefault.c_str(), false,
                     "Global stable date appended by the Date field; initialized when the effect is created.",
                     kParamCalculatedFieldsGroup);
   defineChoiceParam(params, kParamFpsMode, "FPS Mode",
@@ -1902,11 +1898,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     kParamCalculatedFieldsGroup);
   defineStringParam(params, kParamTimecodeStart, "Timecode Start", "00:00:00:00",
                     false,
-                    "Global timecode at the first frame of the effect: HH:MM:SS:FF or HH:MM:SS;FF.",
-                    kParamCalculatedFieldsGroup);
-  defineChoiceParam(params, kParamDropFrameMode, "Drop Frame Mode",
-                    {"Auto", "NonDrop", "Drop"}, 0,
-                    "Auto enables drop-frame for 29.97/59.94; incompatible Drop requests are logged and use NonDrop.",
+                    "Global non-drop timecode at the first frame of the effect: HH:MM:SS:FF.",
                     kParamCalculatedFieldsGroup);
 
   gParameterSuite->paramDefine(
@@ -1970,8 +1962,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   if (definePage(params, kParamTimingPage, "Timing",
                  {kParamFrameRelativeBase, kParamFrameStart, kParamReviewDate,
                   kParamFpsMode,
-                  kParamFpsOverride, kParamTimecodeStart,
-                  kParamDropFrameMode})) {
+                  kParamFpsOverride, kParamTimecodeStart})) {
     definedPages.push_back(kParamTimingPage);
   }
   if (definePage(params, kParamColorPage, "Color",
@@ -2057,8 +2048,6 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
       params, kParamTimecodeStart, &instance->timecodeStart, nullptr);
   gParameterSuite->paramGetHandle(
       params, kParamReviewDate, &instance->reviewDate, nullptr);
-  gParameterSuite->paramGetHandle(
-      params, kParamDropFrameMode, &instance->dropFrameMode, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineEnabled, &instance->outlineEnabled, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineWidth, &instance->outlineWidth, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineColour, &instance->outlineColour, nullptr);
@@ -2088,17 +2077,6 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
     gParameterSuite->paramGetHandle(params, names.opacity, &handles.opacity, nullptr);
     gParameterSuite->paramGetHandle(params, names.offsetX, &handles.offsetX, nullptr);
     gParameterSuite->paramGetHandle(params, names.offsetY, &handles.offsetY, nullptr);
-  }
-  if (instance->reviewDate) {
-    char* reviewDate = nullptr;
-    if (gParameterSuite->paramGetValue(instance->reviewDate, &reviewDate) ==
-            kOfxStatOK &&
-        (!reviewDate || reviewDate[0] == '\0')) {
-      const std::string today = currentLocalDate();
-      if (!today.empty()) {
-        gParameterSuite->paramSetValue(instance->reviewDate, today.c_str());
-      }
-    }
   }
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
   updateUiState(instance);
@@ -2534,7 +2512,8 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     auto globalText = readGlobalTextSettings(
         instance, time, outputImage, displayLinearView);
     globalText.overlay.outputPremultiplied = true;
-    const auto calculatedFields = readCalculatedFieldSettings(instance, inArgs);
+    const auto calculatedFields =
+        readCalculatedFieldSettings(instance, inArgs, time);
     std::array<ZoneTextSettings, 6> zoneSettings{};
     std::array<wipreview::fields::Resolution, 6> zoneFields{};
     std::array<std::shared_ptr<const CachedZoneText>, 6> zoneTextEntries{};
@@ -2764,9 +2743,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " review_date=" + quoted(calculatedFields.resolver.reviewDate.c_str()) +
         " source_frame=" + quoted(calculatedFields.resolver.sourceFrame.c_str()) +
         " source_filename=" +
-            quoted(calculatedFields.resolver.sourceFilename.c_str()) +
-        " drop_frame_mode=" + std::to_string(
-            static_cast<int>(calculatedFields.resolver.dropFrameMode)));
+            quoted(calculatedFields.resolver.sourceFilename.c_str()));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
@@ -2824,8 +2801,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             " timecode=" + quoted(field.timecode.c_str()) +
             " nominal_fps=" + std::to_string(field.nominalFps) +
             " fps_valid=" + (field.fpsValid ? "true" : "false") +
-            " drop_compatible=" + (field.dropCompatible ? "true" : "false") +
-            " drop_applied=" + (field.dropApplied ? "true" : "false") +
             " timecode_start_valid=" +
                 (field.timecodeStartValid ? "true" : "false") +
             " used_timecode_fallback=" +

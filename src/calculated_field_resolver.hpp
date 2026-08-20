@@ -5,12 +5,6 @@
 
 namespace wipreview::fields {
 
-enum class DropFrameMode {
-  Auto,
-  NonDrop,
-  Drop,
-};
-
 enum class CalculatedField {
   None,
   FrameRelative,
@@ -29,7 +23,6 @@ struct Settings {
   std::string reviewDate;
   std::string sourceFrame;
   std::string sourceFilename;
-  DropFrameMode dropFrameMode = DropFrameMode::Auto;
 };
 
 struct Resolution {
@@ -41,8 +34,6 @@ struct Resolution {
   int nominalFps = 24;
   bool containsCalculatedField = false;
   bool fpsValid = true;
-  bool dropCompatible = false;
-  bool dropApplied = false;
   bool timecodeStartValid = true;
   bool usedTimecodeFallback = false;
 };

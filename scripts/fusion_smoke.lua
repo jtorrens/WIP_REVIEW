@@ -63,6 +63,8 @@ local ok, failure = pcall(function()
                                 blanking_enabled, blanking_preset,
                                 blanking_custom, blanking_opacity, configure_zones,
                                 render_times)
+        local times = render_times or {0}
+        comp.CurrentTime = times[1]
         comp:Lock()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
@@ -92,7 +94,6 @@ local ok, failure = pcall(function()
         probe.fpsMode = 1
         probe.fpsOverride = 24.0
         probe.timecodeStart = "00:00:00:00"
-        probe.dropFrameMode = 1
         probe.colorSpaceMode = 1
         probe.manualColorSpace = 0
         probe.graphicsWhiteMode = 0
@@ -101,7 +102,6 @@ local ok, failure = pcall(function()
         if configure_zones ~= nil then configure_zones(probe) end
         comp:SetActiveTool(probe)
         comp:Unlock()
-        local times = render_times or {0}
         for _, render_time in ipairs(times) do
             comp.CurrentTime = render_time
             local image = probe.Output:GetValue(render_time)
@@ -237,24 +237,12 @@ local ok, failure = pcall(function()
                  0, 2, 2.0, 1.0, function(p)
         p.frameRelativeBase = 1; p.frameStart = 1001
         p.fpsMode = 1; p.fpsOverride = 24.0
-        p.timecodeStart = "00:00:00:00"; p.dropFrameMode = 1
+        p.timecodeStart = "00:00:00:00"
         p.tlEnabled = 1; p.tlPrefix = "REL "; p.tlCalculatedField = 1
         p.tcEnabled = 1; p.tcPrefix = "ABS "; p.tcCalculatedField = 2
         p.trEnabled = 1; p.trPrefix = "TC "; p.trCalculatedField = 3
         p.bcEnabled = 1; p.bcPrefix = "LITERAL {frame}"
     end, {0, 1})
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_TIMECODE_DF", 2, 1, 2, 7,
-                 0, 2, 2.0, 1.0, function(p)
-        p.fpsMode = 1; p.fpsOverride = 30000.0 / 1001.0
-        p.timecodeStart = "00:00:00;00"; p.dropFrameMode = 2
-        p.tcEnabled = 1; p.tcPrefix = "DF "; p.tcCalculatedField = 3
-    end, {1799, 1800})
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_INVALID_TIMECODE", 2, 1, 3, 7,
-                 0, 2, 2.0, 1.0, function(p)
-        p.fpsMode = 1; p.fpsOverride = 25.0
-        p.timecodeStart = "invalid"; p.dropFrameMode = 2
-        p.brEnabled = 1; p.brPrefix = "INVALID TC "; p.brCalculatedField = 3
-    end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P4_REC709_LINEAR_BLEND", 0, 1, 1, 8,
                  1, 2, 2.0, 0.5, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 0

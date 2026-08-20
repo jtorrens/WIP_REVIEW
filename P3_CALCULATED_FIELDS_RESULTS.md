@@ -26,12 +26,18 @@ No se interpretan expresiones entre llaves dentro de **Text**. Por ejemplo,
   editable por el usuario.
 - `FPS Mode`: `AutoFromHost` u `Override`.
 - `FPS Override`: default `24.0`.
-- `Timecode Start`: timecode global del primer frame del efecto.
-- `Drop Frame Mode`: `Auto`, `NonDrop` o `Drop`.
+- `Timecode Start`: timecode global `HH:MM:SS:FF` del primer frame del efecto.
 
-Frame Relative, Frame y Timecode se calculan desde `round(effectTime)`. Auto
-aplica drop-frame solo a 29.97 y 59.94. Un FPS inválido, un Timecode Start
-inválido o una petición Drop incompatible se registra explícitamente.
+Frame Relative, Frame y Timecode se calculan desde `round(effectTime)`.
+Timecode usa exclusivamente numeración no-drop. Un FPS o Timecode Start
+inválido se registra explícitamente.
+Fusion puede publicar temporalmente el valor por defecto de Timecode Start como
+string vacía en el primer render; vacío se normaliza exclusivamente al default
+vigente `00:00:00:00`.
+Los strings globales se consultan con `paramGetValueAtTime`, igual que el texto
+de zona, para respetar la coordenada temporal publicada por Fusion.
+La automatización posiciona `comp.CurrentTime` antes de escribir strings,
+porque Fusion crea sus valores en esa coordenada temporal.
 
 ## Variación temporal
 
@@ -44,12 +50,14 @@ Filename son estables.
 - composición de prefijo + cada campo calculado;
 - prefijo con llaves conservado literalmente;
 - incremento temporal y redondeo half-away-from-zero;
-- timecode NonDrop a 24, 25, 30 y 23.976;
-- 29.97 DF: `00:00:59;29 → 00:01:00;02`;
+- timecode a 24, 25, 30, 23.976 y 29.97 fps;
 - fecha, source frame y source filename;
-- configuración inválida con warning controlado;
 - smoke acumulativo en Fusion para campos portables.
 
 Los campos exclusivos de Resolve aún requieren el chequeo empírico final en
 Resolve; si el host no publica una propiedad en una llamada concreta, el OFX
 deja el valor vacío y lo registra, sin fabricar datos.
+
+El smoke acumulativo de Fusion Studio 21.0.4 quedó aprobado el 20 de agosto de
+2026: 33 renders, incluidos Frame Relative, Frame, Timecode y la conservación
+literal de llaves en Text.
