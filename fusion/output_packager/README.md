@@ -94,3 +94,40 @@ Resultado:
 ```text
 OUTPUTPACKAGER_SAVER_ENABLE_HOST_TEST_OK
 ```
+
+## Checkpoint 5 — componente de imagen
+
+`build_output_packager.lua` crea un `GroupOperator` conectado con:
+
+```text
+Input
+→ centered fit + opaque review canvas
+→ ReviewRaster Switch
+→ WIP Review General
+→ WIP Switch
+→ Output
+```
+
+El canvas contiene los valores explícitos de Review Resolution. BetterResize
+lee internamente ese canvas, por lo que su altura efectiva reducida nunca puede
+alterar las dimensiones finales. Los dos bypasses son nodos `Switch`.
+
+Con una comp abierta, crear una instancia:
+
+```lua
+dofile("/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/output_packager/build_output_packager.lua")
+```
+
+Prueba de host:
+
+```sh
+fusion/output_packager/tests/run_builder_test.sh
+```
+
+Comprueba en un consumidor externo los tres estados: source raster `400×200`,
+review limpio `192×108` y review con OFX `192×108`. Al terminar deja abierta la
+comp de prueba y muestra:
+
+```text
+OUTPUTPACKAGER_BUILDER_HOST_TEST_OK
+```
