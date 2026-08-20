@@ -8,7 +8,7 @@ Esta matriz separa pruebas host-independent, evidencia ya obtenida en host y el
 
 | ID | Estado | Evidencia |
 |---|---|---|
-| R01 Requested Review Raster | Validado; repetir con bundle final | Fusion 21 General y Filter entregaron simultáneamente Source 4608×3164 y Output 1920×1080 con `AllowResize=1`. El smoke comprueba RoD, bounds, renderWindow, RoI y placements. |
+| R01 Requested Review Raster | Validado con bundle final | Fusion 21 General y Filter entregaron simultáneamente Source 4608×3164 y Output 1920×1080 con `AllowResize=1`. El smoke comprueba RoD, bounds, renderWindow, RoI y placements. |
 | R02 Unsupported Requested Raster | Implementado; repetir en Resolve final | La matriz de host habilita Requested solo para `com.blackmagicdesign.Fusion`. Resolve y hosts desconocidos bloquean Canvas Mode en Host Raster; la lectura de parámetros vuelve a comprobar la capacidad antes de solicitar RoD. |
 | R03 Upstream equivalence | Automatizado | `wipreview_v1_acceptance` compara la ruta integrada full-res→HD con placement upstream equivalente, y comprueba que Host Raster/Identity no altera el resultado. |
 | R04 Master isolation | Responsabilidad de composición | El OFX no modifica ramas no conectadas. La aceptación operativa exige una rama de conform nativa separada de la rama de review; se comprueba en el proyecto de entrega, no dentro del renderer. |
@@ -75,12 +75,26 @@ scripts/run_fusion_smoke.sh
 scripts/open_fusion_visual.sh
 ```
 
-## Cierre pendiente del artefacto final
+## Estado del artefacto final
 
-Antes del tag V1 deben repetirse con el binario exacto del paquete:
+Validado el 20 de agosto de 2026 en Fusion Studio 21.0.4 con el binario del
+commit `7d47575`:
 
-1. carga y smoke acumulativo en Fusion Standalone;
-2. comprobación visual HD/UHD/DCI y Rec.709/PQ/HLG;
-3. carga en Resolve Edit y Color, confirmando Canvas Mode bloqueado en Host
-   Raster y Source/Output de timeline;
-4. verificación de firma, arquitecturas, símbolos, hash y contenido del paquete.
+- smoke acumulativo: 36 renders aprobados;
+- General y Filter: Requested 1920×1080 desde Source 4608×3164;
+- Host Raster y los cinco placements aprobados;
+- blanking, seis zonas, outline, shadow, overflow y tokens aprobados;
+- Rec.709, PQ y HLG aprobados;
+- firma ad-hoc, símbolos OFX y arquitecturas arm64/x86_64 verificados.
+
+Paquete:
+
+```text
+build-universal/WIPReviewProbe-1.1.0-macOS-universal.zip
+SHA-256 840bb248ca25d5caa95f78fee8e071dfcf1200476579f02ceafdd27dbd85d427
+```
+
+Antes del tag V1 queda repetir la carga en Resolve Edit y Color con este mismo
+bundle, confirmando Canvas Mode bloqueado en Host Raster y Source/Output de
+timeline. La comprobación visual HD/UHD/DCI ya fue realizada durante las fases
+de geometría y color y queda cubierta adicionalmente por la aceptación local.
