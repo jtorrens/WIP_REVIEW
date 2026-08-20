@@ -318,6 +318,15 @@ std::string getString(OfxPropertySetHandle properties, const char* name) {
                               : std::string("<") + statusName(status) + ">";
 }
 
+bool stringPropertyEquals(OfxPropertySetHandle properties, const char* name,
+                          const char* expected) {
+  if (!gPropertySuite || !properties || !expected) return false;
+  char* value = nullptr;
+  return gPropertySuite->propGetString(properties, name, 0, &value) ==
+             kOfxStatOK &&
+      value && std::strcmp(value, expected) == 0;
+}
+
 std::string getInt(OfxPropertySetHandle properties, const char* name) {
   if (!gPropertySuite || !properties) return "<unavailable>";
   int value = 0;
@@ -1132,7 +1141,8 @@ OfxStatus load() {
   gMultiThreadSuite = static_cast<const OfxMultiThreadSuiteV1*>(
       gHost->fetchSuite(gHost->host, kOfxMultiThreadSuite, 1));
   gRequestedReviewRasterSupported =
-      getString(gHost->host, kOfxPropName) == "com.blackmagicdesign.Fusion";
+      stringPropertyEquals(gHost->host, kOfxPropName,
+                           "com.blackmagicdesign.Fusion");
 
   if (!gImageSuite || !gPropertySuite || !gParameterSuite) {
     return kOfxStatErrMissingHostFeature;
