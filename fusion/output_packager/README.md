@@ -201,7 +201,8 @@ La página `WIP` expone únicamente controles de producción del nodo instalado:
 
 - blanking y opacity;
 - font, tamaño, opacity, outline y shadow;
-- seis zonas con enable, textbox y calculated field;
+- seis zonas con enable, texto libre de prefijo y combo de campo calculado
+  (`None`, `Frame Relative`, `Frame`, `Timecode` o `Date`);
 - frame relative base, frame start, FPS y timecode;
 - color-space mode y manual color space.
 

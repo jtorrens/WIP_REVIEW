@@ -157,10 +157,10 @@ local function definition(name, values)
                         Name = "Top Left Text",
                         Page = "WIP",
                     },
-                    OP_TLField = InstanceInput {
+                    OP_TLCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "tlCalculatedField",
-                        Name = "Top Left Field",
+                        Name = "Top Left Calculated Field",
                         Page = "WIP",
                     },
                     OP_TCEnabled = InstanceInput {
@@ -175,10 +175,10 @@ local function definition(name, values)
                         Name = "Top Center Text",
                         Page = "WIP",
                     },
-                    OP_TCField = InstanceInput {
+                    OP_TCCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "tcCalculatedField",
-                        Name = "Top Center Field",
+                        Name = "Top Center Calculated Field",
                         Page = "WIP",
                     },
                     OP_TREnabled = InstanceInput {
@@ -193,10 +193,10 @@ local function definition(name, values)
                         Name = "Top Right Text",
                         Page = "WIP",
                     },
-                    OP_TRField = InstanceInput {
+                    OP_TRCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "trCalculatedField",
-                        Name = "Top Right Field",
+                        Name = "Top Right Calculated Field",
                         Page = "WIP",
                     },
                     OP_BLEnabled = InstanceInput {
@@ -211,10 +211,10 @@ local function definition(name, values)
                         Name = "Bottom Left Text",
                         Page = "WIP",
                     },
-                    OP_BLField = InstanceInput {
+                    OP_BLCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "blCalculatedField",
-                        Name = "Bottom Left Field",
+                        Name = "Bottom Left Calculated Field",
                         Page = "WIP",
                     },
                     OP_BCEnabled = InstanceInput {
@@ -229,10 +229,10 @@ local function definition(name, values)
                         Name = "Bottom Center Text",
                         Page = "WIP",
                     },
-                    OP_BCField = InstanceInput {
+                    OP_BCCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "bcCalculatedField",
-                        Name = "Bottom Center Field",
+                        Name = "Bottom Center Calculated Field",
                         Page = "WIP",
                     },
                     OP_BREnabled = InstanceInput {
@@ -247,10 +247,10 @@ local function definition(name, values)
                         Name = "Bottom Right Text",
                         Page = "WIP",
                     },
-                    OP_BRField = InstanceInput {
+                    OP_BRCalculatedField = InstanceInput {
                         SourceOp = "WIPReviewProbe_WIP",
                         Source = "brCalculatedField",
-                        Name = "Bottom Right Field",
+                        Name = "Bottom Right Calculated Field",
                         Page = "WIP",
                     },
                     OP_FrameRelativeBase = InstanceInput {
@@ -545,12 +545,12 @@ local PUBLIC_CONTROLS = {
     "OP_OutlineEnabled", "OP_OutlineWidth",
     "OP_ShadowEnabled", "OP_ShadowOffsetX", "OP_ShadowOffsetY",
     "OP_ShadowSoftness", "OP_ShadowOpacity",
-    "OP_TLEnabled", "OP_TLText", "OP_TLField",
-    "OP_TCEnabled", "OP_TCText", "OP_TCField",
-    "OP_TREnabled", "OP_TRText", "OP_TRField",
-    "OP_BLEnabled", "OP_BLText", "OP_BLField",
-    "OP_BCEnabled", "OP_BCText", "OP_BCField",
-    "OP_BREnabled", "OP_BRText", "OP_BRField",
+    "OP_TLEnabled", "OP_TLText", "OP_TLCalculatedField",
+    "OP_TCEnabled", "OP_TCText", "OP_TCCalculatedField",
+    "OP_TREnabled", "OP_TRText", "OP_TRCalculatedField",
+    "OP_BLEnabled", "OP_BLText", "OP_BLCalculatedField",
+    "OP_BCEnabled", "OP_BCText", "OP_BCCalculatedField",
+    "OP_BREnabled", "OP_BRText", "OP_BRCalculatedField",
     "OP_FrameRelativeBase", "OP_FrameStart", "OP_FPSMode",
     "OP_FPSOverride", "OP_TimecodeStart", "OP_DropFrameMode",
     "OP_ColorSpaceMode", "OP_ManualColorSpace",

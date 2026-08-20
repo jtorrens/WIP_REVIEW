@@ -28,12 +28,12 @@ local controls = {
     "OP_OutlineEnabled", "OP_OutlineWidth",
     "OP_ShadowEnabled", "OP_ShadowOffsetX", "OP_ShadowOffsetY",
     "OP_ShadowSoftness", "OP_ShadowOpacity",
-    "OP_TLEnabled", "OP_TLText", "OP_TLField",
-    "OP_TCEnabled", "OP_TCText", "OP_TCField",
-    "OP_TREnabled", "OP_TRText", "OP_TRField",
-    "OP_BLEnabled", "OP_BLText", "OP_BLField",
-    "OP_BCEnabled", "OP_BCText", "OP_BCField",
-    "OP_BREnabled", "OP_BRText", "OP_BRField",
+    "OP_TLEnabled", "OP_TLText", "OP_TLCalculatedField",
+    "OP_TCEnabled", "OP_TCText", "OP_TCCalculatedField",
+    "OP_TREnabled", "OP_TRText", "OP_TRCalculatedField",
+    "OP_BLEnabled", "OP_BLText", "OP_BLCalculatedField",
+    "OP_BCEnabled", "OP_BCText", "OP_BCCalculatedField",
+    "OP_BREnabled", "OP_BRText", "OP_BRCalculatedField",
     "OP_FrameRelativeBase", "OP_FrameStart", "OP_FPSMode",
     "OP_FPSOverride", "OP_TimecodeStart", "OP_DropFrameMode",
     "OP_ColorSpaceMode", "OP_ManualColorSpace",
@@ -47,7 +47,7 @@ group.OP_BlankingOpacity[0] = 0.75
 group.OP_FontFamily[0] = "System Default"
 group.OP_TLEnabled[0] = 1
 group.OP_TLText[0] = "{frame} · "
-group.OP_TLField[0] = 2
+group.OP_TLCalculatedField[0] = 2
 group.OP_BREnabled[0] = 1
 group.OP_BRText[0] = "{timecode}"
 group.OP_FrameStart[0] = 1001
@@ -59,6 +59,14 @@ group.OP_ManualColorSpace[0] = 0
 
 if tostring(group.OP_TLText[0]) ~= "{frame} · " then fail("Top Left text did not persist") end
 if tostring(group.OP_BRText[0]) ~= "{timecode}" then fail("Bottom Right text did not persist") end
+local combo_attrs = group.OP_TLCalculatedField:GetAttrs() or {}
+if combo_attrs.INPID_InputControl ~= "ComboControl" then
+    fail("Top Left Calculated Field is not exposed as a combo")
+end
+local combo_values = combo_attrs.INPST_ComboControl_String or {}
+if combo_values[1] ~= "None" or combo_values[5] ~= "Date" then
+    fail("Top Left Calculated Field combo values are not preserved")
+end
 if tonumber(group.OP_FPSOverride[0]) ~= 25 then fail("FPS Override did not persist") end
 if tostring(group.OP_TimecodeStart[0]) ~= "10:00:00:00" then
     fail("Timecode Start did not persist")
