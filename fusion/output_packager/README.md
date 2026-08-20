@@ -191,3 +191,30 @@ La comp temporal se cierra y el resultado es:
 ```text
 OUTPUTPACKAGER_REBUILD_HOST_TEST_OK
 ```
+
+## Checkpoint 8 — UI de WIP Review
+
+La página `WIP` expone únicamente controles de producción del nodo instalado:
+
+- blanking y opacity;
+- font, tamaño, opacity, outline y shadow;
+- seis zonas con enable, textbox y calculated field;
+- frame relative base, frame start, FPS y timecode;
+- color-space mode y manual color space.
+
+`Canvas Mode`, placement, custom RoD, `AllowResize` y diagnósticos permanecen
+ocultos y fijados por el grafo. Crop Ratio continúa en `Applied` y alimenta
+internamente el blanking custom sin expresión hacia ShotConfig.
+
+La prueba escribe texto y tokens en zonas opuestas, configura timing/color y
+reconstruye el Group para comprobar persistencia:
+
+```sh
+fusion/output_packager/tests/run_wip_ui_test.sh
+```
+
+Resultado:
+
+```text
+OUTPUTPACKAGER_WIP_UI_HOST_TEST_OK
+```
