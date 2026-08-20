@@ -233,6 +233,24 @@ local function definition(name, values)
                         },
                         ViewInfo = OperatorInfo { Pos = { -440, -1 } },
                     },
+                    IP_PreColorAlphaSwitch = Switch {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Source = Input { Expression = "IP_AlphaSwitch.Source", },
+                            Name0 = Input { Value = "Ignore Alpha", },
+                            Name1 = Input { Value = "Unpremultiply", },
+                            Input0 = Input {
+                                SourceOp = "IP_DepthSwitch",
+                                Source = "Output",
+                            },
+                            Input1 = Input {
+                                SourceOp = "IP_Unpremultiply",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = OperatorInfo { Pos = { -385, -1 } },
+                    },
                     IP_ColorTransform = ColorSpaceTransform {
                         CtrlWShown = false,
                         NameSet = true,
@@ -242,7 +260,7 @@ local function definition(name, values)
                             OutputColorSpace = Input { Value = FuID { %q }, },
                             OutputGamma = Input { Value = FuID { %q }, },
                             Input = Input {
-                                SourceOp = "IP_Unpremultiply",
+                                SourceOp = "IP_PreColorAlphaSwitch",
                                 Source = "Output",
                             },
                         },
@@ -259,6 +277,24 @@ local function definition(name, values)
                         },
                         ViewInfo = OperatorInfo { Pos = { -220, -1 } },
                     },
+                    IP_PostColorAlphaSwitch = Switch {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Source = Input { Expression = "IP_AlphaSwitch.Source", },
+                            Name0 = Input { Value = "Straight", },
+                            Name1 = Input { Value = "Premultiply", },
+                            Input0 = Input {
+                                SourceOp = "IP_ColorTransform",
+                                Source = "Output",
+                            },
+                            Input1 = Input {
+                                SourceOp = "IP_Premultiply",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = OperatorInfo { Pos = { -165, -1 } },
+                    },
                     IP_ColorSwitch = Switch {
                         CtrlWShown = false,
                         NameSet = true,
@@ -271,7 +307,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_Premultiply",
+                                SourceOp = "IP_PostColorAlphaSwitch",
                                 Source = "Output",
                             },
                         },

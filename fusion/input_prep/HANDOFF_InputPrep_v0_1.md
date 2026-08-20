@@ -216,8 +216,15 @@ Con `Embedded Alpha = false`:
 - el alpha de salida se fuerza a `1.0`;
 - no se interpreta un canal alpha accidental de la fuente.
 
-El prototipo usa `AlphaDivide → CST → AlphaMultiply`; su comportamiento se
-cerrará con la prueba de píxeles semitransparentes en Fusion 21.
+Implementación validada con píxeles semitransparentes en Fusion 21:
+
+- con Embedded Alpha activo, la rama usa
+  `AlphaDivide → CST → AlphaMultiply` y conserva alpha;
+- con Embedded Alpha desactivado, el CST recibe RGB directamente y
+  `ChannelBoolean` fuerza alpha a `1.0`.
+
+Dos switches internos siguen la política pública de alpha y evitan evaluar
+divide/multiply cuando no corresponden.
 
 ## Builders y scripts
 
@@ -232,11 +239,14 @@ fusion/input_prep/
 ├── README.md
 └── tests/
     ├── config_apply_host_test.lua
+    ├── color_alpha_host_test.lua
     ├── prototype_host_test.lua
     ├── resize_host_test.lua
     ├── run_config_apply_test.sh
+    ├── run_color_alpha_test.sh
     ├── run_prototype_test.sh
-    └── run_resize_test.sh
+    ├── run_resize_test.sh
+    └── verify_color_alpha.py
 ```
 
 ### build_input_prep.lua

@@ -100,12 +100,20 @@ El registro, rebuild y Apply/rollback se validan con:
 ./fusion/input_prep/tests/run_config_apply_test.sh
 ```
 
+Color y alpha se comparan píxel a píxel contra grafos nativos de referencia:
+
+```sh
+./fusion/input_prep/tests/run_color_alpha_test.sh
+```
+
 El test comprueba en el host la identidad del grupo, su conexión, el estado
 público, los cinco selectores y los valores serializados de depth, resize,
 crop y alpha. El segundo test renderiza fuentes cuadrada, panorámica y vertical
 y comprueba las dimensiones antes y después del crop. El tercero aplica a dos
 targets, ignora uno no registrado, actualiza valores, conserva el registro al
-reconstruirlo y comprueba validación previa y rollback.
+reconstruirlo y comprueba validación previa y rollback. El cuarto renderiza
+EXR de las políticas Opaque y Preserve y compara sus píxeles con ramas nativas
+equivalentes.
 
 `probe_input_prep.lua` documenta los RegIDs y controles disponibles en la
 instalación actual de Fusion. Crea una comp privada sin guardar:
@@ -117,6 +125,6 @@ instalación actual de Fusion. Crea una comp privada sin guardar:
 
 ## Pendiente antes de cerrar v0.1
 
-Queda validar color y alpha con píxeles semitransparentes y cerrar el rebuild
-de un procesador conservando sus conexiones. Después se podrá retirar la
-etiqueta de prototipo y cerrar los nueve casos del handoff.
+Queda cerrar el rebuild de un procesador conservando sus conexiones. Después
+se podrá retirar la etiqueta de prototipo y cerrar los nueve casos del
+handoff.
