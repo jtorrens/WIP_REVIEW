@@ -9,7 +9,7 @@ Esta matriz separa pruebas host-independent, evidencia ya obtenida en host y el
 | ID | Estado | Evidencia |
 |---|---|---|
 | R01 Requested Review Raster | Validado con bundle final | Fusion 21 General y Filter entregaron simultáneamente Source 4608×3164 y Output 1920×1080 con `AllowResize=1`. El smoke comprueba RoD, bounds, renderWindow, RoI y placements. |
-| R02 Unsupported Requested Raster | Implementado; repetir en Resolve final | La matriz de host habilita Requested solo para `com.blackmagicdesign.Fusion`. Resolve y hosts desconocidos bloquean Canvas Mode en Host Raster; la lectura de parámetros vuelve a comprobar la capacidad antes de solicitar RoD. |
+| R02 Unsupported Requested Raster | Validado con bundle final | Resolve 21.0.4 publicó `DaVinciResolve`; el log confirmó `requested_review_raster=false`, Source/Output con el mismo raster y carga correcta del descriptor único. La lectura de parámetros vuelve a comprobar la capacidad antes de solicitar RoD. |
 | R03 Upstream equivalence | Automatizado | `wipreview_v1_acceptance` compara la ruta integrada full-res→HD con placement upstream equivalente, y comprueba que Host Raster/Identity no altera el resultado. |
 | R04 Master isolation | Responsabilidad de composición | El OFX no modifica ramas no conectadas. La aceptación operativa exige una rama de conform nativa separada de la rama de review; se comprueba en el proyecto de entrega, no dentro del renderer. |
 
@@ -95,7 +95,14 @@ build-universal/WIPReviewProbe-1.1.0-macOS-universal.zip
 SHA-256 918e47b835282b8556de344a199ea338d143d3c6ffffc9d424ad0a6ae1b18621
 ```
 
-Antes del tag V1 queda repetir la carga en Resolve Edit y Color con este mismo
-bundle, confirmando Canvas Mode bloqueado en Host Raster y Source/Output de
-timeline. La comprobación visual HD/UHD/DCI ya fue realizada durante las fases
-de geometría y color y queda cubierta adicionalmente por la aceptación local.
+Resolve 21.0.4 cargó correctamente el descriptor único el 20 de agosto de 2026.
+El host lo instanció en contexto General, mantuvo
+`requested_review_raster=false` y entregó Source/Output iguales a
+3840×2160 —además de sus rasters de preview—, confirmando Host Raster en el
+artefacto final. El proyecto usado aún contenía una referencia al identificador
+Filter Only retirado; se eliminó esa instancia y se añadió `WIP Review`, sin
+introducir alias ni compatibilidad obsoleta.
+
+La aceptación técnica V1 queda completa. La comprobación visual HD/UHD/DCI fue
+realizada durante las fases de geometría y color y queda cubierta
+adicionalmente por la aceptación local.
