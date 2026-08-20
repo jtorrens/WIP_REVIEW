@@ -6,6 +6,9 @@
 
 #define CL_TARGET_OPENCL_VERSION 110
 #include <CL/cl.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <Windows.h>
 
 #include <algorithm>
