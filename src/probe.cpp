@@ -1961,9 +1961,42 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         wipreview::probe::ChannelType::Float32};
     const wipreview::probe::RectI requestedWindow{
         renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
-    wipreview::probe::renderManagedDisplayFrame(
-        sourceView, displayLinearView, requestedWindow, options,
-        managedColor.config);
+    const bool sourceAvailable = sourceView.data && sourceView.pixelBytes > 0 &&
+        sourceView.channels > 0 &&
+        !wipreview::probe::empty(sourceView.bounds);
+    const auto writableWindow = wipreview::probe::intersect(
+        requestedWindow, outputView.bounds);
+    const auto identitySourceArea = wipreview::probe::intersect(
+        writableWindow, sourceView.bounds);
+    const bool directIdentityDecode = sourceAvailable &&
+        options.placement == wipreview::probe::PlacementMode::Identity &&
+        identitySourceArea.x1 == writableWindow.x1 &&
+        identitySourceArea.y1 == writableWindow.y1 &&
+        identitySourceArea.x2 == writableWindow.x2 &&
+        identitySourceArea.y2 == writableWindow.y2;
+    const bool needsDecodedScratch = sourceAvailable && !directIdentityDecode;
+    const int sourceWidth = needsDecodedScratch
+        ? sourceView.bounds.x2 - sourceView.bounds.x1 : 0;
+    const int sourceHeight = needsDecodedScratch
+        ? sourceView.bounds.y2 - sourceView.bounds.y1 : 0;
+    std::vector<float> decodedSourcePixels(
+        static_cast<std::size_t>(sourceWidth) *
+        static_cast<std::size_t>(sourceHeight) * 4U);
+    const wipreview::probe::ImageView decodedSourceView{
+        reinterpret_cast<std::byte*>(decodedSourcePixels.data()),
+        needsDecodedScratch ? sourceView.bounds : wipreview::probe::RectI{},
+        static_cast<std::ptrdiff_t>(sourceWidth * 4 * sizeof(float)),
+        sizeof(float) * 4,
+        4,
+        wipreview::probe::ChannelType::Float32};
+    if (!wipreview::probe::renderManagedDisplayFrame(
+            sourceView, decodedSourceView, displayLinearView, requestedWindow,
+            options, managedColor.config)) {
+      Logger::instance().write(
+          "RENDER_ERROR", instancePrefix(instance) +
+          " invalid_managed_render_scratch=true");
+      result = kOfxStatFailed;
+    }
     auto blanking = readBlankingOptions(instance, time, outputImage);
     blanking.outputPremultiplied = true;
     wipreview::probe::applyBlanking(
@@ -2067,6 +2100,8 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             std::to_string(managedColor.config.graphicsWhiteNits) +
         " hlg_peak_nits=" + std::to_string(managedColor.config.peakNits) +
         " working_space=display-light-linear working_premult=true" +
+        " decode_count=1 decoded_source_scratch_bytes=" +
+            std::to_string(decodedSourcePixels.size() * sizeof(float)) +
         " encode_count=1 output_premult=" +
             (options.outputPremultiplied ? "true" : "false"));
     if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {

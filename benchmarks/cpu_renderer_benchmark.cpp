@@ -124,6 +124,11 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
   std::vector<float> source(sourcePixels);
   std::vector<float> working(outputPixels, 0.0F);
   std::vector<float> output(outputPixels, 0.0F);
+  const bool directIdentityDecode =
+      raster.sourceWidth == raster.outputWidth &&
+      raster.sourceHeight == raster.outputHeight;
+  std::vector<float> decodedSource(
+      directIdentityDecode ? 0 : sourcePixels, 0.0F);
   fillSource(source, raster.sourceWidth, raster.sourceHeight);
 
   auto sourceView = floatView(source, raster.sourceWidth, raster.sourceHeight);
@@ -153,8 +158,16 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
   const GlyphMaskView mask{maskPixels.data(), maskWidth, maskHeight, maskWidth};
 
   const auto renderStart = Clock::now();
-  wipreview::probe::renderManagedDisplayFrame(
-      sourceView, workingView, renderWindow, render, color);
+  ImageView decodedSourceView;
+  if (!directIdentityDecode) {
+    decodedSourceView = floatView(
+        decodedSource, raster.sourceWidth, raster.sourceHeight);
+  }
+  if (!wipreview::probe::renderManagedDisplayFrame(
+          sourceView, decodedSourceView, workingView, renderWindow,
+          render, color)) {
+    throw std::runtime_error("managed render scratch contract failed");
+  }
   const auto renderEnd = Clock::now();
 
   wipreview::probe::applyBlanking(workingView, renderWindow, blanking);

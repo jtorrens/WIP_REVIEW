@@ -226,45 +226,6 @@ std::array<float, 4> sample(const ImageView& source, double x, double y,
   return result;
 }
 
-std::array<float, 4> sampleManaged(
-    const ImageView& source, double x, double y, double scaleX, double scaleY,
-    ResampleFilter filter, bool sourcePremultiplied,
-    const wipreview::color::DisplayConfig& colorConfig) noexcept {
-  std::array<double, 4> sum{};
-  double weightSum = 0.0;
-  const double radius = filter == ResampleFilter::Bilinear ? 1.0
-                      : filter == ResampleFilter::Bicubic ? 2.0 : 3.0;
-  const double filterScaleX = std::max(1.0, 1.0 / std::abs(scaleX));
-  const double filterScaleY = std::max(1.0, 1.0 / std::abs(scaleY));
-  const int firstX = static_cast<int>(std::ceil(x - radius * filterScaleX));
-  const int lastX = static_cast<int>(std::floor(x + radius * filterScaleX));
-  const int firstY = static_cast<int>(std::ceil(y - radius * filterScaleY));
-  const int lastY = static_cast<int>(std::floor(y + radius * filterScaleY));
-  for (int iy = firstY; iy <= lastY; ++iy) {
-    const double wy = kernel((y - static_cast<double>(iy)) / filterScaleY, filter);
-    if (wy == 0.0) continue;
-    const int sy = std::clamp(iy, source.bounds.y1, source.bounds.y2 - 1);
-    for (int ix = firstX; ix <= lastX; ++ix) {
-      const double weight = wy * kernel(
-          (x - static_cast<double>(ix)) / filterScaleX, filter);
-      if (weight == 0.0) continue;
-      const int sx = std::clamp(ix, source.bounds.x1, source.bounds.x2 - 1);
-      const auto rgba = readManagedRGBA(
-          source, sx, sy, sourcePremultiplied, colorConfig);
-      for (std::size_t channel = 0; channel < 4; ++channel) {
-        sum[channel] += static_cast<double>(rgba[channel]) * weight;
-      }
-      weightSum += weight;
-    }
-  }
-  std::array<float, 4> result{};
-  if (std::abs(weightSum) < std::numeric_limits<double>::epsilon()) return result;
-  for (std::size_t channel = 0; channel < 4; ++channel) {
-    result[channel] = static_cast<float>(sum[channel] / weightSum);
-  }
-  return result;
-}
-
 }  // namespace
 
 void copyProbeFrame(const ImageView& source,
@@ -386,58 +347,74 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   }
 }
 
-void renderManagedDisplayFrame(
+void decodeManagedDisplayFrame(
     const ImageView& source, const ImageView& destination,
-    RectI renderWindow, const RenderOptions& options,
+    RectI renderWindow, bool sourcePremultiplied,
     const wipreview::color::DisplayConfig& colorConfig) noexcept {
   if (!destination.data || destination.pixelBytes != sizeof(float) * 4 ||
       destination.channels != 4 ||
       destination.channelType != ChannelType::Float32) return;
-  const RectI writable = intersect(renderWindow, destination.bounds);
-  if (empty(writable)) return;
-  std::array<float, 4> canvas{options.canvas[0], options.canvas[1],
-                              options.canvas[2], options.canvas[3]};
-  for (std::size_t channel = 0; channel < 3; ++channel) {
-    canvas[channel] *= canvas[3];
-  }
   if (!source.data || source.pixelBytes == 0 || source.channels <= 0 ||
-      empty(source.bounds)) {
-    for (int y = writable.y1; y < writable.y2; ++y)
-      for (int x = writable.x1; x < writable.x2; ++x)
-        writePixel(destination, x, y, canvas);
-    return;
-  }
-
-  const PlacementTransform transform = computePlacement(
-      source.bounds, destination.bounds, options);
+      empty(source.bounds)) return;
+  const RectI writable = intersect(
+      intersect(renderWindow, destination.bounds), source.bounds);
+  if (empty(writable)) return;
   for (int y = writable.y1; y < writable.y2; ++y) {
     for (int x = writable.x1; x < writable.x2; ++x) {
-      double sourceX = static_cast<double>(x) + 0.5;
-      double sourceY = static_cast<double>(y) + 0.5;
-      if (options.placement != PlacementMode::Identity) {
-        sourceX = transform.sourceCenterX +
-            (static_cast<double>(x) + 0.5 - transform.outputCenterX) /
-                transform.scaleX;
-        sourceY = transform.sourceCenterY +
-            (static_cast<double>(y) + 0.5 - transform.outputCenterY) /
-                transform.scaleY;
-      }
-      if (sourceX < source.bounds.x1 || sourceX >= source.bounds.x2 ||
-          sourceY < source.bounds.y1 || sourceY >= source.bounds.y2) {
-        writePixel(destination, x, y, canvas);
-        continue;
-      }
-      if (options.placement == PlacementMode::Identity) {
-        writePixel(destination, x, y, readManagedRGBA(
-            source, x, y, options.sourcePremultiplied, colorConfig));
-      } else {
-        writePixel(destination, x, y, sampleManaged(
-            source, sourceX - 0.5, sourceY - 0.5,
-            transform.scaleX, transform.scaleY, options.filter,
-            options.sourcePremultiplied, colorConfig));
-      }
+      writePixel(destination, x, y, readManagedRGBA(
+          source, x, y, sourcePremultiplied, colorConfig));
     }
   }
+}
+
+bool renderManagedDisplayFrame(
+    const ImageView& source, const ImageView& decodedSourceScratch,
+    const ImageView& destination, RectI renderWindow,
+    const RenderOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept {
+  if (!destination.data || destination.pixelBytes != sizeof(float) * 4 ||
+      destination.channels != 4 ||
+      destination.channelType != ChannelType::Float32) return false;
+  const RectI writable = intersect(renderWindow, destination.bounds);
+  if (empty(writable)) return true;
+
+  const bool sourceAvailable = source.data && source.pixelBytes > 0 &&
+      source.channels > 0 && !empty(source.bounds);
+  const RectI identitySourceArea = intersect(writable, source.bounds);
+  const bool directIdentityDecode = sourceAvailable &&
+      options.placement == PlacementMode::Identity &&
+      identitySourceArea.x1 == writable.x1 &&
+      identitySourceArea.y1 == writable.y1 &&
+      identitySourceArea.x2 == writable.x2 &&
+      identitySourceArea.y2 == writable.y2;
+  if (directIdentityDecode) {
+    decodeManagedDisplayFrame(
+        source, destination, writable, options.sourcePremultiplied, colorConfig);
+    return true;
+  }
+
+  auto linearOptions = options;
+  linearOptions.sourcePremultiplied = true;
+  linearOptions.outputPremultiplied = true;
+  if (!sourceAvailable) {
+    renderStaticFrame({}, destination, writable, linearOptions);
+    return true;
+  }
+  if (!decodedSourceScratch.data ||
+      decodedSourceScratch.pixelBytes != sizeof(float) * 4 ||
+      decodedSourceScratch.channels != 4 ||
+      decodedSourceScratch.channelType != ChannelType::Float32 ||
+      decodedSourceScratch.bounds.x1 != source.bounds.x1 ||
+      decodedSourceScratch.bounds.y1 != source.bounds.y1 ||
+      decodedSourceScratch.bounds.x2 != source.bounds.x2 ||
+      decodedSourceScratch.bounds.y2 != source.bounds.y2) return false;
+
+  decodeManagedDisplayFrame(
+      source, decodedSourceScratch, source.bounds,
+      options.sourcePremultiplied, colorConfig);
+  renderStaticFrame(
+      decodedSourceScratch, destination, writable, linearOptions);
+  return true;
 }
 
 void encodeManagedDisplayFrame(

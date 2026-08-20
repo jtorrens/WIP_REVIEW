@@ -139,12 +139,23 @@ void renderStaticFrame(const ImageView& source,
                        RectI renderWindow,
                        const RenderOptions& options) noexcept;
 
-// Decodes straight RGB from the display-referred Source, resamples in
-// display-light linear premultiplied float, and writes that representation to
-// a Float32 RGBA working image. Canvas colours are already relative to
-// Graphics White and therefore do not pass through the image transform.
-void renderManagedDisplayFrame(
+// Decodes display-referred Source pixels exactly once into display-light
+// linear premultiplied Float32 RGBA. Resampling is a separate pass over this
+// decoded surface, so filter taps never repeat PQ/HLG transfer functions.
+void decodeManagedDisplayFrame(
     const ImageView& source,
+    const ImageView& displayLinearDestination,
+    RectI renderWindow,
+    bool sourcePremultiplied,
+    const wipreview::color::DisplayConfig& colorConfig) noexcept;
+
+// Executes the managed decode and placement pass. Non-Identity placement
+// requires decodedSourceScratch to be a Float32 RGBA image with Source bounds;
+// Identity decodes directly into the destination and needs no scratch image.
+// Returns false only when the supplied views cannot satisfy that contract.
+[[nodiscard]] bool renderManagedDisplayFrame(
+    const ImageView& source,
+    const ImageView& decodedSourceScratch,
     const ImageView& displayLinearDestination,
     RectI renderWindow,
     const RenderOptions& options,

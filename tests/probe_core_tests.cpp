@@ -217,8 +217,9 @@ void testManagedDisplayLinearRenderAndSingleEncode() {
   RenderOptions options;
   options.placement = PlacementMode::Identity;
   options.sourcePremultiplied = false;
-  wipreview::probe::renderManagedDisplayFrame(
-      sourceView, workingView, {0, 0, 1, 1}, options, color);
+  wipreview::probe::decodeManagedDisplayFrame(
+      sourceView, workingView, {0, 0, 1, 1},
+      options.sourcePremultiplied, color);
   assert(nearbyint(working[0]) == 1.0F && working[3] == 1.0F);
 
   const std::array<std::uint8_t, 1> halfMask{128};
@@ -257,8 +258,9 @@ void testManagedPremultiplicationAroundColorTransform() {
   RenderOptions options;
   options.placement = PlacementMode::Identity;
   options.sourcePremultiplied = true;
-  wipreview::probe::renderManagedDisplayFrame(
-      sourceView, workingView, {0, 0, 1, 1}, options, color);
+  wipreview::probe::decodeManagedDisplayFrame(
+      sourceView, workingView, {0, 0, 1, 1},
+      options.sourcePremultiplied, color);
   assert(std::abs(working[0] - std::pow(0.5, 2.4) * 0.5) < 1.0e-6);
   assert(working[3] == 0.5F);
 
@@ -269,6 +271,42 @@ void testManagedPremultiplicationAroundColorTransform() {
   assert(std::abs(straightOutput[0] - 0.5F) < 1.0e-6F);
   assert(std::abs(premultOutput[0] - 0.25F) < 1.0e-6F);
   assert(straightOutput[3] == 0.5F && premultOutput[3] == 0.5F);
+}
+
+void testManagedDecodeScratchAndMissingSourceCanvas() {
+  wipreview::color::DisplayConfig color;
+  color.encoding = wipreview::color::DisplayEncoding::Rec709Gamma24;
+  std::array<float, 8> source{
+      0.25F, 0.25F, 0.25F, 1.0F,
+      0.75F, 0.75F, 0.75F, 1.0F};
+  std::array<float, 8> decoded{};
+  std::array<float, 4> working{};
+  const ImageView sourceView = rgbaFloatView(
+      source.data(), {0, 0, 2, 1}, 8 * sizeof(float));
+  const ImageView decodedView = rgbaFloatView(
+      decoded.data(), {0, 0, 2, 1}, 8 * sizeof(float));
+  const ImageView workingView = rgbaFloatView(
+      working.data(), {0, 0, 1, 1}, 4 * sizeof(float));
+  RenderOptions options;
+  options.placement = PlacementMode::Stretch;
+  options.filter = wipreview::probe::ResampleFilter::Bilinear;
+  assert(wipreview::probe::renderManagedDisplayFrame(
+      sourceView, decodedView, workingView, {0, 0, 1, 1}, options, color));
+  const double expected =
+      0.5 * (std::pow(0.25, 2.4) + std::pow(0.75, 2.4));
+  assert(std::abs(working[0] - expected) < 1.0e-6);
+  assert(working[3] == 1.0F);
+
+  options.canvas[0] = 0.4F;
+  options.canvas[1] = 0.2F;
+  options.canvas[2] = 0.1F;
+  options.canvas[3] = 0.5F;
+  assert(wipreview::probe::renderManagedDisplayFrame(
+      {}, {}, workingView, {0, 0, 1, 1}, options, color));
+  assert(std::abs(working[0] - 0.2F) < 1.0e-6F);
+  assert(std::abs(working[1] - 0.1F) < 1.0e-6F);
+  assert(std::abs(working[2] - 0.05F) < 1.0e-6F);
+  assert(working[3] == 0.5F);
 }
 
 template <std::size_t N>
@@ -681,6 +719,7 @@ int main() {
   testDownsampleAntialias();
   testManagedDisplayLinearRenderAndSingleEncode();
   testManagedPremultiplicationAroundColorTransform();
+  testManagedDecodeScratchAndMissingSourceCanvas();
   testBlankingLetterboxAndOpacity();
   testBlankingPillarboxPARAndFractionalEdge();
   testBlankingStraightAlphaAndRenderWindow();
