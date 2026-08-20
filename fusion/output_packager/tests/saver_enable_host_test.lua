@@ -6,6 +6,7 @@ if fusion == nil then error("Fusion Standalone is not reachable") end
 local comp = fusion:NewComp()
 if comp == nil then error("Fusion could not create the Saver enable test comp") end
 _G.comp = comp
+print("FUSION_TEMP_COMP_CREATED")
 
 local enabled_path = "/private/tmp/outputpackager_saver_enabled.exr"
 local disabled_path = "/private/tmp/outputpackager_saver_disabled.exr"

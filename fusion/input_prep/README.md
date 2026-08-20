@@ -127,7 +127,7 @@ instalación actual de Fusion. Crea una comp privada sin guardar:
 
 ```sh
 "/Applications/Blackmagic Fusion 21/Fusion.app/Contents/Libraries/fuscript" \
-  -l lua fusion/input_prep/probe_input_prep.lua
+fusion/input_prep/run_probe.sh
 ```
 
 ## Rebuild

@@ -1,5 +1,5 @@
 -- Fusion Standalone 21 host probe for the native InputPrep building blocks.
--- Creates a private unsaved composition and leaves it open for inspection.
+-- Creates a private unsaved composition and closes it after inspection.
 
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
@@ -7,6 +7,7 @@ if fusion == nil then error("Fusion Standalone is not reachable") end
 local comp = fusion:NewComp()
 if comp == nil then error("Fusion could not create the InputPrep probe comp") end
 _G.comp = comp
+print("FUSION_TEMP_COMP_CREATED")
 
 local candidates = {
     "Background",

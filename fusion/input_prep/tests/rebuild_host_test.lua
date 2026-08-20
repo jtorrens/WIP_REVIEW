@@ -14,6 +14,7 @@ if fusion == nil then error("Fusion Standalone is not reachable") end
 local comp = fusion:NewComp()
 if comp == nil then error("Fusion could not create the rebuild test comp") end
 _G.comp = comp
+print("FUSION_TEMP_COMP_CREATED")
 
 local function fail(message)
     error("InputPrep rebuild failure: " .. message, 2)

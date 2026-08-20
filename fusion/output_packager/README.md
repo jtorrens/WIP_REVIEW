@@ -25,7 +25,7 @@ fusion/output_packager/run_probe.sh
 ```
 
 La sonda crea una composición privada no guardada, imprime RegIDs, controles y
-combos relevantes, y la deja abierta para inspección. El checkpoint sólo pasa
+combos relevantes, y la cierra al terminar. El checkpoint sólo pasa
 si existen todos los bloques requeridos y termina con:
 
 ```text
@@ -64,7 +64,7 @@ Ejecutar la prueba reducida equivalente a `400 × 200 → 192 × 108`:
 fusion/output_packager/tests/run_review_raster_test.sh
 ```
 
-La prueba deja abierta su comp y termina con:
+La prueba cierra su comp temporal y termina con:
 
 ```text
 OUTPUTPACKAGER_REVIEW_RASTER_HOST_TEST_OK
@@ -125,8 +125,8 @@ fusion/output_packager/tests/run_builder_test.sh
 ```
 
 Comprueba en un consumidor externo los tres estados: source raster `400×200`,
-review limpio `192×108` y review con OFX `192×108`. Al terminar deja abierta la
-comp de prueba y muestra:
+review limpio `192×108` y review con OFX `192×108`. Al terminar cierra la comp
+temporal y muestra:
 
 ```text
 OUTPUTPACKAGER_BUILDER_HOST_TEST_OK
