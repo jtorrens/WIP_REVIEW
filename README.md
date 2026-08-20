@@ -277,6 +277,23 @@ la aplicación gráfica instalada:
 cmake --build build --target fusion_host_smoke
 ```
 
+### Benchmark CPU P5
+
+El benchmark de rendimiento es opt-in y no altera el build normal:
+
+```sh
+cmake -S . -B build-p5 \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DWIPREVIEW_BUILD_BENCHMARKS=ON \
+  -DWIPREVIEW_OPENFX_SDK_ROOT=/ruta/al/openfx-fijado
+cmake --build build-p5 --target wipreview_cpu_benchmark
+./build-p5/wipreview_cpu_benchmark \
+  --case fullres_to_hd --encoding all
+```
+
+Casos disponibles: `equivalence_probe`, `fullres_to_hd`, `uhd_identity` y
+`dci_fit`. Resultados y metodología: [P5_PERFORMANCE_RESULTS.md](P5_PERFORMANCE_RESULTS.md).
+
 El script abre Fusion si no está ejecutándose y conecta mediante el `fuscript`
 incluido en Fusion 21. Un crash, bloqueo de licencia o diálogo excepcional del
 sistema sigue siendo una condición externa al harness.

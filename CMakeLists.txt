@@ -5,6 +5,7 @@ project(WIPReviewProbe VERSION 1.0.0 LANGUAGES CXX)
 include(FetchContent)
 
 option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative formatter tests" ON)
+option(WIPREVIEW_BUILD_BENCHMARKS "Build the opt-in CPU performance benchmark" OFF)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
@@ -47,6 +48,11 @@ set_target_properties(wipreview_probe_core PROPERTIES
   CXX_VISIBILITY_PRESET hidden
   VISIBILITY_INLINES_HIDDEN YES
 )
+
+if(WIPREVIEW_BUILD_BENCHMARKS)
+  add_executable(wipreview_cpu_benchmark benchmarks/cpu_renderer_benchmark.cpp)
+  target_link_libraries(wipreview_cpu_benchmark PRIVATE wipreview_probe_core)
+endif()
 
 if(APPLE)
   find_library(WIPREVIEW_CORETEXT_FRAMEWORK CoreText REQUIRED)
