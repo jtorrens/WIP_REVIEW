@@ -1,0 +1,693 @@
+Composition {
+	CurrentTime = 0,
+	RenderRange = { 0, 1000 },
+	GlobalRange = { 0, 1000 },
+	CurrentID = 16,
+	HiQ = true,
+	PlaybackUpdateMode = 0,
+	StereoMode = false,
+	Version = "Fusion Studio 21.0.4 build 4",
+	SavedOutputs = 2,
+	HeldTools = 0,
+	DisabledTools = 0,
+	LockedTools = 0,
+	AudioOffset = 0,
+	AutoRenderRange = true,
+	Resumable = true,
+	OutputClips = {
+	},
+	Tools = {
+		PrototypeSource_3840x2160 = Background {
+			Inputs = {
+				Width = Input { Value = 3840, },
+				Height = Input { Value = 2160, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Type = Input { Value = FuID { "Corner" }, },
+				TopLeftRed = Input { Value = 0.92, },
+				TopLeftGreen = Input { Value = 0.12, },
+				TopLeftBlue = Input { Value = 0.06, },
+				TopRightRed = Input { Value = 0.08, },
+				TopRightGreen = Input { Value = 0.55, },
+				TopRightBlue = Input { Value = 0.95, },
+				BottomLeftRed = Input { Value = 0.12, },
+				BottomLeftGreen = Input { Value = 0.82, },
+				BottomLeftBlue = Input { Value = 0.22, },
+				BottomRightRed = Input { Value = 0.92, },
+				BottomRightGreen = Input { Value = 0.72, },
+				BottomRightBlue = Input { Value = 0.08, }
+			},
+			ViewInfo = OperatorInfo { Pos = { -165, 16.197 } },
+		},
+		InputPrep1 = GroupOperator {
+			CtrlWZoom = false,
+			CustomData = {
+				InputPrep = {
+					Role = "InputPrep",
+					SchemaVersion = 1,
+					Prototype = true
+				},
+			},
+			Inputs = ordered() {
+				IP_Status = Input { Value = "3840 x 2160  ->  3840 x 1920  |  Depth: 3  |  REC709_COLORSPACE / TWOPOINTFOUR_GAMMA  ->  REC709_COLORSPACE / LINEAR_GAMMA", },
+				MainInput1 = InstanceInput {
+					SourceOp = "IP_InputRouter",
+					Source = "Input",
+				},
+				IP_EnableDepth = InstanceInput {
+					SourceOp = "IP_DepthSwitch",
+					Source = "Source",
+					Page = "InputPrep",
+					Name = "Change Depth",
+					Default = 1,
+				},
+				IP_Depth = InstanceInput {
+					SourceOp = "IP_ChangeDepth",
+					Source = "Depth",
+					Page = "InputPrep",
+					Default = 3,
+				},
+				IP_EnableColor = InstanceInput {
+					SourceOp = "IP_ColorSwitch",
+					Source = "Source",
+					Page = "InputPrep",
+					Name = "Color Transform",
+					Default = 1,
+				},
+				IP_EnableResize = InstanceInput {
+					SourceOp = "IP_ResizeSwitch",
+					Source = "Source",
+					Page = "InputPrep",
+					Name = "Resize",
+					Default = 1,
+				},
+				IP_EnableCrop = InstanceInput {
+					SourceOp = "IP_CropSwitch",
+					Source = "Source",
+					Page = "InputPrep",
+					Name = "Crop",
+					Default = 1,
+				},
+				IP_EmbeddedAlpha = InstanceInput {
+					SourceOp = "IP_AlphaSwitch",
+					Source = "Source",
+					Page = "InputPrep",
+					Name = "Use Embedded Alpha",
+					Default = 0,
+				}
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "IP_AlphaSwitch",
+					Source = "Output",
+				}
+			},
+			ViewInfo = GroupInfo {
+				Pos = { 55, 16.197 },
+				Flags = {
+					AllowPan = false,
+					AutoSnap = true,
+					RemoveRouters = true
+				},
+				Size = { 1446, 67.3636, 723, 24.2424 },
+				Direction = "Horizontal",
+				PipeStyle = "Direct",
+				Scale = 1,
+				Offset = { 0, 0 }
+			},
+			Tools = ordered() {
+				IP_InputRouter = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PrototypeSource_3840x2160",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -660, 9.25758 } },
+				},
+				IP_ChangeDepth = ChangeDepth {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Depth = Input { Value = 3, },
+						Input = Input {
+							SourceOp = "IP_InputRouter",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -550, 8.25758 } },
+				},
+				IP_DepthSwitch = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Bypass", },
+						Input0 = Input {
+							SourceOp = "IP_InputRouter",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Process", },
+						Input1 = Input {
+							SourceOp = "IP_ChangeDepth",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -440, 9.25758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				IP_Unpremultiply = AlphaDivide {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "IP_DepthSwitch",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -330, 8.25758 } },
+				},
+				IP_ColorTransform = ColorSpaceTransform {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						InputGamma = Input { Value = FuID { "TWOPOINTFOUR_GAMMA" }, },
+						SrcLumMax = Input { Disabled = true, },
+						DstLumMax = Input { Disabled = true, },
+						Input = Input {
+							SourceOp = "IP_Unpremultiply",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -220, 8.25758 } },
+					Version = 0
+				},
+				IP_Premultiply = AlphaMultiply {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "IP_ColorTransform",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -110, 8.25758 } },
+				},
+				IP_ColorSwitch = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Bypass", },
+						Input0 = Input {
+							SourceOp = "IP_DepthSwitch",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Process", },
+						Input1 = Input {
+							SourceOp = "IP_Premultiply",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 0, 9.25758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				IP_Resize = BetterResize {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 3840, },
+						Height = Input { Value = 2160, },
+						PixelAspect = Input { Value = { 1, 1 }, },
+						Input = Input {
+							SourceOp = "IP_ColorSwitch",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 110, 8.25758 } },
+				},
+				IP_ResizeSwitch = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Bypass", },
+						Input0 = Input {
+							SourceOp = "IP_ColorSwitch",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Process", },
+						Input1 = Input {
+							SourceOp = "IP_Resize",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 220, 9.25758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				IP_Crop = Crop {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						XSize = Input { Value = 3840, },
+						YSize = Input { Value = 1920, },
+						KeepCentered = Input { Value = 1, },
+						Input = Input {
+							SourceOp = "IP_ResizeSwitch",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 330, 8.25758 } },
+				},
+				IP_CropSwitch = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Bypass", },
+						Input0 = Input {
+							SourceOp = "IP_ResizeSwitch",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Process", },
+						Input1 = Input {
+							SourceOp = "IP_Crop",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 440, 9.25758 } },
+					Colors = { TileColor = { R = 0.623529411764706, G = 0.776470588235294, B = 0.0823529411764706 }, }
+				},
+				IP_AlphaPolicy = ChannelBoolean {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						ToRed = Input { Value = 4, },
+						ToGreen = Input { Value = 4, },
+						ToBlue = Input { Value = 4, },
+						ToAlpha = Input { Value = 16, },
+						Background = Input {
+							SourceOp = "IP_CropSwitch",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 550, 8.25758 } },
+				},
+				IP_AlphaSwitch = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Name0 = Input { Value = "Opaque", },
+						Input0 = Input {
+							SourceOp = "IP_AlphaPolicy",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Preserve", },
+						Input1 = Input {
+							SourceOp = "IP_CropSwitch",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 660, 9.25758 } },
+					Colors = { TileColor = { R = 0.623529411764706, G = 0.776470588235294, B = 0.0823529411764706 }, }
+				}
+			},
+			UserControls = ordered() {
+				IP_Status = {
+					INP_ReadOnly = true,
+					INP_External = false,
+					LINKID_DataType = "Text",
+					ICS_ControlPage = "InputPrep",
+					INPID_InputControl = "TextEditControl",
+					INP_ForceNotify = false,
+					LINKS_Name = "Applied Configuration",
+				}
+			}
+		}
+	},
+	Frames = {
+		{
+			FrameTypeID = "ChildFrame",
+			Mode = 3,
+			LayoutPreset = 0,
+			PresetName = "Default",
+			Left = 0,
+			Top = 27,
+			Width = 3840,
+			Height = 2057,
+			ZoneInfo = {
+				AuxRight = { Expanded = true },
+				Right = { Expanded = true, },
+				Left = { Expanded = false, },
+				AuxLeft = { Expanded = true },
+				["!Left"] = {
+				},
+				["!Right"] = {
+				}
+			},
+			ViewInfo = {
+				Keyframes = { Show = false, },
+				LayoutStrip = { Show = true, RatioX = 100, },
+				Inspector = { Show = true, RatioX = 100, RatioY = 1, },
+				Effects = { Show = false, },
+				Viewer2 = { Show = true, RatioX = 1, RatioY = 0.01, },
+				Comments = { Show = false },
+				Clips = { Show = false, },
+				ActionStrip = { Show = true, RatioX = 100, },
+				Time = { Show = true, RatioX = 100, },
+				MediaPool = { Show = false, },
+				Nodes = { Show = true, RatioX = 1, RatioY = 100, },
+				Metadata = { Show = false, },
+				Viewer1 = { Show = true, RatioX = 1, RatioY = 0.01, },
+				Spline = { Show = false, },
+				OuterColumns = {
+					RatioX = 100,
+					RatioY = 1,
+				},
+				OuterLeft = {
+				},
+				CenterSplit = {
+					RatioX = 1,
+					RatioY = 100,
+				},
+				OuterRight = {
+					PixelX = 420,
+					RatioY = 100,
+				},
+				InnerColumns = {
+					RatioX = 100,
+					RatioY = 1.9974293059126,
+				},
+				MainSplit = {
+					RatioX = 100,
+					RatioY = 1.0025706940874,
+				},
+				InnerLeft = {
+				},
+				InnerRight = {
+				},
+				ViewerSplit = {
+					RatioX = 100,
+					RatioY = 1,
+				}
+			},
+			Views = ordered() {
+				Effects = MultiView {
+					Active = "EffectView",
+					ViewList = ordered() {
+						EffectView = "EffectView"
+					},
+				},
+				Nodes = MultiView {
+					Active = "FlowView",
+					ViewList = ordered() {
+						FlowView = "FlowView"
+					},
+					FlowView = FlowView {
+						Flags = {
+							Navigator = true,
+							AutoHideNavigator = true,
+							AutoSnap = true,
+							RemoveRouters = true
+						},
+						NavigatorSize = { 200, 140 },
+						Direction = "Horizontal",
+						PipeStyle = "Direct",
+						RootScale = 1,
+						RootOffset = { 26, 29 }
+					}
+				},
+				Keyframes = MultiView {
+					Active = "TimelineView",
+					ViewList = ordered() {
+						TimelineView = "TimelineView"
+					},
+					TimelineView = TimelineView {
+						TreeControlState = {
+						},
+						DisplayMode = "All Tools",
+						ShowCurrentTimeTools = false,
+						Filter = "Show All",
+						ShowSelectedTools = false,
+						ShowAnimatedToolsOnly = false,
+						ShowEditBoxes = false,
+						KeyFrameView = {
+							Position = { Left = 232, Bottom = 320 },
+							ScaleX = 2.14424951267057,
+							OffsetX = -49.317738791423,
+							OffsetY = 0,
+							AutoScaling = "scroll",
+							AutoSnapTo = "frame",
+							AutoSnapToGuidelines = false,
+							GuidelinesGrabEnabled = true,
+							GuidelinesSnapTo = "none"
+						},
+						Spreadsheet = { LeftPos = 232, Visible = false }
+					}
+				},
+				Spline = MultiView {
+					Active = "SplineView",
+					ViewList = ordered() {
+						SplineView = "SplineEditorView"
+					},
+					SplineView = SplineEditorView {
+						LeftPos = 264,
+						ScaleX = 0.2,
+						ScaleY = 0.00338983050847458,
+						OffsetX = -3.4,
+						OffsetY = 0,
+						AutoScaling = "scroll",
+						AutoSnapTo = "frame",
+						AutoSnapToGuidelines = false,
+						GuidelinesSnapTo = "frame",
+						ShowKeyMarkers = false,
+						IndependentHandles = false,
+						ShowNonSplineModifiers = false,
+						GuidelinesGrabEnabled = true,
+						ShowOneToolOnly = false,
+						ShowSelectedTools = false,
+						ShowAllInputs = false,
+						Filter = "Show All"
+					}
+				},
+				Inspector = MultiView {
+					Active = "Tools",
+					ViewList = ordered() {
+						Tools = "ControlView",
+						Modifiers = "ModifierView"
+					},
+				},
+				Viewer1 = MultiView {
+					Active = "LeftView",
+					ViewList = ordered() {
+						LeftView = "PreviewContainer"
+					},
+				},
+				Viewer2 = MultiView {
+					Active = "RightView",
+					ViewList = ordered() {
+						RightView = "PreviewContainer"
+					},
+				},
+				Time = "TimeView",
+				ActionStrip = "ActionStripView",
+				LayoutStrip = "LayoutStripView"
+			},
+			Layout = {
+				{ ID = "LayoutStrip", FixedY = 36, Resolve = false, Flat = true },
+				{
+					{
+						{ ID = "MediaPool", Fusion = false, RatioX = 1 },
+						{ ID = "Effects", RatioX = 1 },
+						Zone = "Left",
+						Rows = 2,
+						PaneID = "OuterLeft",
+						PixelX = 420
+					},
+					{
+						{
+							{
+								{ ID = "MediaPool", Fusion = false, RatioX = 1 },
+								{ ID = "Effects", RatioX = 1 },
+								PaneID = "InnerLeft",
+								MaxViews = 1,
+								PixelX = 420,
+								Rows = 2,
+								Zone = "!Left"
+							},
+							{
+								{
+									{ ID = "Viewer1", RatioY = 0.01, RatioX = 1 },
+									{ ID = "Viewer2", RatioX = 1 },
+									RatioY = 1,
+									Columns = 2,
+									PaneID = "ViewerSplit"
+								},
+								{ ID = "Time", FixedY = 83, Photo = false, Flat = true },
+								RatioX = 1,
+								Rows = 2
+							},
+							{
+								{ ID = "Inspector", RatioY = 1 },
+								{ ID = "Metadata", RatioY = 1, Fusion = false },
+								PaneID = "InnerRight",
+								MaxViews = 1,
+								PixelX = 420,
+								Rows = 2,
+								Zone = "!Right"
+							},
+							RatioY = 2,
+							Columns = 3,
+							PaneID = "InnerColumns"
+						},
+						{ ID = "ActionStrip", FixedY = 50, Flat = true },
+						{
+							{ ID = "Nodes", RatioX = 1 },
+							{ ID = "Spline", Photo = false, RatioX = 1 },
+							{ ID = "Keyframes", Photo = false, RatioX = 1 },
+							RatioY = 1,
+							Columns = 3,
+							PaneID = "MainSplit"
+						},
+						{ Fusion = false, ID = "Clips", LARGE_FixedY = 160, MEDIUM_FixedY = 138, SMALL_FixedY = 110 },
+						RatioX = 1,
+						Rows = 4,
+						PaneID = "CenterSplit"
+					},
+					{
+						{ ID = "Inspector", RatioY = 1 },
+						{ ID = "Metadata", RatioY = 1, Fusion = false },
+						Zone = "Right",
+						Rows = 2,
+						PaneID = "OuterRight",
+						PixelX = 420
+					},
+					RatioY = 1,
+					Columns = 3,
+					PaneID = "OuterColumns"
+				},
+				RatioX = 1,
+				Rows = 2,
+				RatioY = 1
+			},
+			TopBar = {
+				Left = { "Left", "MediaPool", "Effects", "Clips", "Nodes", "Console" },
+				Right = { "Spline", "Keyframes", "Metadata", "Inspector", "Right" }
+			}
+		}
+	},
+	Prefs = {
+		Comp = {
+			Paths = {
+				Map = {
+					["ResolveCloud:"] = "Fusion:",
+				},
+			},
+			FrameFormat = {
+				GuideRatio = 1.77777777777778,
+				Rate = 25,
+				Width = 3840,
+				Height = 2160,
+				Name = "Ultra HD 2160",
+			},
+			SpellCheck = {
+				Language = "auto",
+			},
+			Views = {
+				RightView = {
+				},
+				View1 = {
+				},
+				LeftView = {
+				},
+				Configs = {
+					FOQN_ACESCG = {
+						PrevCtrlInactiveColor = 4278255360,
+						PickW = 1,
+						ViewLUT = {
+							{
+								Tools = ordered() {
+									ColorSpaceTransform = ViewOperator {
+										NameSet = true,
+										Inputs = {
+											ToneMappingMethod = Input { Value = FuID { "TM_NONE" } },
+											InputColorSpace = Input { Value = FuID { "ACES_AP1_COLORSPACE" } },
+											SrcLumMax = Input { Disabled = true },
+											OutputGamma = Input { Value = FuID { "REC709_GAMMA" } },
+											DstLumMax = Input { Disabled = true }
+										},
+										CtrlWZoom = false
+									}
+								},
+								Version = false,
+								ID = "ColorSpaceTransformViewLUT"
+							},
+							SelectedPlugin = "ColorSpaceTransformViewLUT",
+							SelectedName = "Color Space Transform",
+							Recent = {
+								AcesTransformViewLUT = {
+									Tools = ordered() {
+										ACESTransform = ViewOperator {
+											NameSet = true,
+											Inputs = {
+												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
+												OutputTransform200 = Input { Value = FuID { "ODT_REC709_100" } },
+												InputTransform200 = Input { Value = FuID { "IDT_ACESCG" } }
+											},
+											CtrlWZoom = false
+										}
+									}
+								},
+								SelectedName = "Color Space Transform",
+								SelectedPlugin = "ColorSpaceTransformViewLUT",
+								GamutViewLUT = {
+									Tools = ordered() {
+										GamutViewLUT = ViewOperator {
+											NameSet = true,
+											Inputs = {
+												SourceSpace = Input { Value = FuID { "sRGB" } },
+												OutputSpace = Input { Value = FuID { "sRGB" } }
+											},
+											CtrlWZoom = false
+										}
+									}
+								}
+							}
+						},
+						PickH = 1,
+						Viewer = {
+							EnableLUTs = true,
+							LUTSelected = "Color Space Transform",
+							Layer = ":Default",
+							NearZ = 0,
+							LUTPlugin = "ColorSpaceTransformViewLUT",
+							FitMarginX = 0,
+							FitMarginType = 0,
+							FarZ = -1000,
+							FitMarginY = 0
+						},
+						RulersShow = true,
+						SideB = {
+							Viewer = {
+								ScaleMode = 0,
+								Layer = ":Default"
+							}
+						},
+						Toolbar = {
+							Style = 0,
+							Size = 0
+						},
+						PrevCtrlActiveColor = 4278190335,
+						OpToolbar = {
+							Style = 0,
+							Size = 0
+						}
+					}
+				},
+			},
+			QuickTime = {
+			},
+		}
+	},
+}

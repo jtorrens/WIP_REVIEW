@@ -47,7 +47,8 @@ entre `ShotConfig` e `InputPrep`.
 6. La imagen se procesa en este orden lógico:
 
    ```text
-   tratamiento de premultiplicación
+   normalización de profundidad
+   → tratamiento de premultiplicación
    → conversión Source Color/Gamma a Working Color/Gamma
    → resize uniforme centrado
    → crop centrado
@@ -136,7 +137,12 @@ Output — imagen en el dominio de trabajo
 ```
 
 No duplica los controles públicos de `ShotConfig`. Puede exponer únicamente
-un estado de solo lectura para diagnóstico.
+un estado de solo lectura para diagnóstico y los switches operativos por
+rama `Change Depth`, `Color Transform`, `Resize`, `Crop` y
+`Use Embedded Alpha`. `Depth` publica además la selección nativa de
+`ChangeDepth`, con valor inicial `3`. Los switches usan la herramienta nativa
+`Switch` y seleccionan directamente entre la rama sin procesar y la rama
+transformada; no ejecutan scripts ni usan `Blend = 0`.
 
 Los nodos internos tendrán IDs lógicos estables almacenados como metadata o
 localizados mediante identidad propia, nunca solo por su nombre visible. La
