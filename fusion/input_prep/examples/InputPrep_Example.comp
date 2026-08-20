@@ -2,7 +2,7 @@ Composition {
 	CurrentTime = 0,
 	RenderRange = { 0, 1000 },
 	GlobalRange = { 0, 1000 },
-	CurrentID = 39,
+	CurrentID = 96,
 	HiQ = true,
 	PlaybackUpdateMode = 0,
 	StereoMode = false,
@@ -158,7 +158,7 @@ Composition {
 					AutoSnap = true,
 					RemoveRouters = true
 				},
-				Size = { 1626, 67.8636, 813, 24.2424 },
+				Size = { 476, 2166.36, 238, 24.2424 },
 				Direction = "Horizontal",
 				PipeStyle = "Direct",
 				Scale = 1,
@@ -174,7 +174,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -750, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 8.75757 } },
 				},
 				ChangeDepth_Working = ChangeDepth {
 					CtrlWShown = false,
@@ -186,7 +186,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -650, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 158.758 } },
 				},
 				Switch_Depth = Switch {
 					CtrlWShown = false,
@@ -204,7 +204,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -550, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 308.758 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
 				AlphaDivide_Unpremultiply = AlphaDivide {
@@ -216,7 +216,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -450, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 458.758 } },
 				},
 				Switch_PreColorAlpha = Switch {
 					CtrlWShown = false,
@@ -234,7 +234,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -375, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 608.758 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
 				ColorSpaceTransform_Working = ColorSpaceTransform {
@@ -249,7 +249,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -275, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 758.758 } },
 					Version = 0
 				},
 				AlphaMultiply_Premultiply = AlphaMultiply {
@@ -261,7 +261,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -175, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 908.758 } },
 				},
 				Switch_PostColorAlpha = Switch {
 					CtrlWShown = false,
@@ -279,7 +279,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { -100, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 1058.76 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
 				Switch_Color = Switch {
@@ -298,7 +298,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 0, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 1208.76 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
 				BetterResize_Working = BetterResize {
@@ -314,7 +314,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 125, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 1358.76 } },
 				},
 				Switch_Resize = Switch {
 					CtrlWShown = false,
@@ -332,7 +332,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 250, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 1508.76 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
 				Crop_Working = Crop {
@@ -347,7 +347,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 375, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 1658.76 } },
 				},
 				Switch_Crop = Switch {
 					CtrlWShown = false,
@@ -365,7 +365,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 500, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 1808.76 } },
 					Colors = { TileColor = { R = 0.623529411764706, G = 0.776470588235294, B = 0.0823529411764706 }, }
 				},
 				ChannelBoolean_AlphaPolicy = ChannelBoolean {
@@ -381,7 +381,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 625, 8.00758 } },
+					ViewInfo = OperatorInfo { Pos = { -175, 1958.76 } },
 				},
 				Switch_Alpha = Switch {
 					CtrlWShown = false,
@@ -398,7 +398,7 @@ Composition {
 							Source = "Output",
 						}
 					},
-					ViewInfo = OperatorInfo { Pos = { 750, 9.50758 } },
+					ViewInfo = OperatorInfo { Pos = { 175, 2108.76 } },
 					Colors = { TileColor = { R = 0.623529411764706, G = 0.776470588235294, B = 0.0823529411764706 }, }
 				}
 			},
@@ -406,10 +406,10 @@ Composition {
 				IP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					ICS_ControlPage = "InputPrep",
-					INP_ForceNotify = false,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "InputPrep",
 					INPID_InputControl = "TextEditControl",
+					INP_ForceNotify = false,
 					LINKS_Name = "Applied Configuration",
 				}
 			}
@@ -468,95 +468,95 @@ Composition {
 			UserControls = ordered() {
 				SC_IdentitySection = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Identity",
 				},
 				SC_Show = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "FOQN",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INP_Default = "FOQN",
 					TEC_Lines = 1,
 					LINKS_Name = "Show",
 				},
 				SC_Episode = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "E01",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INP_Default = "E01",
 					TEC_Lines = 1,
 					LINKS_Name = "Episode",
 				},
 				SC_Shot = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "0010",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INP_Default = "0010",
 					TEC_Lines = 1,
 					LINKS_Name = "Shot",
 				},
 				SC_Version = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "v001",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INP_Default = "v001",
 					TEC_Lines = 1,
 					LINKS_Name = "Version",
 				},
 				SC_FormatSection = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Format",
 				},
 				SC_WorkingResolution = {
 					INP_DefaultX = 3840,
 					INPID_PreviewControl = "",
 					INP_DefaultY = 2160,
-					INPID_InputControl = "OffsetControl",
-					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Point",
+					ICS_ControlPage = "Shot",
+					INPID_InputControl = "OffsetControl",
 					LINKS_Name = "Working Resolution",
 				},
 				SC_CropRatio = {
 					INP_MaxAllowed = 10,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "SliderControl",
 					INP_MaxScale = 10,
 					INP_Default = 2,
 					INP_MinScale = 0.1,
 					INP_MinAllowed = 0.1,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "SliderControl",
+					ICS_ControlPage = "Shot",
 					LINKS_Name = "Crop Ratio"
 				},
 				SC_ReviewResolution = {
 					INP_DefaultX = 1920,
 					INPID_PreviewControl = "",
 					INP_DefaultY = 1080,
-					INPID_InputControl = "OffsetControl",
-					ICS_ControlPage = "Shot",
 					LINKID_DataType = "Point",
+					ICS_ControlPage = "Shot",
+					INPID_InputControl = "OffsetControl",
 					LINKS_Name = "Review Resolution",
 				},
 				SC_FormatHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Stored only; not applied to image nodes in v0.1.",
 				},
 				SC_SourceColorSpaceChoice = {
@@ -608,11 +608,11 @@ Composition {
 					INP_MaxAllowed = 44,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					ICS_ControlPage = "Color",
-					INP_Default = 0,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ComboControl",
+					ICS_ControlPage = "Color",
 					LINKS_Name = "Source Color Space",
+					INP_Default = 0,
 				},
 				SC_SourceGammaChoice = {
 					{ CCS_AddString = "Linear" },
@@ -680,11 +680,11 @@ Composition {
 					INP_MaxAllowed = 61,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					ICS_ControlPage = "Color",
-					INP_Default = 3,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ComboControl",
+					ICS_ControlPage = "Color",
 					LINKS_Name = "Source Gamma",
+					INP_Default = 3,
 				},
 				SC_WorkingColorSpaceChoice = {
 					{ CCS_AddString = "Rec.709" },
@@ -735,11 +735,11 @@ Composition {
 					INP_MaxAllowed = 44,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					ICS_ControlPage = "Color",
-					INP_Default = 0,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ComboControl",
+					ICS_ControlPage = "Color",
 					LINKS_Name = "Working Color Space",
+					INP_Default = 0,
 				},
 				SC_WorkingGammaChoice = {
 					{ CCS_AddString = "Linear" },
@@ -807,79 +807,79 @@ Composition {
 					INP_MaxAllowed = 61,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					ICS_ControlPage = "Color",
-					INP_Default = 0,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ComboControl",
+					ICS_ControlPage = "Color",
 					LINKS_Name = "Working Gamma",
+					INP_Default = 0,
 				},
 				SC_EmbeddedAlpha = {
 					INP_MaxAllowed = 1,
 					INP_Integer = true,
 					INP_MinAllowed = 0,
-					ICS_ControlPage = "Color",
-					INP_Default = 0,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "CheckboxControl",
+					ICS_ControlPage = "Color",
 					LINKS_Name = "Embedded Alpha",
+					INP_Default = 0,
 				},
 				SC_ColorHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Color",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Color",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Stored only; not applied to CST nodes in v0.1.",
 				},
 				SC_PathMapSection = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Path Map",
 				},
 				SC_RootPathMap = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "_FOQN:",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "_FOQN:",
 					TEC_Lines = 1,
 					LINKS_Name = "Root Path Map",
 				},
 				SC_PathMapHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Portable Path Map, for example _FOQN:",
 				},
 				SC_Apply = {
-					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/apply_shot_config.lua\"); m.run(comp)",
 					LINKID_DataType = "Number",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/apply_shot_config.lua\"); m.run(comp)",
 					INPID_InputControl = "ButtonControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "Apply / Update",
 				},
 				SC_Status = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "Ready",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "Ready",
 					TEC_Lines = 1,
 					LINKS_Name = "Status",
 				},
 				SC_TargetHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					INPID_InputControl = "LabelControl",
-					INP_Passive = true,
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					INPID_InputControl = "LabelControl",
 					LINKS_Name = "F2 copies the node name. Empty slots are ignored.",
 				},
 				SC_LoaderGroup = {
@@ -896,150 +896,150 @@ Composition {
 				SC_LoaderTarget1Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Node Name",
 				},
 				SC_LoaderTarget1Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Path Template",
 				},
 				SC_LoaderTarget1Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Resolved Path",
 				},
 				SC_LoaderTarget2Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Node Name",
 				},
 				SC_LoaderTarget2Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Path Template",
 				},
 				SC_LoaderTarget2Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Resolved Path",
 				},
 				SC_LoaderTarget3Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Node Name",
 				},
 				SC_LoaderTarget3Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Path Template",
 				},
 				SC_LoaderTarget3Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Resolved Path",
 				},
 				SC_LoaderTarget4Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Node Name",
 				},
 				SC_LoaderTarget4Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Path Template",
 				},
 				SC_LoaderTarget4Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Resolved Path",
 				},
 				SC_LoaderTarget5Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Node Name",
 				},
 				SC_LoaderTarget5Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Path Template",
 				},
 				SC_LoaderTarget5Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Resolved Path",
 				},
@@ -1057,150 +1057,150 @@ Composition {
 				SC_SaverTarget1Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Node Name",
 				},
 				SC_SaverTarget1Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Path Template",
 				},
 				SC_SaverTarget1Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "1 · Resolved Path",
 				},
 				SC_SaverTarget2Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Node Name",
 				},
 				SC_SaverTarget2Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Path Template",
 				},
 				SC_SaverTarget2Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "2 · Resolved Path",
 				},
 				SC_SaverTarget3Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Node Name",
 				},
 				SC_SaverTarget3Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Path Template",
 				},
 				SC_SaverTarget3Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "3 · Resolved Path",
 				},
 				SC_SaverTarget4Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Node Name",
 				},
 				SC_SaverTarget4Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Path Template",
 				},
 				SC_SaverTarget4Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "4 · Resolved Path",
 				},
 				SC_SaverTarget5Node = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Node Name",
 				},
 				SC_SaverTarget5Template = {
 					TEC_ReadOnly = false,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Path Template",
 				},
 				SC_SaverTarget5Resolved = {
 					TEC_ReadOnly = true,
 					INPID_InputControl = "TextEditControl",
+					INP_Default = "",
 					LINKID_DataType = "Text",
 					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INP_Default = "",
 					TEC_Lines = 1,
 					LINKS_Name = "5 · Resolved Path",
 				}
@@ -1250,53 +1250,53 @@ Composition {
 				},
 				IPC_Target1Node = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "1 · Node Name",
-					TEC_Lines = 1,
 					INP_Default = "",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "1 · Node Name",
 				},
 				IPC_Target2Node = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "2 · Node Name",
-					TEC_Lines = 1,
 					INP_Default = "",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "2 · Node Name",
 				},
 				IPC_Target3Node = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "3 · Node Name",
-					TEC_Lines = 1,
 					INP_Default = "",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "3 · Node Name",
 				},
 				IPC_Target4Node = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "4 · Node Name",
-					TEC_Lines = 1,
 					INP_Default = "",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "4 · Node Name",
 				},
 				IPC_Target5Node = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "5 · Node Name",
-					TEC_Lines = 1,
 					INP_Default = "",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "5 · Node Name",
 				},
 				IPC_Apply = {
 					INPID_InputControl = "ButtonControl",
@@ -1307,13 +1307,13 @@ Composition {
 				},
 				IPC_Status = {
 					TEC_ReadOnly = true,
-					ICS_ControlPage = "Targets",
 					LINKID_DataType = "Text",
+					ICS_ControlPage = "Targets",
 					INPID_InputControl = "TextEditControl",
-					TEC_Wrap = false,
-					LINKS_Name = "Status",
-					TEC_Lines = 1,
 					INP_Default = "Ready",
+					TEC_Wrap = false,
+					TEC_Lines = 1,
+					LINKS_Name = "Status",
 				}
 			},
 		}
@@ -1326,63 +1326,63 @@ Composition {
 			PresetName = "Default",
 			Left = 0,
 			Top = 27,
-			Width = 2186,
+			Width = 3840,
 			Height = 2057,
 			ZoneInfo = {
-				AuxRight = { Expanded = true },
-				Right = { Expanded = true, },
-				Left = { Expanded = false, },
-				AuxLeft = { Expanded = true },
+				["!Right"] = {
+				},
 				["!Left"] = {
 				},
-				["!Right"] = {
-				}
+				AuxLeft = { Expanded = true },
+				Right = { Expanded = true, },
+				Left = { Expanded = false, },
+				AuxRight = { Expanded = true }
 			},
 			ViewInfo = {
-				Keyframes = { Show = false, },
-				LayoutStrip = { Show = true, RatioX = 100, },
-				Inspector = { Show = true, RatioX = 100, RatioY = 1, },
-				Effects = { Show = false, },
-				Viewer2 = { Show = true, RatioX = 1, RatioY = 0.01, },
-				Comments = { Show = false },
-				Clips = { Show = false, },
-				ActionStrip = { Show = true, RatioX = 100, },
-				Time = { Show = true, RatioX = 100, },
-				MediaPool = { Show = false, },
-				Nodes = { Show = true, RatioX = 1, RatioY = 100, },
-				Metadata = { Show = false, },
-				Viewer1 = { Show = true, RatioX = 1, RatioY = 0.01, },
-				Spline = { Show = false, },
-				OuterColumns = {
-					RatioX = 100,
-					RatioY = 1,
+				Viewer1 = { Show = true, RatioY = 0.01, RatioX = 1, },
+				InnerLeft = {
 				},
-				OuterLeft = {
+				MainSplit = {
+					RatioX = 100,
+					RatioY = 1.00254323499491,
 				},
 				CenterSplit = {
 					RatioX = 1,
 					RatioY = 100,
 				},
-				OuterRight = {
-					PixelX = 420,
-					RatioY = 100,
-				},
+				Viewer2 = { Show = true, RatioY = 0.01, RatioX = 1, },
+				Comments = { Show = false },
+				Time = { Show = true, RatioX = 100, },
 				InnerColumns = {
 					RatioX = 100,
-					RatioY = 1.9974293059126,
+					RatioY = 1.99745676500509,
 				},
-				MainSplit = {
-					RatioX = 100,
-					RatioY = 1.0025706940874,
-				},
-				InnerLeft = {
-				},
+				Keyframes = { Show = false, },
+				LayoutStrip = { Show = true, RatioX = 100, },
+				Inspector = { Show = true, RatioY = 1, RatioX = 100, },
+				ActionStrip = { Show = true, RatioX = 100, },
 				InnerRight = {
+				},
+				OuterColumns = {
+					RatioX = 100,
+					RatioY = 1,
+				},
+				Effects = { Show = false, },
+				Clips = { Show = false, },
+				Metadata = { Show = false, },
+				OuterLeft = {
 				},
 				ViewerSplit = {
 					RatioX = 100,
 					RatioY = 1,
-				}
+				},
+				Nodes = { Show = true, RatioY = 100, RatioX = 1, },
+				OuterRight = {
+					RatioY = 100,
+					PixelX = 420,
+				},
+				MediaPool = { Show = false, },
+				Spline = { Show = false, }
 			},
 			Views = ordered() {
 				Effects = MultiView {
@@ -1407,7 +1407,7 @@ Composition {
 						Direction = "Horizontal",
 						PipeStyle = "Direct",
 						RootScale = 1,
-						RootOffset = { 26, 29 }
+						RootOffset = { 40.6667, 29 }
 					}
 				},
 				Keyframes = MultiView {
@@ -1427,7 +1427,7 @@ Composition {
 						KeyFrameView = {
 							Position = { Left = 232, Bottom = 320 },
 							ScaleX = 2.14424951267057,
-							OffsetX = -49.317738791423,
+							OffsetX = -51.4619883040936,
 							OffsetY = 0,
 							AutoScaling = "scroll",
 							AutoSnapTo = "frame",
@@ -1571,20 +1571,12 @@ Composition {
 	},
 	Prefs = {
 		Comp = {
-			Paths = {
-				Map = {
-					["ResolveCloud:"] = "Fusion:",
-				},
-			},
-			FrameFormat = {
-				GuideRatio = 1.77777777777778,
-				Rate = 25,
-				Width = 3840,
-				Name = "Ultra HD 2160",
-				Height = 2160,
-			},
 			Views = {
 				RightView = {
+				},
+				LeftView = {
+				},
+				View1 = {
 				},
 				Configs = {
 					FOQN_ACESCG = {
@@ -1616,8 +1608,8 @@ Composition {
 										ACESTransform = ViewOperator {
 											NameSet = true,
 											Inputs = {
-												OutputTransform200 = Input { Value = FuID { "ODT_REC709_100" } },
 												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
+												OutputTransform200 = Input { Value = FuID { "ODT_REC709_100" } },
 												InputTransform200 = Input { Value = FuID { "IDT_ACESCG" } }
 											},
 											CtrlWZoom = false
@@ -1625,6 +1617,7 @@ Composition {
 									}
 								},
 								SelectedName = "Color Space Transform",
+								SelectedPlugin = "ColorSpaceTransformViewLUT",
 								GamutViewLUT = {
 									Tools = ordered() {
 										GamutViewLUT = ViewOperator {
@@ -1636,8 +1629,7 @@ Composition {
 											CtrlWZoom = false
 										}
 									}
-								},
-								SelectedPlugin = "ColorSpaceTransformViewLUT"
+								}
 							}
 						},
 						PickH = 1,
@@ -1647,10 +1639,10 @@ Composition {
 							Layer = ":Default",
 							NearZ = 0,
 							LUTPlugin = "ColorSpaceTransformViewLUT",
-							FitMarginY = 0,
+							FitMarginX = 0,
 							FitMarginType = 0,
 							FarZ = -1000,
-							FitMarginX = 0
+							FitMarginY = 0
 						},
 						RulersShow = true,
 						SideB = {
@@ -1669,17 +1661,25 @@ Composition {
 							Size = 0
 						}
 					}
-				},
-				LeftView = {
-				},
-				View1 = {
+				}
+			},
+			Paths = {
+				Map = {
+					["ResolveCloud:"] = "Fusion:",
 				},
 			},
-			QuickTime = {
+			FrameFormat = {
+				Name = "Ultra HD 2160",
+				Width = 3840,
+				Height = 2160,
+				Rate = 25,
+				GuideRatio = 1.77777777777778,
 			},
 			SpellCheck = {
 				Language = "auto"
-			}
+			},
+			QuickTime = {
+			},
 		}
 	},
 }

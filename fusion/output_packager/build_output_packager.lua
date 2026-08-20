@@ -336,7 +336,7 @@ local function definition(name, values)
                     PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = OperatorInfo { Pos = { -500, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -600 } },
                     },
                     BetterResize_ReviewRaster = BetterResize {
                         CtrlWShown = false,
@@ -351,7 +351,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -375, -1.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -350, -450 } },
                     },
                     Background_ReviewCanvas = Background {
                         CtrlWShown = false,
@@ -364,7 +364,7 @@ local function definition(name, values)
                             TopLeftBlue = Input { Value = 0, },
                             TopLeftAlpha = Input { Value = 1, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -375, 1.5 } },
+                        ViewInfo = OperatorInfo { Pos = { 350, -450 } },
                     },
                     Merge_ReviewRaster = Merge {
                         CtrlWShown = false,
@@ -380,7 +380,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -250, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -300 } },
                     },
                     Switch_ReviewRaster = Switch {
                         CtrlWShown = false,
@@ -398,7 +398,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -125, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -100 } },
                     },
                     Custom_AppliedData = Custom {
                         CtrlWShown = false,
@@ -406,7 +406,7 @@ local function definition(name, values)
                         Inputs = {
                             NumberIn1 = Input { Value = %.12g, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 1.5 } },
+                        ViewInfo = OperatorInfo { Pos = { 350, 50 } },
                     },
                     WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
@@ -426,7 +426,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -1.5 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 150 } },
                     },
                     Switch_WIP = Switch {
                         CtrlWShown = false,
@@ -444,7 +444,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 125, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 350 } },
                     },
                 },
                 UserControls = ordered() {
