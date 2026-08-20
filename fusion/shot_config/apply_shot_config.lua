@@ -471,4 +471,43 @@ function M.run(comp_override)
     return true, targets
 end
 
+-- Resolves and updates only Saver paths. Intended for a version bump after the
+-- managed graph is already in place; it never writes Loader clips or topology.
+function M.run_savers(comp_override)
+    local active_comp = comp_override or rawget(_G, "comp")
+    local time = active_comp and active_comp.CurrentTime or 0
+    local config, err = M.find_config(active_comp)
+    if config == nil then return false, err end
+    local values
+    values, err = M.read_config(config, time)
+    if values == nil then return false, err end
+    if values.root == "" then return false, "Root Path Map is empty" end
+    if #values.saverTargets == 0 then return false, "no Saver targets are configured" end
+
+    local targets = {}
+    local seen = {}
+    for _, target in ipairs(values.saverTargets) do
+        if seen[target.nodeName] then return false, "duplicate Saver target: " .. target.nodeName end
+        seen[target.nodeName] = true
+        target.resolved, err = M.resolve_template(target.template, values)
+        if target.resolved == nil then return false, err end
+        target.tool = find_exact_tool(active_comp, target.nodeName)
+        if target.tool == nil then return false, "Saver target not found: " .. target.nodeName end
+        if reg_id(target.tool) ~= "Saver" then return false, target.nodeName .. " is not a Saver" end
+        target.input = get_input(target.tool, "Clip")
+        if target.input == nil then return false, target.nodeName .. " has no Clip input" end
+        target.previous = target.input[time]
+        targets[#targets + 1] = target
+    end
+    local applied, apply_err = M.apply_prepared(targets, time)
+    if not applied then
+        set_status(config, "ERROR: " .. tostring(apply_err), time)
+        return false, apply_err
+    end
+    local message = "OK: Updated " .. #targets .. " Saver path(s)"
+    set_status(config, message, time)
+    log(message)
+    return true, targets
+end
+
 return M

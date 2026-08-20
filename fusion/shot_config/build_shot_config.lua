@@ -215,11 +215,13 @@ local function serialized_controls(catalog, selections)
     add(label_control("SC_ColorHelp",
         "Stored only; not applied to CST nodes in v0.1.", "Color"))
     local execute = string.format("local m = dofile(%q); m.run(comp)", APPLY_PATH)
+    local update_savers = string.format("local m = dofile(%q); m.run_savers(comp)", APPLY_PATH)
     add(label_control("SC_PathMapSection", "Path Map", "Targets"))
     add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets"))
     add(label_control("SC_PathMapHelp",
         "Portable Path Map, for example _FOQN:", "Targets"))
     add(button_control("SC_Apply", "Apply / Update", execute, "Targets"))
+    add(button_control("SC_UpdateSaverVersions", "Update Saver Versions", update_savers, "Targets"))
     add(button_control("SC_RebuildPipeline", "Rebuild Managed Pipeline",
         string.format("local m = dofile(%q); m.run(comp)", REBUILD_PATH), "Targets"))
     add(text_control(CONTROL.status, "Status", DEFAULTS[CONTROL.status],
