@@ -1,72 +1,91 @@
-# macOS to Windows text-clipping follow-up
+# macOS to Windows free-anchor validation handoff
 
-## Geometry confirmation
+## Source contract
 
-The macOS Resolve log confirms the same UHD horizontal cells reported by
-Windows:
+The current text-layout contract is on `codex/v1-hardening` at commit
+`cad2d7a`.
 
-| Zone | Cell bounds |
-| --- | --- |
-| Left | `[58, 1261]` |
-| Centre | `[1299, 2541]` |
-| Right | `[2579, 3782]` |
+Before changing or validating Windows code, update this branch onto
+`origin/codex/v1-hardening` and confirm that `cad2d7a` is an ancestor.
 
-macOS intentionally uses the shared `paddingLeft=0.015`,
-`paddingRight=0.015`, and `normalizedZoneGap=0.01` calculation. It does not use
-three exact 1280-pixel columns. Do not introduce a Windows-specific cell or
-margin rule.
+The current contract has:
 
-## Windows clipping report
+- six independent frame anchors: TL, TC, TR, BL, BC, and BR;
+- complete text rasterization at the user-selected size;
+- outer left/right/top/bottom padding and per-zone offsets;
+- user responsibility for overlap and text extending beyond the output frame.
 
-The matching cells do not resolve the reported Windows defect. In Resolve on
-Windows, a fresh instance using default typography and overflow settings shows
-apparently incomplete calculated fields after the fields are selected. The
-supplied screenshot shows the top-left frame value and the bottom-right source
-filename case.
+The updated source tree is the only contract. Validate with newly created OFX
+instances.
 
-The current default overflow mode is `ShrinkToFit`, with
-`minimumFontScale=0.60`; therefore an ordinary short frame value should not be
-clipped. The platform rasterizers also resolve `System Default` differently:
-CoreText uses the macOS system font, while DirectWrite currently selects Segoe
-UI. Geometry equality alone cannot establish text-layout equality.
+## Required Windows build validation
 
-## Evidence requested from Windows
+Use a clean build directory after updating the branch:
 
-Reproduce the screenshot using a newly created OFX instance at 3840x2160 with
-unchanged defaults. Record the expected complete frame value and complete
-source filename, then return the matching log records from the same render:
+1. Configure and build Release x64 with Visual Studio 2022.
+2. Run the complete CTest suite.
+3. Confirm the OpenCL host layer and embedded kernel compile with the new
+   64-byte `OpenCLLayer` layout.
+4. Close Resolve and Fusion, then install the newly built bundle as the last
+   build-validation step.
 
-- `CALCULATED_FIELDS`
-- `TEXT_OVERFLOW`
-- `TEXT_ZONE` for `TL`
-- `TEXT_ZONE` for `BR`
-- `CALCULATED_FIELD_ZONE` for `TL` and `BR`
+Do not copy a macOS bundle or reuse an older Windows build directory.
 
-The records must retain at least these fields: `resolved_text`,
-`rendered_text`, `requested_font`, `resolved_font`, `effective_pixel_size`,
-`effective_scale`, `overflowed`, `clipped`, `ellipsized`, `cell`, `mask`, and
-`origin`.
+## Resolve validation
 
-Also save a full-resolution output still rather than only a scaled Resolve
-viewer screenshot. This distinguishes a render defect from viewer scaling.
+Create a new OFX instance in Resolve rather than loading an instance saved
+with the superseded parameter contract. Use a 3840x2160 output, square pixels,
+full render scale, default typography, and select calculated fields in at
+least TL and BR.
 
-## Decision procedure
+Confirm from the image and matching log records that:
 
-1. If `resolved_text` is already incomplete, inspect the Resolve metadata
-   values and calculated-field resolver. Do not change cell geometry or the
-   rasterizer.
-2. If `resolved_text` is complete but `rendered_text` is incomplete, inspect
-   the shared overflow implementation.
-3. If both strings are complete and `clipped=false`, inspect the DirectWrite
-   ink bounds and bitmap allocation/cropping. In particular, compare
-   `IDWriteTextLayout::GetMetrics` with the glyph overhang bounds; the Windows
-   raster surface must include negative left bearings and right-side ink
-   overhang before cropping.
-4. If `clipped=true`, report the mask width, cell width, and effective scale.
-   Confirm why `ShrinkToFit` reached its minimum before changing the current
-   cross-platform contract.
+- `resolved_text` and `rendered_text` contain the complete expected values;
+- `requested_pixel_size` equals `effective_pixel_size`;
+- `TEXT_ZONE` contains the current resolved text, raster, font, mask, origin,
+  offset, color, and opacity fields;
+- TL origin X is the left padding plus its offset;
+- TC origin X is `(frame width - mask width) / 2` plus its offset;
+- TR/BR origin X is the right padded edge minus mask width plus its offset;
+- enabling multiple zones never changes another zone's origin;
+- long strings may overlap or leave the frame without being rewritten.
 
-Any fix should remain host-neutral above the platform rasterizer boundary. A
-Windows-only correction is appropriate only inside the DirectWrite
-rasterizer when it makes that implementation conform to the shared text-layout
-contract. Do not add a compatibility path or legacy fallback.
+Save a full-resolution output still and the matching `CALCULATED_FIELDS`,
+`CALCULATED_FIELD_ZONE`, and `TEXT_ZONE` records. A scaled Resolve viewer
+screenshot alone is insufficient to diagnose glyph rasterization.
+
+Resolve previously reported `opencl_enabled=0`; if that remains true, record
+the test as CPU validation rather than OpenCL validation.
+
+## Fusion Standalone validation
+
+Repeat a representative TL/TC/TR render using a new node. Confirm CPU output
+first. If Fusion advertises an OpenCL command queue, compare its output with
+CPU and record the active backend. Do not add CUDA, a platform layout rule, or
+an alternate CPU behavior to compensate for a host that does not expose
+OpenCL.
+
+## Windows-only fixes
+
+Only modify `src/text_rasterizer_windows.cpp` if the full-resolution output
+proves that DirectWrite produces an incomplete raster from a complete
+`rendered_text` value. In that case, correct DirectWrite ink bounds and bitmap
+allocation so Windows conforms to the shared contract. Do not change shared
+anchoring geometry for a platform-specific font-metric difference.
+
+## Return handoff
+
+Commit all Windows source or test changes only on
+`codex/windows-opencl-validation`. Add
+`handoffs/windows-validation-results.md` containing:
+
+- the exact updated base commit;
+- Windows build and CTest results;
+- Resolve and Fusion versions and contexts;
+- CPU/OpenCL backend status;
+- the requested log records and full-resolution still path;
+- any Windows-only commit hashes;
+- a clear pass/fail conclusion for complete text and invariant anchors.
+
+Push the branch without merging it into `codex/v1-hardening`. macOS will review
+and integrate the finished Windows commits afterward.
