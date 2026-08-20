@@ -11,7 +11,8 @@ local MODULE_DIR = TEST_DIR .. "../"
 local SHOT_CONFIG_DIR = MODULE_DIR .. "../shot_config/"
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
-local comp = fusion:NewComp()
+local temp_comp = dofile(TEST_DIR .. "../../test_support/temp_comp.lua")
+local comp = temp_comp.acquire(fusion)
 if comp == nil then error("Fusion could not create the config apply test comp") end
 _G.comp = comp
 print("FUSION_TEMP_COMP_CREATED")

@@ -10,7 +10,8 @@ local TEST_DIR = script_directory()
 local INPUT_PREP_DIR = TEST_DIR .. "../"
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
-local comp = fusion:NewComp()
+local temp_comp = dofile(TEST_DIR .. "../../test_support/temp_comp.lua")
+local comp = temp_comp.acquire(fusion)
 if comp == nil then error("Fusion could not create the color/alpha test comp") end
 _G.comp = comp
 print("FUSION_TEMP_COMP_CREATED")

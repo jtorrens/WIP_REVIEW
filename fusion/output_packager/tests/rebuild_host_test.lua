@@ -8,7 +8,8 @@ end
 
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
-local comp = fusion:NewComp()
+local temp_comp = dofile(script_directory() .. "../../test_support/temp_comp.lua")
+local comp = temp_comp.acquire(fusion)
 if comp == nil then error("Fusion could not create the rebuild test comp") end
 _G.comp = comp
 print("FUSION_TEMP_COMP_CREATED")
@@ -47,10 +48,12 @@ original.OP_CropRatio[0] = 2.39
 original.OP_Status[0] = "Rebuild sentinel"
 local original_name = original:GetAttrs().TOOLS_Name
 
+comp:Lock()
 local saver = comp:AddTool("Saver", 2, 0)
 saver:SetAttrs({ TOOLS_Name = "RebuildPackageSaver" })
 saver.Clip[0] = "/private/tmp/outputpackager_rebuild.exr"
 saver.Input:ConnectTo(first_output(original))
+comp:Unlock()
 
 local replacement = builder.rebuild(comp, original)
 if replacement == nil then fail("builder returned no replacement") end

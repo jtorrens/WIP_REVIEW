@@ -1,9 +1,16 @@
 -- Fusion 21 validation for the OutputPackager review-raster pipeline.
 
+local function script_directory()
+    local source = debug.getinfo(1, "S").source
+    if source:sub(1, 1) == "@" then source = source:sub(2) end
+    return source:match("^(.*[/\\])") or "./"
+end
+
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
 
-local comp = fusion:NewComp()
+local temp_comp = dofile(script_directory() .. "../../test_support/temp_comp.lua")
+local comp = temp_comp.acquire(fusion)
 if comp == nil then error("Fusion could not create the review-raster test comp") end
 _G.comp = comp
 print("FUSION_TEMP_COMP_CREATED")
