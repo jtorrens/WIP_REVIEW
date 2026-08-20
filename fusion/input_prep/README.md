@@ -1,9 +1,8 @@
 # InputPrep v0.1
 
-Primer prototipo de host para Fusion Standalone 21. Todavía no es el builder
-de producción ni instala macros globales: crea un `GroupOperator` real dentro
-de una composición y permite validar el grafo nativo antes de implementar
-`InputPrepConfig` y la aplicación transaccional a varios targets.
+Prototipo funcional para Fusion Standalone 21. Crea procesadores `InputPrep`,
+un registro explícito `InputPrepConfig` y aplica los valores de `ShotConfig`
+de forma transaccional. No instala macros globales.
 
 ## Probar la composición
 
@@ -29,6 +28,11 @@ Selecciona `InputPrep1` y pulsa `1` o `2` para mostrar su salida en un Viewer.
 La fuente de prueba es un `Background` cuadrado de cuatro esquinas a
 2160 × 2160. El resultado permite ver el fill y el crop sobre una fuente cuyo
 aspect ratio no coincide con el working raster.
+
+La comp incluye `ShotConfig`, `InputPrepConfig` e `InputPrep1`. En la pestaña
+`Targets` del registro, cada slot acepta el nombre exacto de un procesador. F2
+copia el nombre del nodo. `Apply / Update` valida primero todos los slots y
+solo después actualiza los targets.
 
 ## Grafo del prototipo
 
@@ -72,6 +76,10 @@ Configuración aplicada por defecto:
 Los valores son explícitos. No hay expresiones ni enlaces vivos a
 `ShotConfig`.
 
+La pestaña `Applied` de cada `InputPrep` muestra los IDs de color/gamma y las
+dimensiones escritas por el último Apply. Los bypass operativos permanecen en
+la pestaña `InputPrep`.
+
 ## Validación
 
 Con la comp del ejemplo abierta:
@@ -86,10 +94,18 @@ La geometría con fuentes de distinto aspect ratio se valida en el host con:
 ./fusion/input_prep/tests/run_resize_test.sh
 ```
 
+El registro, rebuild y Apply/rollback se validan con:
+
+```sh
+./fusion/input_prep/tests/run_config_apply_test.sh
+```
+
 El test comprueba en el host la identidad del grupo, su conexión, el estado
 público, los cinco selectores y los valores serializados de depth, resize,
 crop y alpha. El segundo test renderiza fuentes cuadrada, panorámica y vertical
-y comprueba las dimensiones antes y después del crop.
+y comprueba las dimensiones antes y después del crop. El tercero aplica a dos
+targets, ignora uno no registrado, actualiza valores, conserva el registro al
+reconstruirlo y comprueba validación previa y rollback.
 
 `probe_input_prep.lua` documenta los RegIDs y controles disponibles en la
 instalación actual de Fusion. Crea una comp privada sin guardar:
@@ -99,9 +115,8 @@ instalación actual de Fusion. Crea una comp privada sin guardar:
   -l lua fusion/input_prep/probe_input_prep.lua
 ```
 
-## Pendiente antes del builder de producción
+## Pendiente antes de cerrar v0.1
 
-Este checkpoint valida el esqueleto, la integración con el host y el fill
-uniforme sin stretch. A continuación se implementarán `InputPrepConfig`, los
-cinco targets explícitos y el flujo
-Resolve → Validate → Apply → Verify/Rollback descrito en el handoff.
+Queda validar color y alpha con píxeles semitransparentes y cerrar el rebuild
+de un procesador conservando sus conexiones. Después se podrá retirar la
+etiqueta de prototipo y cerrar los nueve casos del handoff.

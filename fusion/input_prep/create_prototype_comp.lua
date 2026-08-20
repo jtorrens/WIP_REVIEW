@@ -9,6 +9,9 @@ end
 local SCRIPT_DIR = script_directory()
 local OUTPUT_PATH = SCRIPT_DIR .. "examples/InputPrep_Prototype.comp"
 local BUILD_PATH = SCRIPT_DIR .. "build_input_prep.lua"
+local CONFIG_BUILD_PATH = SCRIPT_DIR .. "build_input_prep_config.lua"
+local APPLY_PATH = SCRIPT_DIR .. "apply_input_prep.lua"
+local SHOT_BUILD_PATH = SCRIPT_DIR .. "../shot_config/build_shot_config.lua"
 
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
@@ -67,12 +70,27 @@ local input_prep = builder.last_group
 if input_prep == nil then error("InputPrep prototype was not created") end
 input_prep.MainInput1 = source.Output
 
+dofile(SHOT_BUILD_PATH)
+dofile(CONFIG_BUILD_PATH)
+local apply = dofile(APPLY_PATH)
+local input_prep_config, config_error = apply.find_config(example)
+if input_prep_config == nil then
+    error(config_error or "InputPrepConfig was not created")
+end
+input_prep_config[apply.target_control(1)][example.CurrentTime] =
+    input_prep:GetAttrs().TOOLS_Name
+local applied, apply_error = apply.run(example)
+if not applied then error(apply_error or "InputPrep prototype apply failed") end
+
 local flow = example.CurrentFrame and example.CurrentFrame.FlowView
 if flow ~= nil then
     pcall(function() flow:SetPos(source, -2, 0) end)
     pcall(function() flow:SetPos(input_prep, 0, 0) end)
+    local shot_config = example:FindTool("ShotConfig")
+    if shot_config ~= nil then pcall(function() flow:SetPos(shot_config, -2, 2) end) end
+    pcall(function() flow:SetPos(input_prep_config, 0, 2) end)
 end
-example:SetActiveTool(input_prep)
+example:SetActiveTool(input_prep_config)
 
 local saved = example:Save(OUTPUT_PATH)
 if saved == false then error("Fusion could not save the InputPrep prototype comp") end

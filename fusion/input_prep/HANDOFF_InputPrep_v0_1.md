@@ -216,22 +216,27 @@ Con `Embedded Alpha = false`:
 - el alpha de salida se fuerza a `1.0`;
 - no se interpreta un canal alpha accidental de la fuente.
 
-La implementación concreta de divide/multiply o herramientas equivalentes se
-decidirá tras una prueba de píxeles en Fusion 21.
+El prototipo usa `AlphaDivide → CST → AlphaMultiply`; su comportamiento se
+cerrará con la prueba de píxeles semitransparentes en Fusion 21.
 
 ## Builders y scripts
 
-Estructura prevista:
+Estructura actual:
 
 ```text
 fusion/input_prep/
 ├── build_input_prep.lua
 ├── build_input_prep_config.lua
 ├── apply_input_prep.lua
+├── geometry.lua
 ├── README.md
 └── tests/
-    ├── fusion_host_tests.lua
-    └── run_fusion_tests.sh
+    ├── config_apply_host_test.lua
+    ├── prototype_host_test.lua
+    ├── resize_host_test.lua
+    ├── run_config_apply_test.sh
+    ├── run_prototype_test.sh
+    └── run_resize_test.sh
 ```
 
 ### build_input_prep.lua

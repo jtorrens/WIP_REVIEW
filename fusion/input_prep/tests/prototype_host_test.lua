@@ -1,5 +1,11 @@
 -- Runtime validation for the currently open InputPrep prototype comp.
 
+local function script_directory()
+    local source = debug.getinfo(1, "S").source
+    if source:sub(1, 1) == "@" then source = source:sub(2) end
+    return source:match("^(.*[/\\])") or "./"
+end
+
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
 local comp = fusion.CurrentComp
@@ -19,6 +25,14 @@ end
 assert_true(input_prep ~= nil, "InputPrep prototype not found")
 assert_true(tonumber(input_prep:GetData("InputPrep.SchemaVersion")) == 1,
     "unexpected schema")
+
+local apply_path = script_directory() .. "../apply_input_prep.lua"
+local apply = dofile(apply_path)
+local config, config_error = apply.find_config(comp)
+assert_true(config ~= nil, config_error or "InputPrepConfig not found")
+assert_true(tostring(config[apply.target_control(1)][comp.CurrentTime]) ==
+    input_prep:GetAttrs().TOOLS_Name,
+    "prototype target is not registered")
 
 local source = comp:FindTool("PrototypeSource_2160x2160")
 assert_true(source ~= nil, "prototype source is missing")
