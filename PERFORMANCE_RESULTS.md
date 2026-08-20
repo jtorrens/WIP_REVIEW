@@ -72,9 +72,10 @@ en Rec.709, PQ y HLG, con alpha premultiplicado variable, color de blanking no
 negro, opacidades 50/100 % y texto. La tolerancia máxima comprobada es `3e-5`
 en Float32. Los píxeles no afectados se copian sin round-trip de transferencia.
 
-## Límite restante
+## Backend actual
 
-El beneficio multihilo depende de los workers que conceda el host; si Resolve
-entrega un solo hilo, se conserva la referencia serial. El plugin mantiene
-`SupportsTiles=0`. Los casos con resize real continúan siendo el principal
-coste; tiles, reutilización de buffers y GPU quedan fuera de este checkpoint.
+Metal cubre ahora tanto identidad como resize real, blanking y texto. En la
+composición real de Resolve usada durante el desarrollo mantiene 25 fps con
+blanking semitransparente; la ruta CPU anterior reproducía ese caso a unos
+6 fps. CPU permanece como backend cuando el host entrega memoria convencional.
+El plugin mantiene `SupportsTiles=0`.

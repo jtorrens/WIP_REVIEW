@@ -40,6 +40,11 @@ La prueba directa compara Metal contra CPU en 18 combinaciones de placement,
 filtro y espacio de salida, con blanking y texto incluidos. El smoke acumulativo
 de Fusion renderiza 33 escenarios y registra `GPU_RENDER backend=metal status=0`.
 
+En Resolve Studio 21.0.4, el clip real usado durante el desarrollo mantiene
+25 fps con blanking semitransparente. Antes del backend Metal, esa misma
+configuración se reproducía aproximadamente a 6 fps. La comprobación visual y
+de reproducción fue aprobada por el usuario el 20 de agosto de 2026.
+
 ## Windows / OpenCL
 
 El backend OpenCL usa buffers OFX 1.5 y el mismo contrato visual que Metal. Los

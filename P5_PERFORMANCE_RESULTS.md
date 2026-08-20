@@ -152,21 +152,16 @@ Los checksums completos coinciden exactamente con una banda para las tres
 curvas. El benchmark usa `std::thread` únicamente para aislar esta evaluación;
 la implementación OFX de producción usa exclusivamente la suite del host.
 
-## Decisión SIMD y GPU
+## Decisión de backend
 
-P5 los ha evaluado y no añade una segunda ruta de render:
+SIMD manual no se incorpora: exigiría implementaciones distintas para arm64 y
+x86_64 y una validación numérica separada.
 
-- SIMD manual exigiría implementaciones distintas para arm64 y x86_64, además
-  de una validación numérica separada. Con 66–113 ms para el caso crítico CPU
-  de referencia, no hay evidencia que justifique esa complejidad en V1.
-- GPU obligaría a duplicar sampler, color, blanking y composición, y a negociar
-  una suite adicional del host. Se pospone hasta disponer de una medición real
-  de Fusion que muestre que el renderer CPU host-threaded no cumple el objetivo.
-
-Esta decisión mantiene una única implementación actual y no reserva una ruta
-alternativa ni un selector inactivo. La interfaz pública permanece preparada
-para reemplazar internamente el backend en una fase futura si la evidencia lo
-exige.
+La medición posterior en Resolve sí justificó GPU: el backend Metal completo
+mantiene 25 fps con blanking semitransparente en el clip real que rendía
+aproximadamente a 6 fps por CPU. Windows usa el backend OpenCL del mismo
+contrato visual. El host selecciona GPU o memoria CPU antes de Render; no hay
+un selector de backend por nodo.
 
 ## Validación en Fusion Standalone
 
