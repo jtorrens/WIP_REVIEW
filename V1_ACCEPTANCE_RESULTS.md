@@ -80,7 +80,7 @@ scripts/open_fusion_visual.sh
 Validado el 20 de agosto de 2026 en Fusion Studio 21.0.4 con el binario del
 commit `7d47575`:
 
-- smoke acumulativo: 36 renders aprobados;
+- smoke acumulativo del descriptor único: 35 renders aprobados;
 - descriptor único en Fusion General: Requested 1920×1080 desde Source
   4608×3164;
 - Host Raster y los cinco placements aprobados;
@@ -92,7 +92,7 @@ Paquete:
 
 ```text
 build-universal/WIPReviewProbe-1.1.0-macOS-universal.zip
-SHA-256 840bb248ca25d5caa95f78fee8e071dfcf1200476579f02ceafdd27dbd85d427
+SHA-256 918e47b835282b8556de344a199ea338d143d3c6ffffc9d424ad0a6ae1b18621
 ```
 
 Antes del tag V1 queda repetir la carga en Resolve Edit y Color con este mismo
