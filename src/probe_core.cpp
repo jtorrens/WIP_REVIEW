@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <vector>
 
 namespace wipreview::probe {
 
@@ -185,30 +186,83 @@ std::array<float, 4> readManagedRGBA(
   return rgba;
 }
 
-std::array<float, 4> sample(const ImageView& source, double x, double y,
-                            double scaleX, double scaleY,
-                            ResampleFilter filter, bool sourcePremultiplied,
-                            bool outputPremultiplied) noexcept {
-  std::array<double, 4> sum{};
-  double weightSum = 0.0;
+struct AxisTap {
+  int source = 0;
+  double weight = 0.0;
+};
+
+struct AxisSpan {
+  std::size_t first = 0;
+  std::size_t count = 0;
+  bool inside = false;
+};
+
+struct AxisPlan {
+  int outputStart = 0;
+  std::vector<AxisSpan> spans;
+  std::vector<AxisTap> taps;
+};
+
+AxisPlan buildAxisPlan(int outputStart, int outputEnd,
+                       int sourceStart, int sourceEnd,
+                       double sourceCenter, double outputCenter,
+                       double scale, ResampleFilter filter) {
+  AxisPlan plan;
+  plan.outputStart = outputStart;
+  plan.spans.reserve(static_cast<std::size_t>(
+      std::max(0, outputEnd - outputStart)));
   const double radius = filter == ResampleFilter::Bilinear ? 1.0
                       : filter == ResampleFilter::Bicubic ? 2.0 : 3.0;
-  const double filterScaleX = std::max(1.0, 1.0 / std::abs(scaleX));
-  const double filterScaleY = std::max(1.0, 1.0 / std::abs(scaleY));
-  const int firstX = static_cast<int>(std::ceil(x - radius * filterScaleX));
-  const int lastX = static_cast<int>(std::floor(x + radius * filterScaleX));
-  const int firstY = static_cast<int>(std::ceil(y - radius * filterScaleY));
-  const int lastY = static_cast<int>(std::floor(y + radius * filterScaleY));
-  for (int iy = firstY; iy <= lastY; ++iy) {
-    const double wy = kernel((y - static_cast<double>(iy)) / filterScaleY, filter);
-    if (wy == 0.0) continue;
-    const int sy = std::clamp(iy, source.bounds.y1, source.bounds.y2 - 1);
-    for (int ix = firstX; ix <= lastX; ++ix) {
-      const double weight = wy * kernel(
-          (x - static_cast<double>(ix)) / filterScaleX, filter);
-      if (weight == 0.0) continue;
-      const int sx = std::clamp(ix, source.bounds.x1, source.bounds.x2 - 1);
-      const auto rgba = readRGBA(source, sx, sy, sourcePremultiplied, true);
+  const double filterScale = std::max(1.0, 1.0 / std::abs(scale));
+  const std::size_t estimatedTaps = static_cast<std::size_t>(
+      std::max(2.0, std::ceil(radius * filterScale * 2.0 + 1.0)));
+  plan.taps.reserve(plan.spans.capacity() * estimatedTaps);
+  for (int output = outputStart; output < outputEnd; ++output) {
+    const double canonical = sourceCenter +
+        (static_cast<double>(output) + 0.5 - outputCenter) / scale;
+    AxisSpan span;
+    span.first = plan.taps.size();
+    span.inside = canonical >= sourceStart && canonical < sourceEnd;
+    if (span.inside) {
+      const double samplePosition = canonical - 0.5;
+      const int first = static_cast<int>(
+          std::ceil(samplePosition - radius * filterScale));
+      const int last = static_cast<int>(
+          std::floor(samplePosition + radius * filterScale));
+      for (int sampleIndex = first; sampleIndex <= last; ++sampleIndex) {
+        const double weight = kernel(
+            (samplePosition - static_cast<double>(sampleIndex)) / filterScale,
+            filter);
+        if (weight == 0.0) continue;
+        plan.taps.push_back({
+            std::clamp(sampleIndex, sourceStart, sourceEnd - 1), weight});
+      }
+    }
+    span.count = plan.taps.size() - span.first;
+    plan.spans.push_back(span);
+  }
+  return plan;
+}
+
+const AxisSpan& spanAt(const AxisPlan& plan, int output) noexcept {
+  return plan.spans[static_cast<std::size_t>(output - plan.outputStart)];
+}
+
+std::array<float, 4> samplePlanned(
+    const ImageView& source, const AxisPlan& xPlan, const AxisPlan& yPlan,
+    int outputX, int outputY, bool sourcePremultiplied,
+    bool outputPremultiplied) noexcept {
+  const AxisSpan& xSpan = spanAt(xPlan, outputX);
+  const AxisSpan& ySpan = spanAt(yPlan, outputY);
+  std::array<double, 4> sum{};
+  double weightSum = 0.0;
+  for (std::size_t yIndex = 0; yIndex < ySpan.count; ++yIndex) {
+    const AxisTap& yTap = yPlan.taps[ySpan.first + yIndex];
+    for (std::size_t xIndex = 0; xIndex < xSpan.count; ++xIndex) {
+      const AxisTap& xTap = xPlan.taps[xSpan.first + xIndex];
+      const double weight = yTap.weight * xTap.weight;
+      const auto rgba = readRGBA(
+          source, xTap.source, yTap.source, sourcePremultiplied, true);
       for (std::size_t channel = 0; channel < 4; ++channel) {
         sum[channel] += static_cast<double>(rgba[channel]) * weight;
       }
@@ -221,7 +275,9 @@ std::array<float, 4> sample(const ImageView& source, double x, double y,
     result[channel] = static_cast<float>(sum[channel] / weightSum);
   }
   if (!outputPremultiplied && result[3] > 1.0e-8F) {
-    for (std::size_t channel = 0; channel < 3; ++channel) result[channel] /= result[3];
+    for (std::size_t channel = 0; channel < 3; ++channel) {
+      result[channel] /= result[3];
+    }
   }
   return result;
 }
@@ -297,7 +353,7 @@ PlacementTransform computePlacement(RectI sourceBounds, RectI outputBounds,
 }
 
 void renderStaticFrame(const ImageView& source, const ImageView& destination,
-                       RectI renderWindow, const RenderOptions& options) noexcept {
+                       RectI renderWindow, const RenderOptions& options) {
   if (!destination.data || destination.pixelBytes == 0 || destination.channels <= 0) return;
   const RectI writable = intersect(renderWindow, destination.bounds);
   if (empty(writable)) return;
@@ -313,35 +369,39 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   }
 
   const PlacementTransform transform = computePlacement(source.bounds, destination.bounds, options);
+  AxisPlan xPlan;
+  AxisPlan yPlan;
+  if (options.placement != PlacementMode::Identity) {
+    xPlan = buildAxisPlan(
+        writable.x1, writable.x2, source.bounds.x1, source.bounds.x2,
+        transform.sourceCenterX, transform.outputCenterX,
+        transform.scaleX, options.filter);
+    yPlan = buildAxisPlan(
+        writable.y1, writable.y2, source.bounds.y1, source.bounds.y2,
+        transform.sourceCenterY, transform.outputCenterY,
+        transform.scaleY, options.filter);
+  }
   for (int y = writable.y1; y < writable.y2; ++y) {
     for (int x = writable.x1; x < writable.x2; ++x) {
-      double sourceX = static_cast<double>(x) + 0.5;
-      double sourceY = static_cast<double>(y) + 0.5;
-      if (options.placement != PlacementMode::Identity) {
-        sourceX = transform.sourceCenterX
-                + (static_cast<double>(x) + 0.5 - transform.outputCenterX) / transform.scaleX;
-        sourceY = transform.sourceCenterY
-                + (static_cast<double>(y) + 0.5 - transform.outputCenterY) / transform.scaleY;
-      }
-      if (sourceX < source.bounds.x1 || sourceX >= source.bounds.x2 ||
-          sourceY < source.bounds.y1 || sourceY >= source.bounds.y2) {
-        writePixel(destination, x, y, canvas);
-        continue;
-      }
-      // Image samples live at integer pixel centres after subtracting 0.5 from
-      // the canonical coordinate used by the placement transform.
-      const double sampleX = sourceX - 0.5;
-      const double sampleY = sourceY - 0.5;
       const bool exactIdentity = options.placement == PlacementMode::Identity;
       if (exactIdentity) {
+        if (x < source.bounds.x1 || x >= source.bounds.x2 ||
+            y < source.bounds.y1 || y >= source.bounds.y2) {
+          writePixel(destination, x, y, canvas);
+          continue;
+        }
         writePixel(destination, x, y,
                    readRGBA(source, x, y, options.sourcePremultiplied,
                             options.outputPremultiplied));
       } else {
+        if (!spanAt(xPlan, x).inside || !spanAt(yPlan, y).inside) {
+          writePixel(destination, x, y, canvas);
+          continue;
+        }
         writePixel(destination, x, y,
-                   sample(source, sampleX, sampleY, transform.scaleX, transform.scaleY,
-                          options.filter, options.sourcePremultiplied,
-                          options.outputPremultiplied));
+                   samplePlanned(source, xPlan, yPlan, x, y,
+                                 options.sourcePremultiplied,
+                                 options.outputPremultiplied));
       }
     }
   }
@@ -371,7 +431,7 @@ bool renderManagedDisplayFrame(
     const ImageView& source, const ImageView& decodedSourceScratch,
     const ImageView& destination, RectI renderWindow,
     const RenderOptions& options,
-    const wipreview::color::DisplayConfig& colorConfig) noexcept {
+    const wipreview::color::DisplayConfig& colorConfig) {
   if (!destination.data || destination.pixelBytes != sizeof(float) * 4 ||
       destination.channels != 4 ||
       destination.channelType != ChannelType::Float32) return false;

@@ -96,6 +96,21 @@ RGBA float equivalente al raster Source; `4608×3164` requiere aproximadamente
 222 MiB. P5 debe evaluar a continuación pesos precomputados y un cache de filas
 decodificadas para reducir tiempo y memoria sin reintroducir decode por tap.
 
+## Optimización 2 — pesos de resampling precomputados
+
+El sampler construye una vez los taps y pesos separables de X e Y para el
+`renderWindow`. Cada píxel conserva el mismo bucle Y→X y el mismo orden de suma;
+solo desaparecen las evaluaciones repetidas de `sin`, divisiones y coordenadas.
+
+| Encoding | Baseline total | Decode once | + pesos precomputados | Ganancia total |
+| --- | ---: | ---: | ---: | ---: |
+| Rec.709 Gamma 2.4 | 19 181.2 ms | 7 164.0 ms | 3 082.3 ms | 6.22× |
+| Rec.2100 PQ | 42 517.5 ms | 7 917.7 ms | 3 841.0 ms | 11.07× |
+| Rec.2100 HLG | 22 131.5 ms | 7 264.7 ms | 3 364.8 ms | 6.58× |
+
+Los checksums completos arm64 siguen siendo idénticos al baseline. No se ha
+introducido SIMD, threading ni GPU.
+
 ## Equivalencia
 
 El benchmark emite un checksum cuantizado útil para comparar ejecuciones dentro

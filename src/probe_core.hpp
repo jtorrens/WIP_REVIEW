@@ -137,7 +137,7 @@ void copyProbeFrame(const ImageView& source,
 void renderStaticFrame(const ImageView& source,
                        const ImageView& destination,
                        RectI renderWindow,
-                       const RenderOptions& options) noexcept;
+                       const RenderOptions& options);
 
 // Decodes display-referred Source pixels exactly once into display-light
 // linear premultiplied Float32 RGBA. Resampling is a separate pass over this
@@ -159,7 +159,7 @@ void decodeManagedDisplayFrame(
     const ImageView& displayLinearDestination,
     RectI renderWindow,
     const RenderOptions& options,
-    const wipreview::color::DisplayConfig& colorConfig) noexcept;
+    const wipreview::color::DisplayConfig& colorConfig);
 
 // Encodes the premultiplied display-light working image exactly once into the
 // negotiated Output representation, preserving its alpha convention.

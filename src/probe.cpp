@@ -2102,6 +2102,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " working_space=display-light-linear working_premult=true" +
         " decode_count=1 decoded_source_scratch_bytes=" +
             std::to_string(decodedSourcePixels.size() * sizeof(float)) +
+        " sampler_weights=precomputed" +
         " encode_count=1 output_premult=" +
             (options.outputPremultiplied ? "true" : "false"));
     if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {
