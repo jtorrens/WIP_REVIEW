@@ -88,8 +88,8 @@ local function definition(name, values)
                         Default = %d,
                     },
                     OP_CropRatio = InstanceInput {
-                        SourceOp = "OP_WIPReview",
-                        Source = "blankingAspectCustom",
+                        SourceOp = "OP_AppliedData",
+                        Source = "NumberIn1",
                         Name = "Crop Ratio",
                         Page = "Applied",
                         Default = %.12g,
@@ -172,6 +172,14 @@ local function definition(name, values)
                         },
                         ViewInfo = OperatorInfo { Pos = { -110, 0 } },
                     },
+                    OP_AppliedData = Custom {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            NumberIn1 = Input { Value = %.12g, },
+                        },
+                        ViewInfo = OperatorInfo { Pos = { 0, 1 } },
+                    },
                     OP_WIPReview = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
                         NameSet = true,
@@ -181,7 +189,9 @@ local function definition(name, values)
                             resampleFilter = Input { Value = 2, },
                             blankingEnabled = Input { Value = 0, },
                             blankingAspectPreset = Input { Value = 4, },
-                            blankingAspectCustom = Input { Value = %.12g, },
+                            blankingAspectCustom = Input {
+                                Expression = "OP_AppliedData.NumberIn1",
+                            },
                             AllowResize = Input { Value = 0, },
                             Source = Input {
                                 SourceOp = "OP_ReviewRasterSwitch",

@@ -131,3 +131,40 @@ temporal y muestra:
 ```text
 OUTPUTPACKAGER_BUILDER_HOST_TEST_OK
 ```
+
+## Checkpoint 6 — registro y Apply
+
+`OutputPackagerConfig` contiene cinco pares constantes:
+
+```text
+OutputPackager Node | Saver Node | Enabled | Review Raster | WIP Review
+```
+
+Los nombres son textboxes para copiar con F2. Una pareja vacía se ignora; una
+pareja parcial, duplicada o con tipos/conexiones incorrectos aborta antes de
+modificar ningún target.
+
+Crear o reconstruir el registro:
+
+```lua
+dofile("/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/output_packager/build_output_packager_config.lua")
+```
+
+`Apply / Update` copia Review Resolution y Crop Ratio desde ShotConfig, fija los
+dos Switches de cada OutputPackager y activa o desactiva su Saver con
+`TOOLB_PassThrough`. La operación captura y verifica GroupOperators y Savers;
+un fallo restaura ambos dominios.
+
+Prueba de aceptación:
+
+```sh
+fusion/output_packager/tests/run_config_apply_test.sh
+```
+
+Valida dos paquetes, un tercero no registrado, rebuild, pareja parcial, WIP sin
+review, conexión incorrecta y rollback forzado. La comp temporal se cierra al
+terminar:
+
+```text
+OUTPUTPACKAGER_CONFIG_APPLY_HOST_TEST_OK
+```
