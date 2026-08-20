@@ -245,6 +245,8 @@ fusion/input_prep/
     ├── run_config_apply_test.sh
     ├── run_color_alpha_test.sh
     ├── run_prototype_test.sh
+    ├── rebuild_host_test.lua
+    ├── run_rebuild_test.sh
     ├── run_resize_test.sh
     └── verify_color_alpha.py
 ```
@@ -257,6 +259,11 @@ fusion/input_prep/
 - no crea dependencias con nombres visuales externos;
 - permite reconstruir un `InputPrep` explícitamente seleccionado conservando
   sus conexiones cuando Fusion lo permita de forma verificable.
+
+Comportamiento validado: al ejecutar el builder con un `InputPrep`
+seleccionado, se conserva nombre, posición, valores públicos, entrada y todos
+los consumidores de salida. El registro no cambia porque mantiene el nombre
+estable. Sin selección compatible, el builder crea un procesador nuevo.
 
 No recorre ni reconstruye todos los `InputPrep` de la comp.
 

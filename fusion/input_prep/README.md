@@ -106,6 +106,12 @@ Color y alpha se comparan píxel a píxel contra grafos nativos de referencia:
 ./fusion/input_prep/tests/run_color_alpha_test.sh
 ```
 
+El rebuild de un procesador seleccionado se valida con:
+
+```sh
+./fusion/input_prep/tests/run_rebuild_test.sh
+```
+
 El test comprueba en el host la identidad del grupo, su conexión, el estado
 público, los cinco selectores y los valores serializados de depth, resize,
 crop y alpha. El segundo test renderiza fuentes cuadrada, panorámica y vertical
@@ -113,7 +119,8 @@ y comprueba las dimensiones antes y después del crop. El tercero aplica a dos
 targets, ignora uno no registrado, actualiza valores, conserva el registro al
 reconstruirlo y comprueba validación previa y rollback. El cuarto renderiza
 EXR de las políticas Opaque y Preserve y compara sus píxeles con ramas nativas
-equivalentes.
+equivalentes. El quinto reconstruye un procesador mediante el builder y
+comprueba identidad, valores, registro, conexiones y render posterior.
 
 `probe_input_prep.lua` documenta los RegIDs y controles disponibles en la
 instalación actual de Fusion. Crea una comp privada sin guardar:
@@ -123,8 +130,12 @@ instalación actual de Fusion. Crea una comp privada sin guardar:
   -l lua fusion/input_prep/probe_input_prep.lua
 ```
 
-## Pendiente antes de cerrar v0.1
+## Rebuild
 
-Queda cerrar el rebuild de un procesador conservando sus conexiones. Después
-se podrá retirar la etiqueta de prototipo y cerrar los nueve casos del
-handoff.
+Ejecutar `build_input_prep.lua` con un `InputPrep` seleccionado reconstruye
+únicamente ese procesador. Conserva su nombre, posición, valores aplicados,
+entrada, todos los consumidores de salida y los nombres almacenados en
+`InputPrepConfig`. Si no hay un procesador seleccionado, crea uno nuevo.
+
+Los nueve casos obligatorios del handoff están cubiertos. El siguiente
+checkpoint retira la etiqueta de prototipo y deja los nombres finales de v0.1.

@@ -446,25 +446,70 @@ local function definition(name, values)
         values.alphaSelection, name)
 end
 
+local PUBLIC_CONTROLS = {
+    "IP_EnableDepth", "IP_Depth",
+    "IP_SourceColorSpace", "IP_SourceGamma",
+    "IP_WorkingColorSpace", "IP_WorkingGamma", "IP_EnableColor",
+    "IP_ResizeWidth", "IP_ResizeHeight", "IP_EnableResize",
+    "IP_CropWidth", "IP_CropHeight", "IP_EnableCrop",
+    "IP_EmbeddedAlpha", "IP_Status",
+}
+
+local function first_output(tool)
+    for _, output in pairs(tool:GetOutputList() or {}) do return output end
+    return nil
+end
+
+local function unique_name(comp, prefix)
+    local index = 1
+    local name = prefix
+    while comp:FindTool(name) ~= nil do
+        index = index + 1
+        name = prefix .. tostring(index)
+    end
+    return name
+end
+
+local function paste_group(comp, overrides, name)
+    local values = normalized_values(overrides)
+    local parsed = bmd.readstring(definition(name, values))
+    if parsed == nil then error("Fusion could not parse the InputPrep definition") end
+    local pasted = comp:Paste(parsed)
+    if pasted == false then error("Fusion could not paste InputPrep") end
+    local group = comp:FindTool(name)
+    if group == nil then error("pasted InputPrep was not found") end
+    group:SetData("InputPrep.Role", M.ROLE)
+    group:SetData("InputPrep.SchemaVersion", M.SCHEMA_VERSION)
+    group:SetData("InputPrep.Prototype", true)
+    return group, values
+end
+
+local function flow_position(comp, tool)
+    if tool == nil or comp.CurrentFrame == nil then return nil, nil end
+    local flow = comp.CurrentFrame.FlowView
+    if flow == nil then return nil, nil end
+    local ok, x, y = pcall(function() return flow:GetPos(tool) end)
+    if ok then return x, y end
+    return nil, nil
+end
+
+local function set_flow_position(comp, tool, x, y)
+    if x == nil or y == nil or comp.CurrentFrame == nil then return end
+    local flow = comp.CurrentFrame.FlowView
+    if flow ~= nil then pcall(function() flow:SetPos(tool, x, y) end) end
+end
+
 function M.run(comp_override, overrides)
     local active_comp = comp_override or rawget(_G, "comp")
     if active_comp == nil then error("InputPrep builder requires an active composition") end
-    local values = normalized_values(overrides)
     local name = next_name(active_comp)
-    local parsed = bmd.readstring(definition(name, values))
-    if parsed == nil then error("Fusion could not parse the InputPrep definition") end
 
     active_comp:StartUndo("Build InputPrep v0.1 prototype")
     active_comp:Lock()
     local group = nil
+    local values = nil
     local ok, failure = pcall(function()
-        local pasted = active_comp:Paste(parsed)
-        if pasted == false then error("Fusion could not paste InputPrep") end
-        group = active_comp:FindTool(name)
-        if group == nil then error("pasted InputPrep was not found") end
-        group:SetData("InputPrep.Role", M.ROLE)
-        group:SetData("InputPrep.SchemaVersion", M.SCHEMA_VERSION)
-        group:SetData("InputPrep.Prototype", true)
+        group, values = paste_group(active_comp, overrides, name)
         active_comp:SetActiveTool(group)
     end)
     active_comp:Unlock()
@@ -479,8 +524,95 @@ function M.run(comp_override, overrides)
     return group
 end
 
+function M.rebuild(comp_override, target)
+    local active_comp = comp_override or rawget(_G, "comp")
+    if active_comp == nil then error("InputPrep rebuild requires an active composition") end
+    if target == nil or target:GetData("InputPrep.Role") ~= M.ROLE then
+        error("select exactly one InputPrep processor to rebuild")
+    end
+    if tonumber(target:GetData("InputPrep.SchemaVersion")) ~= M.SCHEMA_VERSION then
+        error("selected InputPrep has an unsupported schema")
+    end
+
+    local time = active_comp.CurrentTime or 0
+    local original_name = target:GetAttrs().TOOLS_Name
+    local saved = {}
+    for _, id in ipairs(PUBLIC_CONTROLS) do
+        if target[id] == nil then error("selected InputPrep is missing " .. id) end
+        saved[id] = target[id][time]
+    end
+    local upstream = target.MainInput1 and target.MainInput1:GetConnectedOutput() or nil
+    local old_output = first_output(target)
+    if old_output == nil then error("selected InputPrep has no output") end
+    local consumers = old_output:GetConnectedInputs() or {}
+    local x, y = flow_position(active_comp, target)
+    local temporary_name = unique_name(active_comp, "InputPrepRebuild")
+    local backup_name = unique_name(active_comp, "InputPrepPrevious")
+
+    active_comp:StartUndo("Rebuild InputPrep v0.1")
+    active_comp:Lock()
+    local replacement = nil
+    local new_output = nil
+    local old_renamed = false
+    local new_renamed = false
+    local old_deleted = false
+    local ok, failure = pcall(function()
+        replacement = paste_group(active_comp, nil, temporary_name)
+        for _, id in ipairs(PUBLIC_CONTROLS) do
+            replacement[id][time] = saved[id]
+        end
+        if upstream ~= nil then
+            local connected = replacement.MainInput1:ConnectTo(upstream)
+            if connected == false then error("unable to restore Input connection") end
+        end
+        new_output = first_output(replacement)
+        if new_output == nil then error("replacement InputPrep has no output") end
+        for _, destination in pairs(consumers) do
+            local connected = destination:ConnectTo(new_output)
+            if connected == false then error("unable to restore an Output connection") end
+        end
+        target:SetAttrs({ TOOLS_Name = backup_name })
+        old_renamed = true
+        replacement:SetAttrs({ TOOLS_Name = original_name })
+        new_renamed = true
+        set_flow_position(active_comp, replacement, x, y)
+        active_comp:SetActiveTool(replacement)
+        local deleted = target:Delete()
+        if deleted == false then error("unable to remove previous InputPrep") end
+        old_deleted = true
+    end)
+
+    if not ok and not old_deleted then
+        for _, destination in pairs(consumers) do
+            pcall(function() destination:ConnectTo(old_output) end)
+        end
+        if new_renamed and replacement ~= nil then
+            pcall(function() replacement:SetAttrs({ TOOLS_Name = temporary_name }) end)
+        end
+        if old_renamed then
+            pcall(function() target:SetAttrs({ TOOLS_Name = original_name }) end)
+        end
+        if replacement ~= nil then pcall(function() replacement:Delete() end) end
+        set_flow_position(active_comp, target, x, y)
+        pcall(function() active_comp:SetActiveTool(target) end)
+    end
+    active_comp:Unlock()
+    active_comp:EndUndo(ok)
+    if not ok then error("InputPrep rebuild failed: " .. tostring(failure)) end
+    log("Rebuilt " .. original_name .. "; values and connections preserved")
+    return replacement
+end
+
 if rawget(_G, "comp") ~= nil then
-    M.last_group = M.run(comp, rawget(_G, "INPUTPREP_OVERRIDES"))
+    local selected = rawget(_G, "tool")
+    if selected == nil then
+        pcall(function() selected = comp.ActiveTool end)
+    end
+    if selected ~= nil and selected:GetData("InputPrep.Role") == M.ROLE then
+        M.last_group = M.rebuild(comp, selected)
+    else
+        M.last_group = M.run(comp, rawget(_G, "INPUTPREP_OVERRIDES"))
+    end
 end
 
 return M
