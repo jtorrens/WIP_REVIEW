@@ -439,18 +439,7 @@ void testTextMaskComposition() {
   assert(red(pixels.data(), 4, 3, 3) == 1.0F);
 }
 
-void testTextCellsAndClipping() {
-  const RectI output{0, 0, 1920, 1080};
-  auto cell = wipreview::probe::computeTextCell(
-      output, TextAnchor::TopLeft, 0.015, 0.015, 0.010);
-  assert(cell.x1 == 29 && cell.x2 == 630);
-  cell = wipreview::probe::computeTextCell(
-      output, TextAnchor::TopCenter, 0.015, 0.015, 0.010);
-  assert(cell.x1 == 650 && cell.x2 == 1270);
-  cell = wipreview::probe::computeTextCell(
-      output, TextAnchor::TopRight, 0.015, 0.015, 0.010);
-  assert(cell.x1 == 1290 && cell.x2 == 1891);
-
+void testTextIsNotHorizontallyConstrained() {
   std::array<float, 6 * 2 * 4> pixels{};
   fillOpaqueWhite(pixels);
   const ImageView dst = rgbaFloatView(
@@ -459,15 +448,16 @@ void testTextCellsAndClipping() {
   TextOverlayOptions options;
   options.enabled = true;
   options.anchor = TextAnchor::BottomLeft;
+  options.paddingLeft = 0.0;
   options.paddingBottom = 0.0;
   options.colour[0] = options.colour[1] = options.colour[2] = 0.0F;
-  options.constrainToCell = true;
-  options.cellBounds = {0, 0, 2, 2};
   wipreview::probe::compositeTextMask(
       dst, {0, 0, 6, 2}, {mask.data(), 4, 1, 4}, options);
   assert(red(pixels.data(), 6, 0, 0) == 0.0F);
   assert(red(pixels.data(), 6, 1, 0) == 0.0F);
-  assert(red(pixels.data(), 6, 2, 0) == 1.0F);
+  assert(red(pixels.data(), 6, 2, 0) == 0.0F);
+  assert(red(pixels.data(), 6, 3, 0) == 0.0F);
+  assert(red(pixels.data(), 6, 4, 0) == 1.0F);
 }
 
 void testSystemTextRasterizerUTF8() {
@@ -595,57 +585,17 @@ void testShadowUsesGlyphAlpha() {
   assert(styledGlyph.shadowPixels.size() == 16);
 }
 
-void testTextOverflowLayout() {
-  using wipreview::text::OverflowMode;
+void testTextLayoutPreservesCompleteStringAndSize() {
   using wipreview::text::TextLayoutRequest;
   const std::string text = "SECUENCIA ÁRTICO — VERSIÓN EXTRA LARGA";
-  const auto full = wipreview::text::rasterizeUTF8(
-      text, "System Default", wipreview::text::FontStyle::Regular, 40.0);
-  const auto minimum = wipreview::text::rasterizeUTF8(
-      text, "System Default", wipreview::text::FontStyle::Regular, 24.0);
-  assert(!full.fillPixels.empty() && !minimum.fillPixels.empty());
-  assert(full.width > minimum.width);
-
   TextLayoutRequest request;
   request.text = text;
   request.fontFamily = "System Default";
   request.requestedPixelSize = 40.0;
-  request.minimumFontScale = 0.60;
-  request.availableWidth = (full.width + minimum.width) / 2;
-
-  request.overflowMode = OverflowMode::Clip;
-  auto result = wipreview::text::layoutUTF8(request);
-  assert(result.overflowed && result.clipped && !result.ellipsized);
+  const auto result = wipreview::text::layoutUTF8(request);
+  assert(!result.glyph.fillPixels.empty());
   assert(result.renderedText == text);
-  assert(result.effectiveScale == 1.0);
-
-  request.overflowMode = OverflowMode::Ellipsis;
-  result = wipreview::text::layoutUTF8(request);
-  assert(result.overflowed && result.ellipsized && !result.clipped);
-  assert(result.renderedText != text);
-  assert(result.renderedText.size() >= 3);
-  assert(result.renderedText.compare(result.renderedText.size() - 3, 3, "\xE2\x80\xA6") == 0);
-  assert(result.glyph.width <= request.availableWidth);
-
-  request.overflowMode = OverflowMode::ShrinkToFit;
-  result = wipreview::text::layoutUTF8(request);
-  assert(result.overflowed && !result.clipped && !result.ellipsized);
-  assert(result.effectiveScale >= 0.60 && result.effectiveScale < 1.0);
-  assert(result.glyph.width <= request.availableWidth);
-
-  request.availableWidth = std::max(1, minimum.width / 2);
-  result = wipreview::text::layoutUTF8(request);
-  assert(result.overflowed && result.clipped);
-  assert(std::abs(result.effectiveScale - 0.60) < 1.0e-9);
-
-  request.overflowMode = OverflowMode::Clip;
-  request.availableWidth = full.width;
-  request.outlineRadiusPixels = 2;
-  request.shadowEnabled = true;
-  request.shadowOffsetXPixels = 3;
-  request.shadowSoftnessPixels = 1.0;
-  result = wipreview::text::layoutUTF8(request);
-  assert(result.overflowed && result.clipped);  // styled bounds, not fill alone
+  assert(result.effectivePixelSize == 40.0);
 }
 
 void testCalculatedFieldsAndTimecode() {
@@ -723,11 +673,11 @@ int main() {
   testBlankingStraightAlphaAndRenderWindow();
   testTextAnchorsAndGrowth();
   testTextMaskComposition();
-  testTextCellsAndClipping();
+  testTextIsNotHorizontallyConstrained();
   testSystemTextRasterizerUTF8();
   testOutlineUsesGlyphAlpha();
   testShadowUsesGlyphAlpha();
-  testTextOverflowLayout();
+  testTextLayoutPreservesCompleteStringAndSize();
   testCalculatedFieldsAndTimecode();
   return 0;
 }

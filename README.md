@@ -85,13 +85,13 @@ en macOS; si la familia vigente no existe, usa la fuente de sistema.
 
 El orden de composición es `blanking → shadow → outline → fill`. Outline usa
 dilatación de la máscara real del glifo. Shadow desplaza y difumina esa máscara.
-Cada zona está limitada a su celda lógica mediante Clip, Ellipsis o
-ShrinkToFit. Detalles:
+Cada zona define únicamente su anclaje respecto al frame completo. El texto no
+se recorta, abrevia ni escala automáticamente; el usuario controla posibles
+solapes o salidas del frame mediante contenido, tamaño y offsets. Detalles:
 
 - [P2A_SIX_ZONE_RESULTS.md](P2A_SIX_ZONE_RESULTS.md)
 - [P2B_OUTLINE_RESULTS.md](P2B_OUTLINE_RESULTS.md)
 - [P2C_DROP_SHADOW_RESULTS.md](P2C_DROP_SHADOW_RESULTS.md)
-- [P2D_OVERFLOW_RESULTS.md](P2D_OVERFLOW_RESULTS.md)
 
 ## Campos calculados
 
@@ -138,7 +138,7 @@ export WIPREVIEW_PROBE_LOG=/ruta/escribible/WIPReviewProbe.log
 Los eventos principales son `INSTANCE_CREATE`,
 `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`, `RENDER`, `CLIP`,
 `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`, `STATIC_FORMATTER`,
-`EDITORIAL_BLANKING`, `TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW`,
+`EDITORIAL_BLANKING`, `TEXT_OUTLINE`, `TEXT_SHADOW`,
 `CALCULATED_FIELDS`, `CALCULATED_FIELD_ZONE` y `TEXT_ZONE`.
 
 ## Dependencia OpenFX aislada
@@ -231,7 +231,7 @@ scripts/run_fusion_smoke.sh
 
 El harness crea una composición privada con Source `4608×3164`, valida los
 cinco placements en Output `1920×1080`, Host Raster, blanking, seis zonas,
-outline, shadow, overflow, campos calculados y Rec.709/PQ/HLG sobre Metal. La
+outline, shadow, anclajes libres, campos calculados y Rec.709/PQ/HLG sobre Metal. La
 composición activa se restaura y no se modifica.
 
 También puede ejecutarse mediante:
@@ -247,7 +247,7 @@ scripts/open_fusion_visual.sh
 ```
 
 Selecciona nodos `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
-`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. Rec.709 se visualiza directamente.
+`P3_*` o `P4_*` y pulsa `1` o `2`. Rec.709 se visualiza directamente.
 Para PQ/HLG en un viewer SDR, conecta después un CST nativo hacia Rec.709 con
 `HDR 203 Nits Diffuse White` activo.
 

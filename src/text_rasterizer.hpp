@@ -15,12 +15,6 @@ enum class FontStyle {
   BoldItalic,
 };
 
-enum class OverflowMode {
-  Clip,
-  Ellipsis,
-  ShrinkToFit,
-};
-
 struct GlyphRaster {
   std::vector<std::uint8_t> fillPixels;
   std::vector<std::uint8_t> outlinePixels;
@@ -47,24 +41,13 @@ struct TextLayoutRequest {
   std::string text;
   std::string fontFamily;
   FontStyle fontStyle = FontStyle::Regular;
-  OverflowMode overflowMode = OverflowMode::ShrinkToFit;
   double requestedPixelSize = 1.0;
-  double minimumFontScale = 0.60;
-  int availableWidth = 0;
-  int outlineRadiusPixels = 0;
-  bool shadowEnabled = false;
-  int shadowOffsetXPixels = 0;
-  double shadowSoftnessPixels = 0.0;
 };
 
 struct TextLayoutResult {
   GlyphRaster glyph;
   std::string renderedText;
   double effectivePixelSize = 0.0;
-  double effectiveScale = 1.0;
-  bool overflowed = false;
-  bool clipped = false;
-  bool ellipsized = false;
 };
 
 [[nodiscard]] GlyphRaster rasterizeUTF8(const std::string& text,
@@ -72,9 +55,9 @@ struct TextLayoutResult {
                                         FontStyle style,
                                         double pixelSize) noexcept;
 
-// Resolves horizontal overflow before outline and shadow are generated. Their
-// exact canvas expansion is included while fitting, so the final styled raster
-// remains inside the logical cell whenever the selected mode can make it fit.
+// Rasterizes the complete string at the requested size. Positioning is
+// controlled only by the selected frame anchor; text is never constrained,
+// shortened, or scaled automatically.
 [[nodiscard]] TextLayoutResult layoutUTF8(const TextLayoutRequest& request) noexcept;
 
 // Expands the raster canvas and dilates the real glyph alpha with a circular

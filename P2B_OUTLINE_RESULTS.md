@@ -1,7 +1,6 @@
 # P2b Outline — estado de implementación
 
-**Versión de desarrollo:** `WIPReviewProbe.ofx` 0.6.0  
-**Alcance:** outline global de las seis zonas; sin shadow, overflow ni campos calculados.
+**Alcance:** outline global de las seis zonas; sin shadow ni campos calculados.
 
 ## Contrato implementado
 
@@ -53,13 +52,12 @@ La composición visual añade:
 ## Fuera de alcance
 
 - drop shadow;
-- `Clip`, `Ellipsis`, `ShrinkToFit`, celdas lógicas y `zoneGap`;
 - campos calculados;
 - transformaciones OCIO de píxeles, GPU y presets.
 
 ## Resultado automático — aprobado
 
-Ejecutado el 19 de agosto de 2026 con el bundle universal 0.6.0 instalado en
+Ejecutado el 19 de agosto de 2026 con el bundle universal instalado en
 Fusion Studio 21.0.4 para macOS:
 
 - 21 de 21 renderizaciones completadas;

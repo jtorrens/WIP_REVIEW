@@ -49,13 +49,9 @@ typedef struct {
 
 typedef struct {
   int4 geometry;
-  int4 cellBounds;
-  int maskOffset;
-  int constrainToCell;
-  int2 reserved;
+  int4 mask;
   float4 colour;
-  float opacity;
-  float3 reserved2;
+  float4 compositing;
 } Layer;
 
 float halfToFloatBits(ushort value) {
@@ -195,14 +191,11 @@ float4 applyOverlays(float4 linear,int2 coordinate,__global const uchar* masks,
   }
   for(int index=0;index<p->layerCount;++index) {
     __global const Layer* layer=layers+index;
-    if(layer->constrainToCell!=0 &&
-       (coordinate.x<layer->cellBounds.x || coordinate.x>=layer->cellBounds.z ||
-        coordinate.y<layer->cellBounds.y || coordinate.y>=layer->cellBounds.w)) continue;
     int2 localCoord=coordinate-layer->geometry.xy;
     if(localCoord.x<0 || localCoord.y<0 || localCoord.x>=layer->geometry.z ||
        localCoord.y>=layer->geometry.w) continue;
-    float coverage=(float)masks[layer->maskOffset+localCoord.y*layer->geometry.z+localCoord.x]/255.0f;
-    float alpha=clamp(coverage*layer->opacity*layer->colour.w,0.0f,1.0f);
+    float coverage=(float)masks[layer->mask.x+localCoord.y*layer->geometry.z+localCoord.x]/255.0f;
+    float alpha=clamp(coverage*layer->compositing.x*layer->colour.w,0.0f,1.0f);
     if(alpha>0.0f) linear=over(linear,layer->colour.xyz,alpha);
   }
   return linear;
@@ -307,9 +300,6 @@ struct alignas(16) Float4 {
 struct alignas(16) Int3 {
   std::int32_t x = 0, y = 0, z = 0, pad = 0;
 };
-struct alignas(16) Float3 {
-  float x = 0, y = 0, z = 0, pad = 0;
-};
 struct alignas(16) OpenCLParams {
   Int4 sourceBounds{}, outputBounds{}, renderWindow{};
   std::int32_t sourceRowBytes = 0, outputRowBytes = 0, sourcePixelBytes = 0,
@@ -327,15 +317,12 @@ struct alignas(16) OpenCLParams {
   Int3 reserved1{};
 };
 struct alignas(16) OpenCLLayer {
-  Int4 geometry{}, cellBounds{};
-  std::int32_t maskOffset = 0, constrainToCell = 0;
-  std::int32_t reserved[2]{};
+  Int4 geometry{}, mask{};
   Float4 colour{};
-  float opacity = 1.0F;
-  Float3 reserved2{};
+  Float4 compositing{};
 };
 static_assert(sizeof(OpenCLParams) == 208);
-static_assert(sizeof(OpenCLLayer) == 96);
+static_assert(sizeof(OpenCLLayer) == 64);
 
 struct OpenCLApi {
   HMODULE module = nullptr;
@@ -489,13 +476,10 @@ RenderStatus renderOpenCL(const RenderRequest &request,
     OpenCLLayer layer;
     layer.geometry = {sourceLayer.origin.x, sourceLayer.origin.y,
                       sourceLayer.mask.width, sourceLayer.mask.height};
-    layer.cellBounds = {sourceLayer.cellBounds.x1, sourceLayer.cellBounds.y1,
-                        sourceLayer.cellBounds.x2, sourceLayer.cellBounds.y2};
-    layer.maskOffset = static_cast<std::int32_t>(masks.size());
-    layer.constrainToCell = sourceLayer.constrainToCell ? 1 : 0;
+    layer.mask.x = static_cast<std::int32_t>(masks.size());
     layer.colour = {sourceLayer.colour[0], sourceLayer.colour[1],
                     sourceLayer.colour[2], sourceLayer.colour[3]};
-    layer.opacity = sourceLayer.opacity;
+    layer.compositing.x = sourceLayer.opacity;
     for (int y = 0; y < sourceLayer.mask.height; ++y) {
       const auto *row = sourceLayer.mask.data + static_cast<std::ptrdiff_t>(y) *
                                                     sourceLayer.mask.rowBytes;

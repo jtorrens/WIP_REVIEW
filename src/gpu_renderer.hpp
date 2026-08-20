@@ -17,8 +17,6 @@ enum class RenderStatus {
 struct MaskLayer {
   probe::GlyphMaskView mask{};
   probe::PointI origin{};
-  probe::RectI cellBounds{};
-  bool constrainToCell = false;
   float colour[4] = {1.0F, 1.0F, 1.0F, 1.0F};
   float opacity = 1.0F;
 };

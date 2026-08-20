@@ -1,14 +1,14 @@
 # P2a Six Zone Overlay — estado de implementación
 
-**Versión de desarrollo:** `WIPReviewProbe.ofx` 0.5.0  
-**Alcance:** seis zonas estáticas, offsets y overrides; sin outline, shadow ni
-overflow.
+**Alcance:** seis zonas estáticas, offsets y overrides; sin outline ni shadow.
 
 ## Contrato implementado
 
 - Zonas `TL`, `TC`, `TR`, `BL`, `BC` y `BR`, desactivadas por defecto.
 - Enabled y string UTF-8 independientes por zona.
 - Alineación horizontal y crecimiento vertical derivados de la zona.
+- Cada zona es un anclaje libre respecto al frame completo; el texto conserva
+  íntegramente su tamaño y contenido aunque se solape o salga del raster.
 - Padding, familia, estilo, tamaño, color y opacity globales.
 - Overrides opcionales por zona de tamaño, color RGBA y opacity.
 - Offset X normalizado al ancho y Offset Y normalizado a la altura del Output.
@@ -22,8 +22,6 @@ overflow.
 
 ## Fuera de alcance
 
-- celdas lógicas, `zoneGap` y overflow;
-- `Clip`, `Ellipsis` y `ShrinkToFit`;
 - outline y drop shadow;
 - campos calculados;
 - transformaciones OCIO de píxel, GPU y presets.
@@ -55,7 +53,7 @@ La composición visual añade:
 
 ## Resultado automático — aprobado
 
-Ejecutado el 19 de agosto de 2026 con el bundle universal 0.5.0 instalado en
+Ejecutado el 19 de agosto de 2026 con el bundle universal instalado en
 Fusion Studio 21.0.4 para macOS:
 
 - 19 de 19 renderizaciones completadas;

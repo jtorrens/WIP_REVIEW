@@ -86,9 +86,6 @@ local ok, failure = pcall(function()
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
         probe.shadowEnabled = 0
-        probe.zoneGap = 0.010
-        probe.overflowMode = 0
-        probe.minimumFontScale = 0.60
         probe.frameRelativeBase = 1
         probe.frameStart = 1001
         probe.fpsMode = 1
@@ -210,28 +207,11 @@ local ok, failure = pcall(function()
         p.shadowOpacity = 1.0
         p.brEnabled = 1; p.brPrefix = "P2C HARD BLUE SHADOW"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_CLIP", 2, 1, 1, 6,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_FREE_ANCHOR_TEXT", 2, 1, 1, 6,
                  0, 2, 2.0, 1.0, function(p)
-        p.overflowMode = 0; p.fontSize = 0.060
+        p.fontSize = 0.060
         p.tlEnabled = 1
-        p.tlPrefix = "CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL"
-    end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_ELLIPSIS", 2, 1, 2, 6,
-                 0, 2, 2.0, 1.0, function(p)
-        p.overflowMode = 1; p.fontSize = 0.060
-        p.tcEnabled = 1
-        p.tcPrefix = "ELLIPSIS PRESERVES UTF-8 ÁRTICO AND REPLACES THE TAIL"
-    end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_SHRINK", 2, 1, 3, 6,
-                 0, 2, 2.0, 1.0, function(p)
-        p.overflowMode = 2; p.fontSize = 0.060; p.minimumFontScale = 0.60
-        p.trEnabled = 1; p.trPrefix = "SHRINK TO FIT THIS CELL"
-    end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_MIN_CLIP", 2, 1, 4, 6,
-                 0, 2, 2.0, 1.0, function(p)
-        p.overflowMode = 2; p.fontSize = 0.060; p.minimumFontScale = 0.60
-        p.blEnabled = 1
-        p.blPrefix = "MINIMUM SCALE STILL CANNOT FIT THIS DELIBERATELY VERY LONG STRING AND MUST CLIP"
+        p.tlPrefix = "FREE ANCHOR KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE THE FRAME"
     end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_CALCULATED_FIELDS", 2, 1, 1, 7,
                  0, 2, 2.0, 1.0, function(p)

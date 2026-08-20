@@ -46,13 +46,9 @@ struct Params {
 
 struct Layer {
   int4 geometry;
-  int4 cellBounds;
-  int maskOffset;
-  int constrainToCell;
-  int2 reserved;
+  int4 mask;
   float4 colour;
-  float opacity;
-  float3 reserved2;
+  float4 compositing;
 };
 
 float readChannel(device const uchar* pixel, int channel, int type) {
@@ -197,15 +193,12 @@ float4 applyOverlays(float4 linear, int2 coordinate,
   }
   for (int index = 0; index < p.layerCount; ++index) {
     constant Layer& layer = layers[index];
-    if (layer.constrainToCell != 0 &&
-        (coordinate.x < layer.cellBounds.x || coordinate.x >= layer.cellBounds.z ||
-         coordinate.y < layer.cellBounds.y || coordinate.y >= layer.cellBounds.w)) continue;
     int2 local = coordinate - layer.geometry.xy;
     if (local.x < 0 || local.y < 0 ||
         local.x >= layer.geometry.z || local.y >= layer.geometry.w) continue;
-    float coverage = float(masks[layer.maskOffset +
+    float coverage = float(masks[layer.mask.x +
         local.y * layer.geometry.z + local.x]) / 255.0f;
-    float layerAlpha = clamp(coverage * layer.opacity * layer.colour.a,
+    float layerAlpha = clamp(coverage * layer.compositing.x * layer.colour.a,
                              0.0f, 1.0f);
     if (layerAlpha > 0.0f) linear = over(linear, layer.colour.rgb, layerAlpha);
   }
@@ -369,13 +362,9 @@ struct alignas(16) MetalParams {
 
 struct alignas(16) MetalLayer {
   simd_int4 geometry{};
-  simd_int4 cellBounds{};
-  std::int32_t maskOffset = 0;
-  std::int32_t constrainToCell = 0;
-  simd_int2 reserved{};
+  simd_int4 mask{};
   simd_float4 colour{};
-  float opacity = 1.0F;
-  simd_float3 reserved2{};
+  simd_float4 compositing{};
 };
 
 static_assert(offsetof(MetalParams, transform) == 96);
@@ -383,7 +372,7 @@ static_assert(offsetof(MetalParams, canvas) == 112);
 static_assert(offsetof(MetalParams, blankingColour) == 144);
 static_assert(offsetof(MetalParams, aperture) == 160);
 static_assert(sizeof(MetalParams) == 208);
-static_assert(sizeof(MetalLayer) == 96);
+static_assert(sizeof(MetalLayer) == 64);
 
 std::mutex gPipelineMutex;
 id<MTLDevice> gPipelineDevice = nil;
@@ -490,14 +479,10 @@ RenderStatus renderMetal(const RenderRequest &request,
         MetalLayer layer;
         layer.geometry = {sourceLayer.origin.x, sourceLayer.origin.y,
                           sourceLayer.mask.width, sourceLayer.mask.height};
-        layer.cellBounds = {
-            sourceLayer.cellBounds.x1, sourceLayer.cellBounds.y1,
-            sourceLayer.cellBounds.x2, sourceLayer.cellBounds.y2};
-        layer.maskOffset = static_cast<std::int32_t>(masks.size());
-        layer.constrainToCell = sourceLayer.constrainToCell ? 1 : 0;
+        layer.mask.x = static_cast<std::int32_t>(masks.size());
         layer.colour = {sourceLayer.colour[0], sourceLayer.colour[1],
                         sourceLayer.colour[2], sourceLayer.colour[3]};
-        layer.opacity = sourceLayer.opacity;
+        layer.compositing.x = sourceLayer.opacity;
         for (int y = 0; y < sourceLayer.mask.height; ++y) {
           const auto *row =
               sourceLayer.mask.data +

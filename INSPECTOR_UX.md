@@ -10,7 +10,7 @@ paginado.
 |---:|---|---|
 | 1 | Processing | Capacidades GPU publicadas por el host |
 | 2 | Canvas | Capacidad de host, Canvas Mode, raster preset/Custom, placement, filtro, canvas y blanking |
-| 3 | Typography | Fuente, estilo, tamaño, color, opacity, padding, gap, overflow, outline y shadow |
+| 3 | Typography | Fuente, estilo, tamaño, color, opacity, padding, outline y shadow |
 | 4 | Zones | TL, TC, TR, BL, BC y BR con texto, offsets y overrides |
 | 5 | Timing | Frame Relative Base, Frame Start, FPS y timecode |
 | 6 | Color | Modo de interpretación, espacio fallback/manual, Graphics White y peak HLG |

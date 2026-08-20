@@ -120,14 +120,15 @@ void testG02DciUsesHeightForTypeAndWidthForPadding() {
   const double uhdFontPixels = normalizedFontSize * 2160.0;
   const double dciFontPixels = normalizedFontSize * 2160.0;
   assert(uhdFontPixels == dciFontPixels);
-  const auto uhdCell = wipreview::probe::computeTextCell(
-      {0, 0, 3840, 2160}, TextAnchor::TopLeft, 0.015, 0.015, 0.010);
-  const auto dciCell = wipreview::probe::computeTextCell(
-      {0, 0, 4096, 2160}, TextAnchor::TopLeft, 0.015, 0.015, 0.010);
-  assert(uhdCell.x1 == 58);
-  assert(dciCell.x1 == 61);
-  assert(dciCell.x2 > uhdCell.x2);
-  assert(uhdCell.y1 == dciCell.y1 && uhdCell.y2 == dciCell.y2);
+  TextOverlayOptions overlay;
+  overlay.anchor = TextAnchor::TopLeft;
+  const auto uhdOrigin = wipreview::probe::computeTextOrigin(
+      {0, 0, 3840, 2160}, 100, 50, overlay);
+  const auto dciOrigin = wipreview::probe::computeTextOrigin(
+      {0, 0, 4096, 2160}, 100, 50, overlay);
+  assert(uhdOrigin.x == 58);
+  assert(dciOrigin.x == 61);
+  assert(uhdOrigin.y == dciOrigin.y);
 }
 
 void testG03AnamorphicParPlacement() {

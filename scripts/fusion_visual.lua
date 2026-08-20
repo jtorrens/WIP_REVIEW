@@ -120,9 +120,6 @@ local ok, failure = pcall(function()
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
         probe.shadowEnabled = 0
-        probe.zoneGap = 0.010
-        probe.overflowMode = 2
-        probe.minimumFontScale = 0.60
         probe.frameRelativeBase = 1
         probe.frameStart = 1001
         probe.fpsMode = 1
@@ -182,9 +179,6 @@ local ok, failure = pcall(function()
         probe.textOpacity = 1.0
         probe.outlineEnabled = 0
         probe.shadowEnabled = 0
-        probe.zoneGap = 0.010
-        probe.overflowMode = 2
-        probe.minimumFontScale = 0.60
         probe.frameRelativeBase = 1
         probe.frameStart = 1001
         probe.fpsMode = 1
@@ -285,44 +279,13 @@ local ok, failure = pcall(function()
         p.blPrefix = "BL SHADOW"; p.bcPrefix = "BC SHADOW"; p.brPrefix = "BR SHADOW"
     end, 10)
 
-    add_zones("P2D_OVERFLOW_CLIP", 0, function(p)
-        p.overflowMode = 0; p.fontSize = 0.080
+    add_zones("FREE_ANCHOR_LONG_TEXT", 0, function(p)
+        p.fontSize = 0.080
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
-        p.tlUseColorOverride = 1
-        p.tlColorRed = 1.0; p.tlColorGreen = 0.0; p.tlColorBlue = 0.0
-        p.tcUseColorOverride = 1
-        p.tcColorRed = 0.0; p.tcColorGreen = 1.0; p.tcColorBlue = 0.0
-        p.trUseColorOverride = 1
-        p.trColorRed = 0.0; p.trColorGreen = 0.4; p.trColorBlue = 1.0
-        p.tlPrefix = "LEFT CLIPS AT ITS CELL BOUNDARY"
-        p.tcPrefix = "CENTER CLIPS AT BOTH CELL BOUNDARIES"
-        p.trPrefix = "RIGHT CLIPS AT ITS CELL BOUNDARY"
+        p.tlPrefix = "LEFT ANCHOR MAY OVERLAP"
+        p.tcPrefix = "CENTER ANCHOR MAY OVERLAP"
+        p.trPrefix = "RIGHT ANCHOR MAY OVERLAP"
     end, 11)
-    add_zones("P2D_OVERFLOW_ELLIPSIS", 0, function(p)
-        p.overflowMode = 1; p.fontSize = 0.060
-        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
-        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
-        p.tlPrefix = "LEFT ELLIPSIS PRESERVES ÁRTICO"
-        p.tcPrefix = "CENTER ELLIPSIS PRESERVES VERSIÓN"
-        p.trPrefix = "RIGHT ELLIPSIS PRESERVES SECUENCIA"
-        p.blPrefix = "BOTTOM LEFT ELLIPSIS"
-        p.bcPrefix = "BOTTOM CENTER ELLIPSIS"
-        p.brPrefix = "BOTTOM RIGHT ELLIPSIS"
-    end, 12)
-    add_zones("P2D_OVERFLOW_SHRINK", 0, function(p)
-        p.overflowMode = 2; p.fontSize = 0.080; p.minimumFontScale = 0.60
-        p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
-        p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
-        p.tlPrefix = "LEFT SHRINKS TO FIT"
-        p.tcPrefix = "CENTER SHRINKS TO FIT"
-        p.trPrefix = "RIGHT SHRINKS TO FIT"
-        p.blPrefix = "SHORT"; p.bcPrefix = "SHORT"; p.brPrefix = "SHORT"
-    end, 13)
-    add_zones("P2D_OVERFLOW_MIN_CLIP", 1, function(p)
-        p.overflowMode = 2; p.fontSize = 0.080; p.minimumFontScale = 0.60
-        p.tcEnabled = 1
-        p.tcPrefix = "MINIMUM SCALE CANNOT FIT THIS EXTREMELY LONG STRING SO THE CELL CLIPS IT"
-    end, 14)
 
     local calculated_fields = add_zones("P3_CALCULATED_FIELDS_24", 0, function(p)
         p.frameRelativeBase = 1; p.frameStart = 1001
