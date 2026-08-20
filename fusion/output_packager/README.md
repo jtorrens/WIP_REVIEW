@@ -218,3 +218,35 @@ Resultado:
 ```text
 OUTPUTPACKAGER_WIP_UI_HOST_TEST_OK
 ```
+
+## Checkpoint 9 — ejemplo persistente
+
+Generar, guardar y dejar abierta la comp base:
+
+```sh
+fusion/output_packager/create_example_comp.sh
+```
+
+`examples/OutputPackager_Example.comp` incluye:
+
+- fuente final 2:1 con patrón de esquinas;
+- `ClientReviewPackager` con WIP y tokens frame/timecode;
+- `CleanReviewPackager` sin overlay;
+- `ClientReviewSaver` y `CleanReviewSaver` habilitados;
+- ShotConfig con templates portables bajo `_OUTPUTPACKAGER_TEST:`;
+- OutputPackagerConfig con las dos parejas ya registradas.
+
+La comp se guarda antes de quedar abierta. Su prueba no crea otro documento:
+
+```sh
+fusion/output_packager/tests/run_example_test.sh
+```
+
+Resultado:
+
+```text
+OUTPUTPACKAGER_EXAMPLE_HOST_TEST_OK
+```
+
+Los probes y tests temporales reutilizan la comp vacía activa y la cierran desde
+su runner. No acumulan tabs ni muestran una secuencia de diálogos de guardado.
