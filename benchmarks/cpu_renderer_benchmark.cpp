@@ -261,7 +261,8 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding,
 
 void runLocalizedIdentityCase(const RasterCase& raster,
                               DisplayEncoding encoding,
-                              float blankingOpacity) {
+                              float blankingOpacity,
+                              unsigned int threadCount) {
   const std::size_t pixelCount =
       static_cast<std::size_t>(raster.outputWidth) * raster.outputHeight;
   std::vector<float> source(pixelCount * 4);
@@ -296,9 +297,6 @@ void runLocalizedIdentityCase(const RasterCase& raster,
           sourceView, outputView, window, true, true)) {
     throw std::runtime_error("localized identity copy failed");
   }
-  wipreview::probe::compositeManagedIdentityBlanking(
-      outputView, workingView, dirty, window,
-      blanking, color, true);
   for (TextAnchor anchor : anchors) {
     TextOverlayOptions text;
     text.enabled = true;
@@ -309,6 +307,35 @@ void runLocalizedIdentityCase(const RasterCase& raster,
     wipreview::probe::prepareManagedTextPixels(
         outputView, workingView, dirty, window,
         mask, text, color, true);
+  }
+  auto blankingBand = [&](unsigned int index) {
+    const int y1 = window.y1 +
+        (window.y2 - window.y1) * static_cast<int>(index) /
+            static_cast<int>(threadCount);
+    const int y2 = window.y1 +
+        (window.y2 - window.y1) * static_cast<int>(index + 1U) /
+            static_cast<int>(threadCount);
+    wipreview::probe::compositeManagedIdentityBlankingFused(
+        outputView, workingView, dirty,
+        {window.x1, y1, window.x2, y2}, blanking, color, true);
+  };
+  std::vector<std::thread> blankingWorkers;
+  if (threadCount == 1) {
+    blankingBand(0);
+  } else {
+    blankingWorkers.reserve(threadCount);
+    for (unsigned int index = 0; index < threadCount; ++index) {
+      blankingWorkers.emplace_back(blankingBand, index);
+    }
+    for (auto& worker : blankingWorkers) worker.join();
+  }
+  for (TextAnchor anchor : anchors) {
+    TextOverlayOptions text;
+    text.enabled = true;
+    text.anchor = anchor;
+    text.colour[0] = 1.0F;
+    text.colour[1] = 0.72F;
+    text.colour[2] = 0.18F;
     wipreview::probe::compositeTextMask(workingView, window, mask, text);
   }
   wipreview::probe::encodeManagedDirtyPixels(
@@ -323,6 +350,7 @@ void runLocalizedIdentityCase(const RasterCase& raster,
             << " encoding=" << encodingName(encoding)
             << " source=" << raster.sourceWidth << 'x' << raster.sourceHeight
             << " output=" << raster.outputWidth << 'x' << raster.outputHeight
+            << " threads=" << threadCount
             << " total_ms=" << milliseconds(begin, end)
             << " dirty_pixels=" << dirtyCount
             << " dirty_percent="
@@ -376,8 +404,8 @@ int main(int argc, char** argv) {
       runCase(raster, encoding, threadCount);
       if (raster.sourceWidth == raster.outputWidth &&
           raster.sourceHeight == raster.outputHeight) {
-        runLocalizedIdentityCase(raster, encoding, 0.5F);
-        runLocalizedIdentityCase(raster, encoding, 1.0F);
+        runLocalizedIdentityCase(raster, encoding, 0.5F, threadCount);
+        runLocalizedIdentityCase(raster, encoding, 1.0F, threadCount);
       }
     }
   } catch (const std::exception& error) {

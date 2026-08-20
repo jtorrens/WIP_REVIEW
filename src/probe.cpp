@@ -2356,6 +2356,64 @@ bool runManagedRenderBands(
   return true;
 }
 
+struct ManagedBlankingBands {
+  const wipreview::probe::ImageView* output = nullptr;
+  const wipreview::probe::ImageView* workspace = nullptr;
+  const wipreview::probe::ManagedDirtyRegion* textDirtyRegion = nullptr;
+  wipreview::probe::RectI window{};
+  const wipreview::probe::BlankingOptions* options = nullptr;
+  const wipreview::color::DisplayConfig* color = nullptr;
+  bool outputPremultiplied = true;
+  std::atomic<bool> failed{false};
+  std::atomic<unsigned int> actualThreads{1};
+};
+
+void compositeManagedBlankingBand(unsigned int threadIndex,
+                                  unsigned int threadMax,
+                                  void* customArg) {
+  auto& bands = *static_cast<ManagedBlankingBands*>(customArg);
+  bands.actualThreads.store(threadMax, std::memory_order_relaxed);
+  try {
+    wipreview::probe::compositeManagedIdentityBlankingFused(
+        *bands.output, *bands.workspace, *bands.textDirtyRegion,
+        threadBand(bands.window, threadIndex, threadMax), *bands.options,
+        *bands.color, bands.outputPremultiplied);
+  } catch (...) {
+    bands.failed.store(true, std::memory_order_relaxed);
+  }
+}
+
+bool runManagedBlankingBands(
+    const wipreview::probe::ImageView& output,
+    const wipreview::probe::ImageView& workspace,
+    const wipreview::probe::ManagedDirtyRegion& textDirtyRegion,
+    wipreview::probe::RectI window,
+    const wipreview::probe::BlankingOptions& options,
+    const wipreview::color::DisplayConfig& color,
+    bool outputPremultiplied,
+    unsigned int& actualThreads) {
+  const unsigned int requestedThreads = managedThreadCount(window);
+  ManagedBlankingBands bands;
+  bands.output = &output;
+  bands.workspace = &workspace;
+  bands.textDirtyRegion = &textDirtyRegion;
+  bands.window = window;
+  bands.options = &options;
+  bands.color = &color;
+  bands.outputPremultiplied = outputPremultiplied;
+  OfxStatus status = kOfxStatOK;
+  if (requestedThreads > 1 && gMultiThreadSuite) {
+    status = gMultiThreadSuite->multiThread(
+        compositeManagedBlankingBand, requestedThreads, &bands);
+  } else {
+    compositeManagedBlankingBand(0, 1, &bands);
+  }
+  if (status != kOfxStatOK ||
+      bands.failed.load(std::memory_order_relaxed)) return false;
+  actualThreads = bands.actualThreads.load(std::memory_order_relaxed);
+  return true;
+}
+
 struct ManagedEncodeBands {
   const wipreview::probe::ImageView* source = nullptr;
   const wipreview::probe::ImageView* destination = nullptr;
@@ -2475,6 +2533,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
     wipreview::probe::ManagedRenderStats managedRenderStats;
     unsigned int managedRenderThreads = 1;
+    unsigned int managedBlankingThreads = 1;
     std::unique_ptr<wipreview::probe::ManagedDirtyRegion> localizedDirtyRegion;
     const bool identityPlacement = sourceImage &&
         wipreview::probe::isEffectivelyIdentityPlacement(
@@ -2498,12 +2557,10 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     }
     auto blanking = readBlankingOptions(instance, time, outputImage);
     blanking.outputPremultiplied = true;
-    if (localizedIdentity) {
-      wipreview::probe::compositeManagedIdentityBlanking(
-          outputView, displayLinearView, *localizedDirtyRegion,
-          requestedWindow, blanking, managedColor.config,
-          options.outputPremultiplied);
-    } else {
+    const bool activeBlanking = blanking.enabled &&
+        blanking.editorialAspect > 0.0 && blanking.opacity > 0.0F &&
+        blanking.colour[3] > 0.0F;
+    if (!localizedIdentity) {
       wipreview::probe::applyBlanking(
           displayLinearView, requestedWindow, blanking);
     }
@@ -2574,9 +2631,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
               shadowOverlay, managedColor.config,
               options.outputPremultiplied);
         }
-        wipreview::probe::compositeTextMask(
-            displayLinearView, requestedWindow,
-            zoneGlyph->shadowView(), shadowOverlay);
+        if (!localizedIdentity) {
+          wipreview::probe::compositeTextMask(
+              displayLinearView, requestedWindow,
+              zoneGlyph->shadowView(), shadowOverlay);
+        }
       }
       if (zoneGlyph && !zoneGlyph->outlinePixels.empty()) {
         auto outlineOverlay = layer.overlay;
@@ -2591,9 +2650,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
               outlineOverlay, managedColor.config,
               options.outputPremultiplied);
         }
-        wipreview::probe::compositeTextMask(
-            displayLinearView, requestedWindow,
-            zoneGlyph->outlineView(), outlineOverlay);
+        if (!localizedIdentity) {
+          wipreview::probe::compositeTextMask(
+              displayLinearView, requestedWindow,
+              zoneGlyph->outlineView(), outlineOverlay);
+        }
       }
       if (localizedIdentity && zoneGlyph) {
         wipreview::probe::prepareManagedTextPixels(
@@ -2602,7 +2663,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             layer.overlay, managedColor.config,
             options.outputPremultiplied);
       }
-      if (zoneGlyph) {
+      if (zoneGlyph && !localizedIdentity) {
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
             zoneGlyph->fillView(), layer.overlay);
@@ -2617,6 +2678,44 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     }
     unsigned int managedEncodeThreads = 1;
     if (localizedIdentity) {
+      if (activeBlanking && !runManagedBlankingBands(
+            outputView, displayLinearView, *localizedDirtyRegion,
+            requestedWindow, blanking, managedColor.config,
+            options.outputPremultiplied, managedBlankingThreads)) {
+        Logger::instance().write(
+            "RENDER_ERROR", instancePrefix(instance) +
+            " managed_blanking_bands_failed=true");
+        result = kOfxStatFailed;
+      }
+      for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
+        const auto& layer = zoneSettings[index].layer;
+        const auto* zoneGlyph = zoneTextEntries[index]
+            ? &zoneTextEntries[index]->layout.glyph : nullptr;
+        if (!zoneGlyph) continue;
+        if (!zoneGlyph->shadowPixels.empty()) {
+          auto shadowOverlay = layer.overlay;
+          shadowOverlay.opacity = layer.shadowOpacity;
+          for (int channel = 0; channel < 4; ++channel) {
+            shadowOverlay.colour[channel] = layer.shadowColour[channel];
+          }
+          wipreview::probe::compositeTextMask(
+              displayLinearView, requestedWindow,
+              zoneGlyph->shadowView(), shadowOverlay);
+        }
+        if (!zoneGlyph->outlinePixels.empty()) {
+          auto outlineOverlay = layer.overlay;
+          outlineOverlay.opacity = layer.outlineOpacity;
+          for (int channel = 0; channel < 4; ++channel) {
+            outlineOverlay.colour[channel] = layer.outlineColour[channel];
+          }
+          wipreview::probe::compositeTextMask(
+              displayLinearView, requestedWindow,
+              zoneGlyph->outlineView(), outlineOverlay);
+        }
+        wipreview::probe::compositeTextMask(
+            displayLinearView, requestedWindow,
+            zoneGlyph->fillView(), layer.overlay);
+      }
       wipreview::probe::encodeManagedDirtyPixels(
           displayLinearView, outputView, *localizedDirtyRegion,
           requestedWindow, managedColor.config,
@@ -2654,6 +2753,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " sampler_weights=precomputed" +
         " multithread_suite=" + (gMultiThreadSuite ? "true" : "false") +
         " render_threads=" + std::to_string(managedRenderThreads) +
+        " blanking_threads=" + std::to_string(managedBlankingThreads) +
+        " blanking_direct_fused=" +
+            (localizedIdentity && activeBlanking ? "true" : "false") +
         " encode_threads=" + std::to_string(managedEncodeThreads) +
         " encode_count=1 localized_identity=" +
             (localizedIdentity ? "true" : "false") +

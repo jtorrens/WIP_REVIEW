@@ -187,6 +187,26 @@ std::array<float, 4> readManagedRGBA(
   return rgba;
 }
 
+void writeManagedRGBA(
+    const ImageView& destination, int x, int y,
+    std::array<float, 4> rgba,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool outputPremultiplied) noexcept {
+  const float alpha = rgba[3];
+  wipreview::color::RGB straight{};
+  if (alpha > 1.0e-8F) {
+    for (std::size_t channel = 0; channel < 3; ++channel) {
+      straight[channel] = rgba[channel] / alpha;
+    }
+  }
+  const auto encoded = wipreview::color::encodeDisplay(straight, colorConfig);
+  for (std::size_t channel = 0; channel < 3; ++channel) {
+    rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
+                                       : encoded[channel];
+  }
+  writePixel(destination, x, y, rgba);
+}
+
 struct AxisTap {
   int source = 0;
   double weight = 0.0;
@@ -625,20 +645,9 @@ void encodeManagedDisplayFrame(
       intersect(renderWindow, source.bounds), destination.bounds);
   for (int y = writable.y1; y < writable.y2; ++y) {
     for (int x = writable.x1; x < writable.x2; ++x) {
-      auto rgba = readRGBA(source, x, y, true, true);
-      const float alpha = rgba[3];
-      wipreview::color::RGB straight{};
-      if (alpha > 1.0e-8F) {
-        for (std::size_t channel = 0; channel < 3; ++channel) {
-          straight[channel] = rgba[channel] / alpha;
-        }
-      }
-      const auto encoded = wipreview::color::encodeDisplay(straight, colorConfig);
-      for (std::size_t channel = 0; channel < 3; ++channel) {
-        rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
-                                           : encoded[channel];
-      }
-      writePixel(destination, x, y, rgba);
+      writeManagedRGBA(destination, x, y,
+                       readRGBA(source, x, y, true, true),
+                       colorConfig, outputPremultiplied);
     }
   }
 }
@@ -732,43 +741,56 @@ int ManagedDirtyRegion::rowEnd(int y) const noexcept {
   return rowEnd_[static_cast<std::size_t>(y - bounds_.y1)];
 }
 
-void compositeManagedIdentityBlanking(
+void compositeManagedIdentityBlankingFused(
     const ImageView& encodedOutput, const ImageView& workspace,
-    ManagedDirtyRegion& dirtyRegion,
+    const ManagedDirtyRegion& textDirtyRegion,
     RectI renderWindow, const BlankingOptions& options,
     const wipreview::color::DisplayConfig& colorConfig,
-    bool basePremultiplied) noexcept {
+    bool outputPremultiplied) noexcept {
   if (!options.enabled || !encodedOutput.data || !workspace.data ||
       options.editorialAspect <= 0.0) return;
   const RectI writable = intersect(
       intersect(renderWindow, encodedOutput.bounds), workspace.bounds);
   if (empty(writable)) return;
-  const RectD aperture = computeBlankingAperture(workspace.bounds, options);
+  const RectD aperture = computeBlankingAperture(encodedOutput.bounds, options);
   const float colourAlpha = std::clamp(options.colour[3], 0.0F, 1.0F);
   const float opacity = std::clamp(options.opacity, 0.0F, 1.0F);
   const auto encodedColour = wipreview::color::encodeDisplay(
       {options.colour[0], options.colour[1], options.colour[2]}, colorConfig);
-  forEachBlankingPixel(writable, workspace.bounds, aperture,
+  forEachBlankingPixel(writable, encodedOutput.bounds, aperture,
       [&](int x, int y, float coverage) {
         const float alpha = std::clamp(
             coverage * opacity * colourAlpha, 0.0F, 1.0F);
         if (alpha <= 0.0F) return;
+        const bool reservedForText = textDirtyRegion.contains(x, y);
         if (alpha >= 1.0F) {
-          writePixel(encodedOutput, x, y,
-                     {encodedColour[0], encodedColour[1], encodedColour[2],
-                      1.0F});
+          if (reservedForText) {
+            writePixel(workspace, x, y,
+                       {options.colour[0], options.colour[1],
+                        options.colour[2], 1.0F});
+          } else {
+            writePixel(encodedOutput, x, y,
+                       {encodedColour[0], encodedColour[1], encodedColour[2],
+                        1.0F});
+          }
           return;
         }
-        prepareManagedPixel(encodedOutput, workspace, dirtyRegion, x, y,
-                            colorConfig, basePremultiplied);
-        const auto base = readRGBA(workspace, x, y, true, true);
+        const auto base = reservedForText
+            ? readRGBA(workspace, x, y, true, true)
+            : readManagedRGBA(
+                  encodedOutput, x, y, outputPremultiplied, colorConfig);
         std::array<float, 4> result{};
         for (std::size_t channel = 0; channel < 3; ++channel) {
           result[channel] = options.colour[channel] * alpha +
               base[channel] * (1.0F - alpha);
         }
         result[3] = alpha + base[3] * (1.0F - alpha);
-        writePixel(workspace, x, y, result);
+        if (reservedForText) {
+          writePixel(workspace, x, y, result);
+        } else {
+          writeManagedRGBA(encodedOutput, x, y, result, colorConfig,
+                           outputPremultiplied);
+        }
       });
 }
 
@@ -818,21 +840,9 @@ void encodeManagedDirtyPixels(
     const int x2 = std::min(writable.x2, dirtyRegion.rowEnd(y));
     for (int x = x1; x < x2; ++x) {
       if (!dirtyRegion.contains(x, y)) continue;
-      auto rgba = readRGBA(workspace, x, y, true, true);
-      const float alpha = rgba[3];
-      wipreview::color::RGB straight{};
-      if (alpha > 1.0e-8F) {
-        for (std::size_t channel = 0; channel < 3; ++channel) {
-          straight[channel] = rgba[channel] / alpha;
-        }
-      }
-      const auto encoded = wipreview::color::encodeDisplay(
-          straight, colorConfig);
-      for (std::size_t channel = 0; channel < 3; ++channel) {
-        rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
-                                           : encoded[channel];
-      }
-      writePixel(destination, x, y, rgba);
+      writeManagedRGBA(destination, x, y,
+                       readRGBA(workspace, x, y, true, true),
+                       colorConfig, outputPremultiplied);
     }
   }
 }

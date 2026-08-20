@@ -228,12 +228,22 @@ void testLocalizedIdentityMatchesFullManagedPipeline() {
       assert(wipreview::probe::copyIdentityFrame(
           sourceView, localizedOutputView, localizedOutputView.bounds, true,
           true));
-      wipreview::probe::compositeManagedIdentityBlanking(
-          localizedOutputView, localizedWorkingView, dirty,
-          localizedWorkingView.bounds, blanking, color, true);
       wipreview::probe::prepareManagedTextPixels(
           localizedOutputView, localizedWorkingView, dirty,
           localizedWorkingView.bounds, maskView, text, color, true);
+      const int bandSplit = localizedWorkingView.bounds.y1 +
+          (localizedWorkingView.bounds.y2 - localizedWorkingView.bounds.y1) /
+              2;
+      wipreview::probe::compositeManagedIdentityBlankingFused(
+          localizedOutputView, localizedWorkingView, dirty,
+          {localizedWorkingView.bounds.x1, localizedWorkingView.bounds.y1,
+           localizedWorkingView.bounds.x2, bandSplit},
+          blanking, color, true);
+      wipreview::probe::compositeManagedIdentityBlankingFused(
+          localizedOutputView, localizedWorkingView, dirty,
+          {localizedWorkingView.bounds.x1, bandSplit,
+           localizedWorkingView.bounds.x2, localizedWorkingView.bounds.y2},
+          blanking, color, true);
       wipreview::probe::compositeTextMask(
           localizedWorkingView, localizedWorkingView.bounds, maskView, text);
       wipreview::probe::encodeManagedDirtyPixels(

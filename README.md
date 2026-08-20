@@ -45,10 +45,11 @@ como información no editable. Dentro de cada zona las etiquetas se acortan a
 `Enabled`, `Text`, offsets y overrides porque el grupo ya identifica la zona.
 La matriz completa está en [INSPECTOR_UX.md](INSPECTOR_UX.md).
 
-La ruta Host Raster 1:1 compone en luz lineal únicamente los píxeles afectados
-por overlays, escribe directamente el blanking opaco y reutiliza las máscaras
-tipográficas sin cambios. Las mediciones reproducibles y la comparación con
-el pipeline completo están en [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md).
+La ruta Host Raster 1:1 compone el blanking mediante una pasada fusionada y
+multihilo directamente sobre Output. Las intersecciones tipográficas comparten
+un único workspace y encode final, y las máscaras sin cambios se reutilizan.
+Las mediciones reproducibles y la comparación con el pipeline completo están
+en [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md).
 
 ## Geometry/Placement
 

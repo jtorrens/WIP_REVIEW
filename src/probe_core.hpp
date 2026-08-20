@@ -225,17 +225,18 @@ void encodeManagedDisplayFrame(
     const wipreview::color::DisplayConfig& colorConfig,
     bool outputPremultiplied) noexcept;
 
-// Localized display-light workspace used by an identity render. Opaque
-// blanking is encoded once and written directly; partially covered pixels are
-// decoded lazily and only those dirty pixels are encoded back to Output.
-void compositeManagedIdentityBlanking(
+// Fused identity blanking pass. Pixels reserved by the text dirty region stay
+// in the shared display-light workspace so blanking and text need one final
+// encode. Every other affected pixel is decoded, composited and encoded
+// directly to Output. Disjoint render-window bands may run in parallel.
+void compositeManagedIdentityBlankingFused(
     const ImageView& encodedOutput,
     const ImageView& displayLinearWorkspace,
-    ManagedDirtyRegion& dirtyRegion,
+    const ManagedDirtyRegion& textDirtyRegion,
     RectI renderWindow,
     const BlankingOptions& options,
     const wipreview::color::DisplayConfig& colorConfig,
-    bool basePremultiplied) noexcept;
+    bool outputPremultiplied) noexcept;
 
 void prepareManagedTextPixels(
     const ImageView& encodedBase,

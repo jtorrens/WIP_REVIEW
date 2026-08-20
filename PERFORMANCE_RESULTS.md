@@ -7,16 +7,19 @@ commit `39345d4` en DaVinci Resolve Studio 21.0.4 y Fusion Studio 21.0.4.
 
 1. Fit, Fill, Stretch y 1:1 usan el fast path de Identity cuando su
    transformación resuelta es exactamente 1:1, con bounds y PAR compatibles.
-2. En esa ruta, Source se copia directamente a Output. Solo los píxeles
-   cubiertos por blanking, fill, outline o shadow se decodifican a luz lineal,
-   se componen y se vuelven a codificar.
+2. En esa ruta, Source se copia directamente a Output. El blanking usa una
+   pasada fusionada `decode → over → encode` directamente sobre Output. Solo
+   las intersecciones con fill, outline o shadow permanecen en el workspace
+   lineal para compartir un único encode final con el texto.
 3. El log acumula hasta 128 registros y hace flush en checkpoints, errores y
    cierre de instancia, en lugar de sincronizar el archivo después de cada
    registro.
-4. Un mapa por filas limita el encode final a los spans que contienen píxeles
-   modificados; el workspace Float32 no se inicializa fuera de esos píxeles.
-5. El blanking completamente opaco se codifica una vez y se escribe
-   directamente. Solo sus bordes fraccionales pasan por composición lineal.
+4. Un mapa por filas limita el encode final a los spans tipográficos; el
+   blanking semitransparente ya no incorpora sus bandas completas a ese mapa ni
+   al workspace Float32.
+5. La pasada de blanking se divide en bandas mediante el multithreading OFX.
+   El blanking completamente opaco se codifica una vez; solo sus bordes
+   fraccionales y las bandas semitransparentes pasan por composición lineal.
 6. Cada instancia conserva las seis máscaras tipográficas resueltas mientras
    texto, fuente, tamaño, overflow, outline y shadow no cambien.
 
@@ -48,18 +51,19 @@ El smoke acumulativo aprobó 36 renders. El escenario Host Raster 1:1 activó la
 ruta localizada y bajó de 54 a 27,7 ms. Los escenarios que cambian raster o
 placement mantuvieron `localized_identity=false`.
 
-## Microbenchmark UHD, un hilo
+## Microbenchmark UHD
 
-El benchmark incorpora blanking 2.00 y seis máscaras de texto. Al 50 % la ruta
-localizada modifica el 11,5 % de los 8.294.400 píxeles UHD. Al 100 %, las
-bandas se escriben directamente y solo el 3,0 % permanece en el workspace
-lineal.
+El benchmark incorpora blanking 2.00 y seis máscaras de texto. Tanto al 50 %
+como al 100 %, solo el 3,0 % de los 8.294.400 píxeles UHD permanece en el
+workspace lineal; las bandas restantes se resuelven directamente. La tabla
+separa la referencia serial de la ejecución con 24 bandas, equivalente a la
+ruta solicitada al suite multithread del host.
 
-| Encoding | Pipeline completo | Blanking 50 % | Blanking 100 % |
+| Encoding | Pipeline completo, 1 hilo | Blanking 50 %, 1 hilo | Blanking 50 %, 24 bandas |
 |---|---:|---:|---:|
-| Rec.709 Gamma 2.4 | 492 ms | 69 ms | 21 ms |
-| Rec.2100 PQ | 1245 ms | 158 ms | 40 ms |
-| Rec.2100 HLG | 697 ms | 98 ms | 28 ms |
+| Rec.709 Gamma 2.4 | 481 ms | 71 ms | 41 ms |
+| Rec.2100 PQ | 1237 ms | 156 ms | 89 ms |
+| Rec.2100 HLG | 687 ms | 97 ms | 59 ms |
 
 ## Equivalencia
 
@@ -70,6 +74,7 @@ en Float32. Los píxeles no afectados se copian sin round-trip de transferencia.
 
 ## Límite restante
 
-Resolve sigue entregando un solo hilo y el plugin mantiene
+El beneficio multihilo depende de los workers que conceda el host; si Resolve
+entrega un solo hilo, se conserva la referencia serial. El plugin mantiene
 `SupportsTiles=0`. Los casos con resize real continúan siendo el principal
 coste; tiles, reutilización de buffers y GPU quedan fuera de este checkpoint.
