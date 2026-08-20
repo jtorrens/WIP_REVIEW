@@ -6,6 +6,7 @@ Estas reglas se aplican a todos los grupos y macros generados por este árbol:
 - los `GroupOperator` empiezan por `Group_`;
 - el camino principal se dispone de arriba abajo sobre `X = 0`;
 - las ramas de proceso se colocan a la izquierda y las fuentes auxiliares a la derecha;
+- los desvíos de imagen usan `PipeRouter` como punto de distribución visible;
 - cada rama vuelve a su `Switch` antes de comenzar la etapa siguiente.
 
 Ejemplos: `ChangeDepth_Working`, `ColorSpaceTransform_Working`,

@@ -190,7 +190,7 @@ local function definition(name, values)
                     PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = OperatorInfo { Pos = { 0, -1000 } },
+                        ViewInfo = PipeRouterInfo { Pos = { 0, -700 } },
                     },
                     ChangeDepth_Working = ChangeDepth {
                         CtrlWShown = false,
@@ -202,7 +202,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, -850 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, -600 } },
                     },
                     Switch_Depth = Switch {
                         CtrlWShown = false,
@@ -220,7 +220,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -700 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -500 } },
                     },
                     AlphaDivide_Unpremultiply = AlphaDivide {
                         CtrlWShown = false,
@@ -231,7 +231,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, -550 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, -400 } },
                     },
                     Switch_PreColorAlpha = Switch {
                         CtrlWShown = false,
@@ -249,7 +249,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -400 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -300 } },
                     },
                     ColorSpaceTransform_Working = ColorSpaceTransform {
                         CtrlWShown = false,
@@ -264,7 +264,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -250 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -200 } },
                     },
                     AlphaMultiply_Premultiply = AlphaMultiply {
                         CtrlWShown = false,
@@ -275,7 +275,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, -100 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, -100 } },
                     },
                     Switch_PostColorAlpha = Switch {
                         CtrlWShown = false,
@@ -293,7 +293,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 50 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 0 } },
                     },
                     Switch_Color = Switch {
                         CtrlWShown = false,
@@ -311,7 +311,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 200 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 100 } },
                     },
                     BetterResize_Working = BetterResize {
                         CtrlWShown = false,
@@ -326,7 +326,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, 350 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, 200 } },
                     },
                     Switch_Resize = Switch {
                         CtrlWShown = false,
@@ -344,7 +344,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 500 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 300 } },
                     },
                     Crop_Working = Crop {
                         CtrlWShown = false,
@@ -360,7 +360,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, 650 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, 400 } },
                     },
                     Switch_Crop = Switch {
                         CtrlWShown = false,
@@ -378,7 +378,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 800 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 500 } },
                     },
                     ChannelBoolean_AlphaPolicy = ChannelBoolean {
                         CtrlWShown = false,
@@ -393,7 +393,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -350, 950 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, 600 } },
                     },
                     Switch_Alpha = Switch {
                         CtrlWShown = false,
@@ -411,7 +411,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 1100 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 700 } },
                     },
                 },
                 UserControls = ordered() {
