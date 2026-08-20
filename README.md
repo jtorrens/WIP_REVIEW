@@ -46,8 +46,9 @@ como información no editable. Dentro de cada zona las etiquetas se acortan a
 La matriz completa está en [INSPECTOR_UX.md](INSPECTOR_UX.md).
 
 La ruta Host Raster 1:1 compone en luz lineal únicamente los píxeles afectados
-por blanking y texto. Las mediciones reproducibles y la comparación con el
-pipeline completo están en [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md).
+por overlays, escribe directamente el blanking opaco y reutiliza las máscaras
+tipográficas sin cambios. Las mediciones reproducibles y la comparación con
+el pipeline completo están en [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md).
 
 ## Geometry/Placement
 
