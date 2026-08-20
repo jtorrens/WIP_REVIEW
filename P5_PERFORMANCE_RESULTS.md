@@ -1,7 +1,7 @@
 # P5 Performance — renderer CPU
 
 **Rama:** `p5-performance`  
-**Estado:** renderer CPU optimizado; pendiente smoke final en Fusion.
+**Estado:** aprobado en Fusion Standalone 21.0.4.
 
 ## Contrato
 
@@ -164,8 +164,26 @@ P5 los ha evaluado y no añade una segunda ruta de render:
   de Fusion que muestre que el renderer CPU host-threaded no cumple el objetivo.
 
 Esta decisión mantiene una única implementación actual y no reserva una ruta
-legacy ni un selector inactivo. La interfaz pública permanece preparada para
-reemplazar internamente el backend en una fase futura si la evidencia lo exige.
+alternativa ni un selector inactivo. La interfaz pública permanece preparada
+para reemplazar internamente el backend en una fase futura si la evidencia lo
+exige.
+
+## Validación en Fusion Standalone
+
+El bundle universal `1.1.0` instalado contiene `arm64` y `x86_64`. El smoke
+acumulativo P1–P5 pasó en Fusion Standalone 21.0.4 el 20 de agosto de 2026:
+
+- `OfxMultiThreadSuiteV1` disponible;
+- 24 workers reales para render y 24 para encode;
+- Source `4608×3164` y Output `1920×1080` ejercitados;
+- cache de filas activo en placements con resampling;
+- Rec.709, PQ, HLG y Auto unknown renderizados;
+- sin regresiones en geometría, blanking, seis zonas, outline, sombra,
+  overflow ni tokens dinámicos.
+
+El chequeo visual final de `P4_REC709_DISPLAY_LINEAR_COMPOSITE`, usando el
+renderer P5 instalado, fue aprobado por el usuario. La imagen conserva raster,
+crop, blanking, color y texto respecto al checkpoint P4 validado.
 
 ## Equivalencia
 
