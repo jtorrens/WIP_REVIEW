@@ -1,5 +1,8 @@
 #include "text_rasterizer.hpp"
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dwrite.h>
@@ -106,7 +109,9 @@ class BitmapTextRenderer final : public IDWriteTextRenderer {
 
   HRESULT STDMETHODCALLTYPE GetPixelsPerDip(
       void*, FLOAT* pixelsPerDip) override {
-    return pixelsPerDip ? target_->GetPixelsPerDip(pixelsPerDip) : E_POINTER;
+    if (!pixelsPerDip) return E_POINTER;
+    *pixelsPerDip = target_->GetPixelsPerDip();
+    return S_OK;
   }
 
   HRESULT STDMETHODCALLTYPE DrawGlyphRun(
