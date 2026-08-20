@@ -70,6 +70,7 @@ local ok, failure = pcall(function()
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
         probe.canvasMode = canvas_mode
+        probe.reviewRasterPreset = 0
         probe.placementMode = placement
         probe.resampleFilter = 2
         probe.AllowResize = 1
@@ -120,6 +121,12 @@ local ok, failure = pcall(function()
             placement, 1, placement + 1, 0)
     end
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_GEOMETRY_HOST_RASTER", 0, 0, 2, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_RASTER_CUSTOM_HD", 1, 1, 3, 1,
+                 0, 3, 2.0, 1.0, function(p)
+        p.reviewRasterPreset = 4
+        p.requestedWidth = 1920
+        p.requestedHeight = 1080
+    end)
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B01_2_00", 0, 1, 1, 2,
                  1, 2, 2.0, 1.0)
     render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B02_HALF", 0, 1, 2, 2,

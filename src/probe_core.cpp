@@ -360,6 +360,23 @@ std::array<float, 4> sampleManagedRows(
 
 }  // namespace
 
+RasterSize resolveReviewRaster(ReviewRasterPreset preset, int customWidth,
+                               int customHeight) noexcept {
+  switch (preset) {
+    case ReviewRasterPreset::HD:
+      return {1920, 1080};
+    case ReviewRasterPreset::UHD:
+      return {3840, 2160};
+    case ReviewRasterPreset::DCI2K:
+      return {2048, 1080};
+    case ReviewRasterPreset::DCI4K:
+      return {4096, 2160};
+    case ReviewRasterPreset::Custom:
+      return {std::max(1, customWidth), std::max(1, customHeight)};
+  }
+  return {1920, 1080};
+}
+
 PlacementTransform computePlacement(RectI sourceBounds, RectI outputBounds,
                                     const RenderOptions& options) noexcept {
   const double sourceWidth = std::max(1, sourceBounds.x2 - sourceBounds.x1);

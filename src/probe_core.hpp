@@ -35,6 +35,19 @@ enum class ResampleFilter {
   Lanczos3,
 };
 
+enum class ReviewRasterPreset {
+  HD,
+  UHD,
+  DCI2K,
+  DCI4K,
+  Custom,
+};
+
+struct RasterSize {
+  int width = 1920;
+  int height = 1080;
+};
+
 struct ImageView {
   std::byte* data = nullptr;
   RectI bounds{};
@@ -124,6 +137,9 @@ struct ManagedRenderStats {
 
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
+
+[[nodiscard]] RasterSize resolveReviewRaster(
+    ReviewRasterPreset preset, int customWidth, int customHeight) noexcept;
 
 [[nodiscard]] PlacementTransform computePlacement(
     RectI sourceBounds,

@@ -99,9 +99,7 @@ Resolve 21.0.4 cargó correctamente el descriptor único el 20 de agosto de 2026
 El host lo instanció en contexto General, mantuvo
 `requested_review_raster=false` y entregó Source/Output iguales a
 3840×2160 —además de sus rasters de preview—, confirmando Host Raster en el
-artefacto final. El proyecto usado aún contenía una referencia al identificador
-Filter Only retirado; se eliminó esa instancia y se añadió `WIP Review`, sin
-introducir alias ni compatibilidad obsoleta.
+artefacto final. La prueba se realizó con una instancia nueva de `WIP Review`.
 
 La aceptación técnica V1 queda completa. La comprobación visual HD/UHD/DCI fue
 realizada durante las fases de geometría y color y queda cubierta

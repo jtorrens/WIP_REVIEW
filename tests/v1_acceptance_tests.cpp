@@ -93,6 +93,28 @@ void testG01HdUhdNormalizedLayout() {
   assert(uhdAperture.y2 == hdAperture.y2 * 2.0);
 }
 
+void testReviewRasterPresets() {
+  using wipreview::probe::ReviewRasterPreset;
+  const auto hd = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::HD, 1, 1);
+  const auto uhd = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::UHD, 1, 1);
+  const auto dci2k = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::DCI2K, 1, 1);
+  const auto dci4k = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::DCI4K, 1, 1);
+  const auto custom = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::Custom, 3000, 2000);
+  const auto clampedCustom = wipreview::probe::resolveReviewRaster(
+      ReviewRasterPreset::Custom, 0, -1);
+  assert(hd.width == 1920 && hd.height == 1080);
+  assert(uhd.width == 3840 && uhd.height == 2160);
+  assert(dci2k.width == 2048 && dci2k.height == 1080);
+  assert(dci4k.width == 4096 && dci4k.height == 2160);
+  assert(custom.width == 3000 && custom.height == 2000);
+  assert(clampedCustom.width == 1 && clampedCustom.height == 1);
+}
+
 void testG02DciUsesHeightForTypeAndWidthForPadding() {
   constexpr double normalizedFontSize = 0.028;
   const double uhdFontPixels = normalizedFontSize * 2160.0;
@@ -187,6 +209,7 @@ void testPixelDepthRoundTrips() {
 int main() {
   testR03IntegratedAndUpstreamEquivalence();
   testG01HdUhdNormalizedLayout();
+  testReviewRasterPresets();
   testG02DciUsesHeightForTypeAndWidthForPadding();
   testG03AnamorphicParPlacement();
   testC06ManagedIdentity();

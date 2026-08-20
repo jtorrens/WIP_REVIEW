@@ -2,8 +2,9 @@
 
 `WIPReviewProbe.ofx` es un efecto OpenFX de review para DaVinci Resolve y
 Fusion. Coloca una imagen en un raster de review, aplica blanking editorial y
-compone seis zonas de texto en CPU. No incluye GPU, presets ni una
-transformación fotográfica interna.
+compone seis zonas de texto en CPU. No incluye GPU ni una transformación
+fotográfica interna. Los presets disponibles se limitan a
+rasters y aspectos técnicos; no codifican semántica de producción.
 
 La imagen fotográfica debe llegar ya transformada al espacio display-referred
 de review mediante el Color Space Transform nativo del host. El plugin recibe y
@@ -14,8 +15,8 @@ compone los gráficos y codifica una sola vez.
 
 **Canvas Mode** es la única selección de raster:
 
-- **Requested Review Raster** solicita Width/Height al host. Está habilitado y
-  seleccionado por defecto únicamente en Fusion, cuya ruta fue validada con
+- **Requested Review Raster** ofrece HD, UHD, DCI 2K, DCI 4K y Custom. Está
+  habilitado y seleccionado por defecto únicamente en Fusion, cuya ruta fue validada con
   `Settings → Use plugin RoD for output size` (`AllowResize=1`).
 - **Host Raster** conserva el raster publicado por el host. Es el único modo
   disponible en Resolve y en hosts no validados.
@@ -31,11 +32,24 @@ Esto implementa la matriz medida, sin rutas privadas del host:
 
 La evidencia está en [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 
+## Inspector
+
+El contrato se organiza en cinco páginas OFX: **Canvas**, **Typography**,
+**Zones**, **Timing** y **Color**. Los mismos bloques existen como jerarquía de
+grupos para hosts que presentan un inspector plegable en vez de páginas.
+
+Los controles dependientes se deshabilitan cuando no tienen efecto: raster
+Custom, aspect Custom, blanking, outline, shadow, overrides por zona, FPS
+Override y Graphics White manual. El estado de capacidad de raster se muestra
+como información no editable. Dentro de cada zona las etiquetas se acortan a
+`Enabled`, `Text`, offsets y overrides porque el grupo ya identifica la zona.
+La matriz completa está en [INSPECTOR_UX.md](INSPECTOR_UX.md).
+
 ## Geometry/Placement
 
 - **Placement**: Identity, Fit, Fill / Crop, Stretch y 1:1.
 - **Resample Filter**: Bilinear, Bicubic Catmull-Rom y Lanczos3.
-- **Canvas Colour**: RGBA, negro opaco por defecto.
+- **Canvas Color**: RGBA, negro opaco por defecto.
 
 Fit y Fill incorporan Source/Output PAR. Identity alinea coordenadas sin resize
 implícito; 1:1 centra píxeles físicos. El renderer limita las escrituras al

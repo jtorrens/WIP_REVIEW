@@ -49,6 +49,8 @@ constexpr char kPluginIdentifier[] = "com.jtorrens.WIPReviewProbe";
 constexpr char kParamWidth[] = "requestedWidth";
 constexpr char kParamHeight[] = "requestedHeight";
 constexpr char kParamCanvasMode[] = "canvasMode";
+constexpr char kParamRasterStatus[] = "rasterCapabilityStatus";
+constexpr char kParamRasterPreset[] = "reviewRasterPreset";
 constexpr char kParamPlacement[] = "placementMode";
 constexpr char kParamResample[] = "resampleFilter";
 constexpr char kParamCanvasColour[] = "canvasColour";
@@ -95,6 +97,14 @@ constexpr char kParamPaddingLeft[] = "paddingLeft";
 constexpr char kParamPaddingRight[] = "paddingRight";
 constexpr char kParamPaddingTop[] = "paddingTop";
 constexpr char kParamPaddingBottom[] = "paddingBottom";
+constexpr char kParamCanvasGroup[] = "canvasGroup";
+constexpr char kParamBlankingGroup[] = "blankingGroup";
+constexpr char kParamZonesGroup[] = "zonesGroup";
+constexpr char kParamCanvasPage[] = "canvasPage";
+constexpr char kParamTypographyPage[] = "typographyPage";
+constexpr char kParamZonesPage[] = "zonesPage";
+constexpr char kParamTimingPage[] = "timingPage";
+constexpr char kParamColorPage[] = "colorPage";
 
 struct ZoneParamNames {
   const char* label;
@@ -366,7 +376,10 @@ void logHostCapabilities() {
   Logger::instance().write("HOST_PARAMETER_CAPABILITIES",
       "string_animation=" + getInt(host, kOfxParamHostPropSupportsStringAnimation) +
       " choice_animation=" + getInt(host, kOfxParamHostPropSupportsChoiceAnimation) +
-      " boolean_animation=" + getInt(host, kOfxParamHostPropSupportsBooleanAnimation));
+      " boolean_animation=" + getInt(host, kOfxParamHostPropSupportsBooleanAnimation) +
+      " max_pages=" + getInt(host, kOfxParamHostPropMaxPages) +
+      " page_rows_columns=" +
+          joinInts(host, kOfxParamHostPropPageRowColumnCount));
   Logger::instance().write("HOST_COLOUR_CAPABILITIES",
       "style=" + getString(host, kOfxImageEffectPropColourManagementStyle) +
       " native_configs=" + joinStrings(host, kOfxImageEffectPropColourManagementAvailableConfigs));
@@ -392,6 +405,7 @@ struct InstanceData {
   OfxParamHandle width = nullptr;
   OfxParamHandle height = nullptr;
   OfxParamHandle canvasMode = nullptr;
+  OfxParamHandle rasterPreset = nullptr;
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
   OfxParamHandle canvasColour = nullptr;
@@ -528,16 +542,24 @@ bool readRequestedRaster(
   width = 1920;
   height = 1080;
   int canvasMode = 1;
+  int rasterPreset = 0;
   const OfxStatus modeStatus = gParameterSuite->paramGetValue(
       instance->canvasMode, &canvasMode);
+  const OfxStatus presetStatus = gParameterSuite->paramGetValue(
+      instance->rasterPreset, &rasterPreset);
   const OfxStatus widthStatus = gParameterSuite->paramGetValue(
       instance->width, &width);
   const OfxStatus heightStatus = gParameterSuite->paramGetValue(
       instance->height, &height);
   enabled = gRequestedReviewRasterSupported && canvasMode == 1;
-  width = std::max(1, width);
-  height = std::max(1, height);
-  return modeStatus == kOfxStatOK && widthStatus == kOfxStatOK &&
+  const int clampedPreset = std::clamp(rasterPreset, 0, 4);
+  const auto raster = wipreview::probe::resolveReviewRaster(
+      static_cast<wipreview::probe::ReviewRasterPreset>(clampedPreset), width,
+      height);
+  width = raster.width;
+  height = raster.height;
+  return modeStatus == kOfxStatOK && presetStatus == kOfxStatOK &&
+      widthStatus == kOfxStatOK &&
       heightStatus == kOfxStatOK;
 }
 
@@ -1274,24 +1296,62 @@ void defineIntegerParam(OfxParamSetHandle params, const char* name, const char* 
   if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
 }
 
+void defineReadOnlyString(OfxParamSetHandle params, const char* name,
+                          const char* label, const char* value,
+                          const char* hint, const char* parent) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(params, kOfxParamTypeString, name,
+                                   &properties) != kOfxStatOK) return;
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
+  gPropertySuite->propSetString(properties, kOfxParamPropDefault, 0, value);
+  gPropertySuite->propSetString(properties, kOfxParamPropStringMode, 0,
+                               kOfxParamStringIsSingleLine);
+  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropEnabled, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
+  if (parent) {
+    gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
+  }
+}
+
+bool definePage(OfxParamSetHandle params, const char* name, const char* label,
+                const std::vector<const char*>& children) {
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramDefine(params, kOfxParamTypePage, name,
+                                   &properties) != kOfxStatOK) return false;
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
+  for (std::size_t index = 0; index < children.size(); ++index) {
+    gPropertySuite->propSetString(properties, kOfxParamPropPageChild,
+                                 static_cast<int>(index), children[index]);
+  }
+  return true;
+}
+
 void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeGroup, zone.group,
                                    &properties) != kOfxStatOK) return;
-  const std::string groupLabel = std::string(zone.label) + " Zone";
+  const std::string groupLabel = std::string(zone.label) + " — Zone";
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, groupLabel.c_str());
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamZonesGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.enabled, &properties);
-  const std::string enabledLabel = std::string(zone.label) + " Enabled";
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, enabledLabel.c_str());
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Enabled");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
 
-  const std::string textLabel = std::string(zone.label) + " Text";
-  defineStringParam(params, zone.text, textLabel.c_str(), "", false,
+  defineStringParam(params, zone.text, "Text", "", false,
                     "UTF-8 text. Supports {frame_rel}, {frame} and {timecode}.", zone.group);
+
+  defineDoubleParam(params, zone.offsetX, "Offset X", 0.0,
+                    -1.0, 1.0, -0.25, 0.25,
+                    "Normalized to output width; positive values move right.", zone.group);
+  defineDoubleParam(params, zone.offsetY, "Offset Y", 0.0,
+                    -1.0, 1.0, -0.25, 0.25,
+                    "Normalized to output height; positive values move up.", zone.group);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, zone.useSize, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Use Size Override");
@@ -1324,12 +1384,77 @@ void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
                     0.0, 1.0, 0.0, 1.0,
                     "Replaces global text opacity when override is enabled.", zone.group);
 
-  defineDoubleParam(params, zone.offsetX, "Offset X", 0.0,
-                    -1.0, 1.0, -0.25, 0.25,
-                    "Normalized to output width; positive values move right.", zone.group);
-  defineDoubleParam(params, zone.offsetY, "Offset Y", 0.0,
-                    -1.0, 1.0, -0.25, 0.25,
-                    "Normalized to output height; positive values move up.", zone.group);
+}
+
+int readIntegerParam(OfxParamHandle parameter, int fallback) {
+  int value = fallback;
+  if (parameter) gParameterSuite->paramGetValue(parameter, &value);
+  return value;
+}
+
+void setParameterEnabled(OfxParamHandle parameter, bool enabled) {
+  if (!parameter) return;
+  OfxPropertySetHandle properties = nullptr;
+  if (gParameterSuite->paramGetPropertySet(parameter, &properties) ==
+          kOfxStatOK &&
+      properties) {
+    gPropertySuite->propSetInt(properties, kOfxParamPropEnabled, 0,
+                               enabled ? 1 : 0);
+  }
+}
+
+void updateUiState(InstanceData* instance) {
+  if (!instance) return;
+  const int canvasMode = readIntegerParam(instance->canvasMode, 0);
+  const int rasterPreset = readIntegerParam(instance->rasterPreset, 0);
+  const bool requestedRaster =
+      gRequestedReviewRasterSupported && canvasMode == 1;
+  setParameterEnabled(instance->rasterPreset, requestedRaster);
+  const bool customRaster = requestedRaster && rasterPreset == 4;
+  setParameterEnabled(instance->width, customRaster);
+  setParameterEnabled(instance->height, customRaster);
+
+  const bool blanking = readIntegerParam(instance->blankingEnabled, 0) != 0;
+  const int blankingAspect =
+      readIntegerParam(instance->blankingAspectPreset, 3);
+  setParameterEnabled(instance->blankingAspectPreset, blanking);
+  setParameterEnabled(instance->blankingAspectCustom,
+                      blanking && blankingAspect == 4);
+  setParameterEnabled(instance->blankingColour, blanking);
+  setParameterEnabled(instance->blankingOpacity, blanking);
+
+  const bool outline = readIntegerParam(instance->outlineEnabled, 1) != 0;
+  setParameterEnabled(instance->outlineWidth, outline);
+  setParameterEnabled(instance->outlineColour, outline);
+  setParameterEnabled(instance->outlineOpacity, outline);
+
+  const bool shadow = readIntegerParam(instance->shadowEnabled, 0) != 0;
+  setParameterEnabled(instance->shadowOffsetX, shadow);
+  setParameterEnabled(instance->shadowOffsetY, shadow);
+  setParameterEnabled(instance->shadowSoftness, shadow);
+  setParameterEnabled(instance->shadowColour, shadow);
+  setParameterEnabled(instance->shadowOpacity, shadow);
+
+  const int fpsMode = readIntegerParam(instance->fpsMode, 0);
+  setParameterEnabled(instance->fpsOverride, fpsMode == 1);
+
+  const int graphicsWhiteMode =
+      readIntegerParam(instance->graphicsWhiteMode, 0);
+  setParameterEnabled(instance->graphicsWhiteNits, graphicsWhiteMode == 1);
+  const int colorSpaceMode = readIntegerParam(instance->colorSpaceMode, 0);
+  const int manualColorSpace =
+      readIntegerParam(instance->manualColorSpace, 0);
+  setParameterEnabled(instance->hlgPeakNits,
+                      colorSpaceMode == 0 || manualColorSpace == 2);
+
+  for (auto& zone : instance->zones) {
+    setParameterEnabled(zone.size,
+                        readIntegerParam(zone.useSize, 0) != 0);
+    setParameterEnabled(zone.colour,
+                        readIntegerParam(zone.useColour, 0) != 0);
+    setParameterEnabled(zone.opacity,
+                        readIntegerParam(zone.useOpacity, 0) != 0);
+  }
 }
 
 OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
@@ -1355,63 +1480,78 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   if (status != kOfxStatOK) return status;
 
   OfxPropertySetHandle properties = nullptr;
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamCanvasGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
+
+  defineReadOnlyString(
+      params, kParamRasterStatus, "Raster Capability",
+      gRequestedReviewRasterSupported
+          ? "Fusion — Requested Review Raster available"
+          : "Host Raster only",
+      "Requested Review Raster is enabled only on a validated host path.",
+      kParamCanvasGroup);
   defineChoiceParam(params, kParamCanvasMode, "Canvas Mode",
                     {"Host Raster", "Requested Review Raster"},
                     gRequestedReviewRasterSupported ? 1 : 0,
-                    "Host Raster keeps the host output size; Requested Review Raster uses Requested Width/Height when the validated host path accepts plugin RoD.",
-                    nullptr, gRequestedReviewRasterSupported);
+                    "Host Raster keeps the host output size; Requested Review Raster uses the selected review raster when the validated host path accepts plugin RoD.",
+                    kParamCanvasGroup, gRequestedReviewRasterSupported);
+  defineChoiceParam(params, kParamRasterPreset, "Review Raster",
+                    {"HD 1920 × 1080", "UHD 3840 × 2160",
+                     "DCI 2K 2048 × 1080", "DCI 4K 4096 × 2160", "Custom"},
+                    0, "Physical output raster used in Requested Review Raster mode.",
+                    kParamCanvasGroup, gRequestedReviewRasterSupported);
+
+  defineIntegerParam(params, kParamWidth, "Custom Width", 1920,
+                     1, 32768, 16, 8192,
+                     "Physical pixel width used only by the Custom review raster.",
+                     kParamCanvasGroup);
+  defineIntegerParam(params, kParamHeight, "Custom Height", 1080,
+                     1, 32768, 16, 8192,
+                     "Physical pixel height used only by the Custom review raster.",
+                     kParamCanvasGroup);
 
   defineChoiceParam(params, kParamPlacement, "Placement",
                     {"Identity", "Fit", "Fill / Crop", "Stretch", "1:1"}, 1,
-                    "Static source placement inside the output canvas. Identity is coordinate-aligned and never resizes.");
+                    "Static source placement inside the output canvas. Identity is coordinate-aligned and never resizes.",
+                    kParamCanvasGroup);
 
   defineChoiceParam(params, kParamResample, "Resample Filter",
                     {"Bilinear", "Bicubic (Catmull-Rom)", "Lanczos3"}, 2,
-                    "CPU reference resampling filter. No sharpening is applied.");
+                    "CPU reference resampling filter. No sharpening is applied.",
+                    kParamCanvasGroup);
 
-  gParameterSuite->paramDefine(
-      params, kOfxParamTypeGroup, kParamColorGroup, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Managed Color");
-  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
-  defineChoiceParam(params, kParamColorSpaceMode, "Color Space Mode",
-                    {"Auto from Host", "Manual Override"}, 0,
-                    "Input and Output use the same display-referred review space. Auto requires a valid host colourspace.",
-                    kParamColorGroup);
-  defineChoiceParam(params, kParamManualColorSpace, "Manual Color Space",
-                    {"Rec.709 Gamma 2.4", "Rec.2100 PQ", "Rec.2100 HLG"}, 0,
-                    "Explicit interpretation used in Manual Override or when Auto cannot identify the host colourspace.",
-                    kParamColorGroup);
-  defineChoiceParam(params, kParamGraphicsWhiteMode, "Graphics White Mode",
-                    {"Auto", "Manual"}, 0,
-                    "Auto uses 100 nits for Rec.709, 203 nits for PQ, and 20.3 percent of HLG peak.",
-                    kParamColorGroup);
-  defineDoubleParam(params, kParamGraphicsWhiteNits, "Graphics White Nits", 203.0,
-                    1.0, 10000.0, 48.0, 1000.0,
-                    "Reference white for graphic picker value 1.0 when Graphics White Mode is Manual.",
-                    kParamColorGroup);
-  defineDoubleParam(params, kParamHlgPeakNits, "HLG Peak Nits", 1000.0,
-                    100.0, 10000.0, 400.0, 4000.0,
-                    "Peak display luminance used by the Rec.2100 HLG OOTF and automatic Graphics White.",
-                    kParamColorGroup);
-
-  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamCanvasColour, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas Colour");
+  gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamCanvasColour,
+                               &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Canvas Color");
   const double canvasDefault[4] = {0.0, 0.0, 0.0, 1.0};
-  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, canvasDefault);
+  gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
+                                canvasDefault);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamCanvasGroup);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
       "RGBA canvas outside the placed source; defaults to opaque black.");
 
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamBlankingGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
+                               "Editorial Blanking");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamBlankingEnabled, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Enabled");
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamBlankingGroup);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
       "Composites editorial blanking outside the centred aperture without changing the raster.");
 
   defineChoiceParam(params, kParamBlankingAspectPreset, "Blanking Aspect",
                     {"1.78", "1.85", "2.00", "2.39", "Custom"}, 3,
-                    "Editorial display aspect. Wider than the canvas creates letterbox; narrower creates pillarbox.");
+                    "Editorial display aspect. Wider than the canvas creates letterbox; narrower creates pillarbox.",
+                    kParamBlankingGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeDouble, kParamBlankingAspectCustom, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Custom Aspect");
@@ -1421,12 +1561,16 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMin, 0, 1.0);
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 3.0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamBlankingGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamBlankingColour, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Colour");
   const double blankingColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
   gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, blankingColourDefault);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamBlankingGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeDouble, kParamBlankingOpacity, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Blanking Opacity");
@@ -1436,9 +1580,11 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMin, 0, 0.0);
   gPropertySuite->propSetDouble(properties, kOfxParamPropDisplayMax, 0, 1.0);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamBlankingGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamTextGroup, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Text Global");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Typography");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 1);
 
   defineStringParam(params, kParamFontFamily, "Font Family", "System Default", false,
@@ -1453,7 +1599,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     kParamTextGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamTextColour, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Text Colour");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Text Color");
   const double textColourDefault[4] = {1.0, 1.0, 1.0, 1.0};
   gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4, textColourDefault);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
@@ -1490,6 +1636,8 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamOutlineGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamTextGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamOutlineEnabled, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Enabled");
@@ -1501,7 +1649,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     "Glyph-mask dilation radius normalized to output height.",
                     kParamOutlineGroup);
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamOutlineColour, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Colour");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline Color");
   const double outlineColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
   gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
                                 outlineColourDefault);
@@ -1515,6 +1663,8 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamShadowGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Drop Shadow");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  gPropertySuite->propSetString(properties, kOfxParamPropParent, 0,
+                               kParamTextGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamShadowEnabled, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Shadow Enabled");
@@ -1534,7 +1684,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     "Gaussian sigma normalized to output height; applied to shadow alpha.",
                     kParamShadowGroup);
   gParameterSuite->paramDefine(params, kOfxParamTypeRGBA, kParamShadowColour, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Shadow Colour");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Shadow Color");
   const double shadowColourDefault[4] = {0.0, 0.0, 0.0, 1.0};
   gPropertySuite->propSetDoubleN(properties, kOfxParamPropDefault, 4,
                                 shadowColourDefault);
@@ -1544,12 +1694,19 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     0.0, 1.0, 0.0, 1.0,
                     "Multiplies shadow alpha independently of fill and outline.",
                     kParamShadowGroup);
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamZonesGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Zones");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
   for (const auto& zone : kZoneParams) defineZoneParams(params, zone);
 
   gParameterSuite->paramDefine(
       params, kOfxParamTypeGroup, kParamDynamicTextGroup, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Dynamic Text");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Timing");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  gPropertySuite->propSetString(
+      properties, kOfxParamPropHint, 0,
+      "Supported text tokens: {frame_rel}, {frame}, {timecode}.");
   defineIntegerParam(params, kParamFrameRelativeBase, "Frame Relative Base", 1,
                      -1000000000, 1000000000, -10000, 10000,
                      "Added to round(effectTime) for {frame_rel}.",
@@ -1574,32 +1731,92 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                     "Auto enables drop-frame for 29.97/59.94; incompatible Drop requests are logged and use NonDrop.",
                     kParamDynamicTextGroup);
 
-  gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamWidth, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Width");
-  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1920);
-  gPropertySuite->propSetInt(properties, kOfxParamPropMin, 0, 1);
-  gPropertySuite->propSetInt(properties, kOfxParamPropMax, 0, 32768);
-  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMin, 0, 16);
-  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMax, 0, 8192);
-  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-  gPropertySuite->propSetInt(
-      properties, kOfxParamPropEnabled, 0,
-      gRequestedReviewRasterSupported ? 1 : 0);
+  gParameterSuite->paramDefine(
+      params, kOfxParamTypeGroup, kParamColorGroup, &properties);
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Managed Color");
+  gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
+  defineChoiceParam(params, kParamColorSpaceMode, "Color Space Mode",
+                    {"Auto from Host", "Manual Override"}, 0,
+                    "Input and Output use the same display-referred review space. Auto requires a valid host colourspace.",
+                    kParamColorGroup);
+  defineChoiceParam(params, kParamManualColorSpace, "Fallback / Manual Space",
+                    {"Rec.709 Gamma 2.4", "Rec.2100 PQ", "Rec.2100 HLG"}, 0,
+                    "Used by Manual Override and as the explicit fallback when Auto cannot identify the host colourspace.",
+                    kParamColorGroup);
+  defineChoiceParam(params, kParamGraphicsWhiteMode, "Graphics White Mode",
+                    {"Auto", "Manual"}, 0,
+                    "Auto uses 100 nits for Rec.709, 203 nits for PQ, and 20.3 percent of HLG peak.",
+                    kParamColorGroup);
+  defineDoubleParam(params, kParamGraphicsWhiteNits, "Graphics White Nits", 203.0,
+                    1.0, 10000.0, 48.0, 1000.0,
+                    "Reference white for graphic picker value 1.0 when Graphics White Mode is Manual.",
+                    kParamColorGroup);
+  defineDoubleParam(params, kParamHlgPeakNits, "HLG Peak Nits", 1000.0,
+                    100.0, 10000.0, 400.0, 4000.0,
+                    "Peak display luminance used by the Rec.2100 HLG OOTF and automatic Graphics White.",
+                    kParamColorGroup);
 
-  gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamHeight, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Height");
-  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1080);
-  gPropertySuite->propSetInt(properties, kOfxParamPropMin, 0, 1);
-  gPropertySuite->propSetInt(properties, kOfxParamPropMax, 0, 32768);
-  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMin, 0, 16);
-  gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMax, 0, 8192);
-  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-  gPropertySuite->propSetInt(
-      properties, kOfxParamPropEnabled, 0,
-      gRequestedReviewRasterSupported ? 1 : 0);
+  std::vector<const char*> definedPages;
+  if (definePage(params, kParamCanvasPage, "Canvas",
+                 {kParamRasterStatus, kParamCanvasMode, kParamRasterPreset,
+                  kParamWidth, kParamHeight, kParamPlacement, kParamResample,
+                  kParamCanvasColour, kParamBlankingEnabled,
+                  kParamBlankingAspectPreset, kParamBlankingAspectCustom,
+                  kParamBlankingColour, kParamBlankingOpacity})) {
+    definedPages.push_back(kParamCanvasPage);
+  }
+  if (definePage(params, kParamTypographyPage, "Typography",
+                 {kParamFontFamily, kParamFontStyle, kParamFontSize,
+                  kParamTextColour, kParamTextOpacity, kParamPaddingLeft,
+                  kParamPaddingRight, kParamPaddingTop, kParamPaddingBottom,
+                  kParamZoneGap, kParamOverflowMode, kParamMinimumFontScale,
+                  kParamOutlineEnabled, kParamOutlineWidth,
+                  kParamOutlineColour, kParamOutlineOpacity,
+                  kParamShadowEnabled, kParamShadowOffsetX,
+                  kParamShadowOffsetY, kParamShadowSoftness,
+                  kParamShadowColour, kParamShadowOpacity})) {
+    definedPages.push_back(kParamTypographyPage);
+  }
+  std::vector<const char*> zonePageChildren;
+  zonePageChildren.reserve(kZoneParams.size() * 10);
+  for (const auto& zone : kZoneParams) {
+    zonePageChildren.insert(zonePageChildren.end(),
+                            {zone.enabled, zone.text, zone.offsetX, zone.offsetY,
+                             zone.useSize, zone.size, zone.useColour,
+                             zone.colour, zone.useOpacity, zone.opacity});
+  }
+  if (definePage(params, kParamZonesPage, "Zones", zonePageChildren)) {
+    definedPages.push_back(kParamZonesPage);
+  }
+  if (definePage(params, kParamTimingPage, "Timing",
+                 {kParamFrameRelativeBase, kParamFrameStart, kParamFpsMode,
+                  kParamFpsOverride, kParamTimecodeStart,
+                  kParamDropFrameMode})) {
+    definedPages.push_back(kParamTimingPage);
+  }
+  if (definePage(params, kParamColorPage, "Color",
+                 {kParamColorSpaceMode, kParamManualColorSpace,
+                  kParamGraphicsWhiteMode, kParamGraphicsWhiteNits,
+                  kParamHlgPeakNits})) {
+    definedPages.push_back(kParamColorPage);
+  }
+  OfxPropertySetHandle paramSetProperties = nullptr;
+  if (gParameterSuite->paramSetGetPropertySet(params, &paramSetProperties) ==
+          kOfxStatOK &&
+      paramSetProperties) {
+    for (std::size_t index = 0; index < definedPages.size(); ++index) {
+      gPropertySuite->propSetString(
+          paramSetProperties, kOfxPluginPropParamPageOrder,
+          static_cast<int>(index), definedPages[index]);
+    }
+  }
 
   const std::string context = getString(inArgs, kOfxImageEffectPropContext);
-  Logger::instance().write("DESCRIBE_IN_CONTEXT", "context=" + context);
+  Logger::instance().write(
+      "DESCRIBE_IN_CONTEXT",
+      "context=" + context +
+          " pages_defined=" + std::to_string(definedPages.size()) +
+          " hierarchy=[Canvas,Editorial Blanking,Typography,Zones,Timing,Managed Color]");
   return kOfxStatOK;
 }
 
@@ -1622,6 +1839,8 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamWidth, &instance->width, nullptr);
   gParameterSuite->paramGetHandle(params, kParamHeight, &instance->height, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasMode, &instance->canvasMode, nullptr);
+  gParameterSuite->paramGetHandle(
+      params, kParamRasterPreset, &instance->rasterPreset, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
@@ -1687,6 +1906,7 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
     gParameterSuite->paramGetHandle(params, names.offsetY, &handles.offsetY, nullptr);
   }
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
+  updateUiState(instance);
 
   Logger::instance().write("INSTANCE_CREATE",
       instancePrefix(instance) + " log_path=" + quoted(Logger::instance().path().c_str()));
@@ -2377,6 +2597,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
 OfxStatus instanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   InstanceData* instance = getInstance(effect);
   if (!instance) return kOfxStatErrBadHandle;
+  updateUiState(instance);
   Logger::instance().write("INSTANCE_CHANGED",
       instancePrefix(instance) +
       " reason=" + getString(inArgs, kOfxPropChangeReason) +
