@@ -182,9 +182,15 @@ void compareCase(id<MTLDevice> device, id<MTLCommandQueue> queue,
 int main() {
   @autoreleasepool {
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    assert(device);
+    if (!device) {
+      std::cout << "Metal renderer tests skipped: no default Metal device\n";
+      return 0;
+    }
     id<MTLCommandQueue> queue = [device newCommandQueue];
-    assert(queue);
+    if (!queue) {
+      std::cout << "Metal renderer tests skipped: no Metal command queue\n";
+      return 0;
+    }
     const std::array<PlacementMode, 5> placements{
         PlacementMode::Identity, PlacementMode::Fit, PlacementMode::Fill,
         PlacementMode::Stretch, PlacementMode::OneToOne};
