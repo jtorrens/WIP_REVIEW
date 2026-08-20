@@ -173,8 +173,8 @@ acumulativo P1–P5 pasó en Fusion Standalone 21.0.4 el 20 de agosto de 2026:
 - Source `4608×3164` y Output `1920×1080` ejercitados;
 - cache de filas activo en placements con resampling;
 - Rec.709, PQ, HLG y Auto unknown renderizados;
-- sin regresiones en geometría, blanking, seis zonas, outline, sombra,
-  overflow ni campos calculados.
+- sin regresiones en geometría, blanking, seis anclajes libres, outline,
+  sombra ni campos calculados.
 
 El chequeo visual final de `P4_REC709_DISPLAY_LINEAR_COMPOSITE`, usando el
 renderer P5 instalado, fue aprobado por el usuario. La imagen conserva raster,

@@ -1,7 +1,6 @@
 # P2c Drop Shadow — estado de implementación
 
-**Versión de desarrollo:** `WIPReviewProbe.ofx` 0.7.0  
-**Alcance:** drop shadow global de las seis zonas; sin overflow ni campos calculados.
+**Alcance:** drop shadow global de las seis zonas; sin campos calculados.
 
 ## Contrato implementado
 
@@ -60,13 +59,12 @@ La composición visual añade:
 
 ## Fuera de alcance
 
-- `Clip`, `Ellipsis`, `ShrinkToFit`, celdas lógicas y `zoneGap`;
 - campos calculados;
 - transformaciones OCIO de píxeles, GPU y presets.
 
 ## Resultado automático — aprobado
 
-Ejecutado el 19 de agosto de 2026 con el bundle universal 0.7.0 instalado en
+Ejecutado el 19 de agosto de 2026 con el bundle universal instalado en
 Fusion Studio 21.0.4 para macOS:
 
 - 23 de 23 renderizaciones completadas;

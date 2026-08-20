@@ -21,7 +21,7 @@ commit `39345d4` en DaVinci Resolve Studio 21.0.4 y Fusion Studio 21.0.4.
    El blanking completamente opaco se codifica una vez; solo sus bordes
    fraccionales y las bandas semitransparentes pasan por composición lineal.
 6. Cada instancia conserva las seis máscaras tipográficas resueltas mientras
-   texto, fuente, tamaño, overflow, outline y shadow no cambien.
+   texto, fuente, tamaño, outline y shadow no cambien.
 
 El resize real conserva el pipeline de referencia completo: decode lineal,
 resampling, overlays y encode. No se introdujo una ruta de calidad reducida.

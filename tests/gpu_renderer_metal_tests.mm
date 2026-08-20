@@ -150,8 +150,6 @@ void compareCase(id<MTLDevice> device, id<MTLCommandQueue> queue,
     layer.mask = maskView;
     layer.origin = wipreview::probe::computeTextOrigin(
         gpuOutputView.bounds, maskView.width, maskView.height, text);
-    layer.cellBounds = text.cellBounds;
-    layer.constrainToCell = text.constrainToCell;
     layer.colour[0] = text.colour[0];
     layer.colour[1] = text.colour[1];
     layer.colour[2] = text.colour[2];

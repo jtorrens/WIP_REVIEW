@@ -75,9 +75,6 @@ constexpr char kParamFontSize[] = "fontSize";
 constexpr char kParamTextColour[] = "textColor";
 constexpr char kParamTextOpacity[] = "textOpacity";
 constexpr char kParamTextGroup[] = "textGlobalGroup";
-constexpr char kParamZoneGap[] = "zoneGap";
-constexpr char kParamOverflowMode[] = "overflowMode";
-constexpr char kParamMinimumFontScale[] = "minimumFontScale";
 constexpr char kParamCalculatedFieldsGroup[] = "calculatedFieldsGroup";
 constexpr char kParamFrameRelativeBase[] = "frameRelativeBase";
 constexpr char kParamFrameStart[] = "frameStart";
@@ -430,11 +427,7 @@ struct TextCacheKey {
   std::string text;
   std::string fontFamily;
   wipreview::text::FontStyle fontStyle = wipreview::text::FontStyle::Regular;
-  wipreview::text::OverflowMode overflowMode =
-      wipreview::text::OverflowMode::ShrinkToFit;
   double requestedPixelSize = 0.0;
-  double minimumFontScale = 0.0;
-  int availableWidth = 0;
   int outlineRadiusPixels = 0;
   bool shadowEnabled = false;
   int shadowOffsetXPixels = 0;
@@ -443,10 +436,8 @@ struct TextCacheKey {
 
   [[nodiscard]] bool operator==(const TextCacheKey& other) const noexcept {
     return text == other.text && fontFamily == other.fontFamily &&
-        fontStyle == other.fontStyle && overflowMode == other.overflowMode &&
+        fontStyle == other.fontStyle &&
         requestedPixelSize == other.requestedPixelSize &&
-        minimumFontScale == other.minimumFontScale &&
-        availableWidth == other.availableWidth &&
         outlineRadiusPixels == other.outlineRadiusPixels &&
         shadowEnabled == other.shadowEnabled &&
         shadowOffsetXPixels == other.shadowOffsetXPixels &&
@@ -502,9 +493,6 @@ struct InstanceData {
   OfxParamHandle fontSize = nullptr;
   OfxParamHandle textColour = nullptr;
   OfxParamHandle textOpacity = nullptr;
-  OfxParamHandle zoneGap = nullptr;
-  OfxParamHandle overflowMode = nullptr;
-  OfxParamHandle minimumFontScale = nullptr;
   OfxParamHandle frameRelativeBase = nullptr;
   OfxParamHandle frameStart = nullptr;
   OfxParamHandle fpsMode = nullptr;
@@ -535,15 +523,16 @@ struct InstanceData {
 std::shared_ptr<const CachedZoneText> cachedZoneText(
     InstanceData* instance, std::size_t index,
     const wipreview::text::TextLayoutRequest& request,
-    int shadowOffsetDownPixels, bool& cacheHit) {
+    int outlineRadiusPixels, bool shadowEnabled,
+    int shadowOffsetXPixels, int shadowOffsetDownPixels,
+    double shadowSoftnessPixels, bool& cacheHit) {
   cacheHit = false;
   TextCacheKey key{
       request.text, request.fontFamily, request.fontStyle,
-      request.overflowMode, request.requestedPixelSize,
-      request.minimumFontScale, request.availableWidth,
-      request.outlineRadiusPixels, request.shadowEnabled,
-      request.shadowOffsetXPixels, shadowOffsetDownPixels,
-      request.shadowSoftnessPixels};
+      request.requestedPixelSize,
+      outlineRadiusPixels, shadowEnabled,
+      shadowOffsetXPixels, shadowOffsetDownPixels,
+      shadowSoftnessPixels};
   {
     std::lock_guard<std::mutex> lock(instance->textCacheMutex);
     const auto& cached = instance->textCache[index];
@@ -557,14 +546,14 @@ std::shared_ptr<const CachedZoneText> cachedZoneText(
   built->key = std::move(key);
   built->layout = wipreview::text::layoutUTF8(request);
   auto& glyph = built->layout.glyph;
-  if (!glyph.fillPixels.empty() && request.outlineRadiusPixels > 0) {
+  if (!glyph.fillPixels.empty() && outlineRadiusPixels > 0) {
     built->outlineGenerationFailed = !wipreview::text::addOutline(
-        glyph, request.outlineRadiusPixels);
+        glyph, outlineRadiusPixels);
   }
-  if (!glyph.fillPixels.empty() && request.shadowEnabled) {
+  if (!glyph.fillPixels.empty() && shadowEnabled) {
     built->shadowGenerationFailed = !wipreview::text::addShadow(
-        glyph, request.shadowOffsetXPixels, shadowOffsetDownPixels,
-        request.shadowSoftnessPixels);
+        glyph, shadowOffsetXPixels, shadowOffsetDownPixels,
+        shadowSoftnessPixels);
   }
 
   std::lock_guard<std::mutex> lock(instance->textCacheMutex);
@@ -1008,10 +997,6 @@ struct TextRenderSettings {
   double shadowSoftnessPixels = 0.0;
   float shadowColour[4] = {0.0F, 0.0F, 0.0F, 1.0F};
   float shadowOpacity = 0.60F;
-  double normalizedZoneGap = 0.010;
-  wipreview::text::OverflowMode overflowMode =
-      wipreview::text::OverflowMode::ShrinkToFit;
-  double minimumFontScale = 0.60;
 };
 
 TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime time,
@@ -1033,9 +1018,6 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   double shadowSoftness = 0.0020;
   double shadowColour[4] = {0.0, 0.0, 0.0, 1.0};
   double shadowOpacity = 0.60;
-  double zoneGap = 0.010;
-  int overflowMode = 2;
-  double minimumFontScale = 0.60;
   double paddingLeft = 0.015;
   double paddingRight = 0.015;
   double paddingTop = 0.020;
@@ -1081,16 +1063,6 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   }
   if (instance->shadowOpacity) {
     gParameterSuite->paramGetValueAtTime(instance->shadowOpacity, time, &shadowOpacity);
-  }
-  if (instance->zoneGap) {
-    gParameterSuite->paramGetValueAtTime(instance->zoneGap, time, &zoneGap);
-  }
-  if (instance->overflowMode) {
-    gParameterSuite->paramGetValueAtTime(instance->overflowMode, time, &overflowMode);
-  }
-  if (instance->minimumFontScale) {
-    gParameterSuite->paramGetValueAtTime(
-        instance->minimumFontScale, time, &minimumFontScale);
   }
   if (instance->paddingLeft) gParameterSuite->paramGetValueAtTime(instance->paddingLeft, time, &paddingLeft);
   if (instance->paddingRight) gParameterSuite->paramGetValueAtTime(instance->paddingRight, time, &paddingRight);
@@ -1145,14 +1117,6 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
   for (int channel = 0; channel < 4; ++channel) {
     settings.shadowColour[channel] = static_cast<float>(shadowColour[channel]);
   }
-  const auto overflowModes = std::array{
-      wipreview::text::OverflowMode::Clip,
-      wipreview::text::OverflowMode::Ellipsis,
-      wipreview::text::OverflowMode::ShrinkToFit};
-  settings.normalizedZoneGap = std::clamp(zoneGap, 0.0, 0.25);
-  settings.overflowMode = overflowModes[
-      static_cast<std::size_t>(std::clamp(overflowMode, 0, 2))];
-  settings.minimumFontScale = std::clamp(minimumFontScale, 0.01, 1.0);
   return settings;
 }
 
@@ -1172,11 +1136,6 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   settings.layer = global;
   settings.layer.overlay.enabled = false;
   settings.layer.overlay.anchor = static_cast<wipreview::probe::TextAnchor>(index);
-  settings.layer.overlay.constrainToCell = true;
-  settings.layer.overlay.cellBounds = wipreview::probe::computeTextCell(
-      outputView.bounds, settings.layer.overlay.anchor,
-      global.overlay.paddingLeft, global.overlay.paddingRight,
-      global.normalizedZoneGap);
   settings.layer.overlay.offsetX = 0.0;
   settings.layer.overlay.offsetY = 0.0;
   settings.layer.text.clear();
@@ -1841,18 +1800,6 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   defineDoubleParam(params, kParamPaddingBottom, "Padding Bottom", 0.020,
                     0.0, 1.0, 0.0, 0.25,
                     "Normalized to output height.", kParamTextGroup);
-  defineDoubleParam(params, kParamZoneGap, "Zone Gap", 0.010,
-                    0.0, 0.25, 0.0, 0.10,
-                    "Complete normalized horizontal gap between adjacent logical cells.",
-                    kParamTextGroup);
-  defineChoiceParam(params, kParamOverflowMode, "Overflow Mode",
-                    {"Clip", "Ellipsis", "ShrinkToFit"}, 2,
-                    "Clip at the cell, replace the tail with an ellipsis, or reduce only overflowing text.",
-                    kParamTextGroup);
-  defineDoubleParam(params, kParamMinimumFontScale, "Minimum Font Scale", 0.60,
-                    0.01, 1.0, 0.10, 1.0,
-                    "Lowest scale permitted by ShrinkToFit; remaining overflow is clipped.",
-                    kParamTextGroup);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeGroup, kParamOutlineGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Outline");
@@ -1995,7 +1942,6 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
                  {kParamFontFamily, kParamFontStyle, kParamFontSize,
                   kParamTextColour, kParamTextOpacity, kParamPaddingLeft,
                   kParamPaddingRight, kParamPaddingTop, kParamPaddingBottom,
-                  kParamZoneGap, kParamOverflowMode, kParamMinimumFontScale,
                   kParamOutlineEnabled, kParamOutlineWidth,
                   kParamOutlineColour, kParamOutlineOpacity,
                   kParamShadowEnabled, kParamShadowOffsetX,
@@ -2091,10 +2037,6 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamFontSize, &instance->fontSize, nullptr);
   gParameterSuite->paramGetHandle(params, kParamTextColour, &instance->textColour, nullptr);
   gParameterSuite->paramGetHandle(params, kParamTextOpacity, &instance->textOpacity, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamZoneGap, &instance->zoneGap, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamOverflowMode, &instance->overflowMode, nullptr);
-  gParameterSuite->paramGetHandle(
-      params, kParamMinimumFontScale, &instance->minimumFontScale, nullptr);
   gParameterSuite->paramGetHandle(
       params, kParamFrameRelativeBase, &instance->frameRelativeBase, nullptr);
   gParameterSuite->paramGetHandle(params, kParamFrameStart, &instance->frameStart, nullptr);
@@ -2685,18 +2627,12 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         layoutRequest.text = zoneFields[index].text;
         layoutRequest.fontFamily = layer.fontFamily;
         layoutRequest.fontStyle = layer.fontStyle;
-        layoutRequest.overflowMode = layer.overflowMode;
         layoutRequest.requestedPixelSize = layer.pixelSize;
-        layoutRequest.minimumFontScale = layer.minimumFontScale;
-        layoutRequest.availableWidth = std::max(
-            0, layer.overlay.cellBounds.x2 - layer.overlay.cellBounds.x1);
-        layoutRequest.outlineRadiusPixels = layer.outlineRadiusPixels;
-        layoutRequest.shadowEnabled = layer.shadowEnabled;
-        layoutRequest.shadowOffsetXPixels = layer.shadowOffsetXPixels;
-        layoutRequest.shadowSoftnessPixels = layer.shadowSoftnessPixels;
         bool wasCached = false;
         const auto cached = cachedZoneText(
-            instance, index, layoutRequest, layer.shadowOffsetDownPixels,
+            instance, index, layoutRequest, layer.outlineRadiusPixels,
+            layer.shadowEnabled, layer.shadowOffsetXPixels,
+            layer.shadowOffsetDownPixels, layer.shadowSoftnessPixels,
             wasCached);
         textCacheHits += wasCached ? 1U : 0U;
         zoneTextEntries[index] = cached;
@@ -2799,8 +2735,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           gpuLayer.mask = mask;
           gpuLayer.origin = wipreview::probe::computeTextOrigin(
               outputView.bounds, mask.width, mask.height, overlay);
-          gpuLayer.cellBounds = overlay.cellBounds;
-          gpuLayer.constrainToCell = overlay.constrainToCell;
           gpuLayer.opacity = overlay.opacity;
           for (int channel = 0; channel < 4; ++channel) {
             gpuLayer.colour[channel] = overlay.colour[channel];
@@ -3001,12 +2935,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                        std::to_string(globalText.shadowColour[2]) + ',' +
                        std::to_string(globalText.shadowColour[3]) + ']' +
         " opacity=" + std::to_string(globalText.shadowOpacity));
-    Logger::instance().write("TEXT_OVERFLOW",
-        instancePrefix(instance) +
-        " mode=" + std::to_string(static_cast<int>(globalText.overflowMode)) +
-        " normalized_zone_gap=" + std::to_string(globalText.normalizedZoneGap) +
-        " minimum_font_scale=" + std::to_string(globalText.minimumFontScale) +
-        " minimum_policy=clip");
     Logger::instance().write("CALCULATED_FIELDS",
         instancePrefix(instance) +
         " time=" + std::to_string(time) +
@@ -3048,12 +2976,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           " normalized_size=" + std::to_string(layer.normalizedSize) +
           " requested_pixel_size=" + std::to_string(layer.pixelSize) +
           " effective_pixel_size=" + std::to_string(layout.effectivePixelSize) +
-          " effective_scale=" + std::to_string(layout.effectiveScale) +
-          " overflowed=" + (layout.overflowed ? "true" : "false") +
-          " clipped=" + (layout.clipped ? "true" : "false") +
-          " ellipsized=" + (layout.ellipsized ? "true" : "false") +
-          " cell=[" + std::to_string(layer.overlay.cellBounds.x1) + ',' +
-                       std::to_string(layer.overlay.cellBounds.x2) + ']' +
           " mask=[" + std::to_string(zoneMask.width) + ',' +
                        std::to_string(zoneMask.height) + ']' +
           " outline=" + (!zoneMask.outlinePixels.empty() ? "true" : "false") +
