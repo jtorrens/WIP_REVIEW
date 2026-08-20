@@ -86,14 +86,14 @@ ShrinkToFit. Detalles:
 - [P2C_DROP_SHADOW_RESULTS.md](P2C_DROP_SHADOW_RESULTS.md)
 - [P2D_OVERFLOW_RESULTS.md](P2D_OVERFLOW_RESULTS.md)
 
-## Texto dinámico
+## Campos calculados
 
-Las seis strings aceptan `{frame_rel}`, `{frame}` y `{timecode}`. El frame
-absoluto y el inicio de timecode proceden de parámetros explícitos; no se
-infiere semántica editorial inexistente en OFX. Timecode admite FPS del host u
-override y modos Auto, NonDrop y Drop. Solo un texto con un token soportado
-declara el output frame-varying. Véase
-[P3_DYNAMIC_TOKENS_RESULTS.md](P3_DYNAMIC_TOKENS_RESULTS.md).
+Cada zona ofrece **Text** como prefijo literal y, a continuación,
+**Calculated Field** con None, Frame Relative, Frame, Timecode o Date. Resolve
+añade Source Frame y Source Filename cuando carga el plugin; Fusion conserva
+solo el conjunto portable. Frame Start, Timecode Start, Review Date y los
+ajustes de FPS son globales. Véase
+[P3_CALCULATED_FIELDS_RESULTS.md](P3_CALCULATED_FIELDS_RESULTS.md).
 
 ## Color gestionado
 
@@ -113,7 +113,7 @@ paralela dentro del plugin. Véase
 El log registra identidad/API del host, contextos, multi-resolution, tiles,
 depths, PAR, Source/Output, bounds y RoD entregados, `renderWindow`,
 `renderScale`, premultiplicación, colourspace y negociación de color. También
-registra placement, blanking, capas tipográficas, tokens y uso de la ruta
+registra placement, blanking, capas tipográficas, campos calculados y uso de la ruta
 multithread.
 
 Ruta por defecto:
@@ -132,7 +132,7 @@ Los eventos principales son `INSTANCE_CREATE`,
 `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`, `RENDER`, `CLIP`,
 `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`, `STATIC_FORMATTER`,
 `EDITORIAL_BLANKING`, `TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW`,
-`DYNAMIC_TEXT`, `TOKEN_ZONE` y `TEXT_ZONE`.
+`CALCULATED_FIELDS`, `CALCULATED_FIELD_ZONE` y `TEXT_ZONE`.
 
 ## Dependencia OpenFX aislada
 
@@ -202,7 +202,7 @@ scripts/run_fusion_smoke.sh
 
 El harness crea una composición privada con Source `4608×3164`, valida los
 cinco placements en Output `1920×1080`, Host Raster, blanking, seis zonas,
-outline, shadow, overflow, tokens, Rec.709/PQ/HLG y la ruta CPU multithread. La
+outline, shadow, overflow, campos calculados, Rec.709/PQ/HLG y la ruta CPU multithread. La
 composición activa se restaura y no se modifica.
 
 También puede ejecutarse mediante:

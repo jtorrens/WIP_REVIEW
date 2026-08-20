@@ -2,9 +2,8 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 
-namespace wipreview::tokens {
+namespace wipreview::fields {
 
 enum class DropFrameMode {
   Auto,
@@ -12,11 +11,24 @@ enum class DropFrameMode {
   Drop,
 };
 
+enum class CalculatedField {
+  None,
+  FrameRelative,
+  Frame,
+  Timecode,
+  Date,
+  SourceFrame,
+  SourceFilename,
+};
+
 struct Settings {
   std::int64_t frameRelativeBase = 1;
   std::int64_t frameStart = 1001;
   double fps = 24.0;
   std::string timecodeStart = "00:00:00:00";
+  std::string reviewDate;
+  std::string sourceFrame;
+  std::string sourceFilename;
   DropFrameMode dropFrameMode = DropFrameMode::Auto;
 };
 
@@ -27,7 +39,7 @@ struct Resolution {
   std::int64_t frameRelative = 1;
   std::int64_t frame = 1001;
   int nominalFps = 24;
-  bool containsDynamicTokens = false;
+  bool containsCalculatedField = false;
   bool fpsValid = true;
   bool dropCompatible = false;
   bool dropApplied = false;
@@ -35,13 +47,12 @@ struct Resolution {
   bool usedTimecodeFallback = false;
 };
 
-[[nodiscard]] bool containsDynamicToken(std::string_view text) noexcept;
-
-// Resolves only the three V1 tokens. Unknown brace expressions remain literal.
-// Invalid timecode state uses frameRelative as the internal frame offset and is
+// Appends the selected calculated value to the literal prefix. Invalid
+// timecode state uses frameRelative as the internal frame offset and is
 // surfaced in the result instead of silently approximating the requested start.
-[[nodiscard]] Resolution resolve(std::string_view text,
+[[nodiscard]] Resolution resolve(const std::string& prefix,
+                                 CalculatedField field,
                                  double effectTime,
                                  const Settings& settings) noexcept;
 
-}  // namespace wipreview::tokens
+}  // namespace wipreview::fields

@@ -1,4 +1,4 @@
-#include "token_resolver.hpp"
+#include "calculated_field_resolver.hpp"
 
 #include <algorithm>
 #include <array>
@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <limits>
 
-namespace wipreview::tokens {
+namespace wipreview::fields {
 namespace {
 
 constexpr double kFps29_97 = 30000.0 / 1001.0;
@@ -114,29 +114,15 @@ std::string formatTimecode(std::int64_t actualFrames, int nominalFps,
   return buffer.data();
 }
 
-void replaceAll(std::string& text, std::string_view token,
-                const std::string& value) {
-  std::size_t offset = 0;
-  while ((offset = text.find(token, offset)) != std::string::npos) {
-    text.replace(offset, token.size(), value);
-    offset += value.size();
-  }
-}
-
 }  // namespace
 
-bool containsDynamicToken(std::string_view text) noexcept {
-  return text.find("{frame_rel}") != std::string_view::npos ||
-         text.find("{frame}") != std::string_view::npos ||
-         text.find("{timecode}") != std::string_view::npos;
-}
-
-Resolution resolve(std::string_view text, double effectTime,
+Resolution resolve(const std::string& prefix, CalculatedField field,
+                   double effectTime,
                    const Settings& settings) noexcept {
   Resolution result;
   try {
-    result.text = std::string(text);
-    result.containsDynamicTokens = containsDynamicToken(text);
+    result.text = prefix;
+    result.containsCalculatedField = field != CalculatedField::None;
     result.effectFrame = roundedFrame(effectTime);
     result.frameRelative = saturatingAdd(result.effectFrame, settings.frameRelativeBase);
     result.frame = saturatingAdd(result.effectFrame, settings.frameStart);
@@ -161,13 +147,32 @@ Resolution resolve(std::string_view text, double effectTime,
     result.timecode = formatTimecode(
         timecodeFrames, result.nominalFps, result.dropApplied);
 
-    replaceAll(result.text, "{frame_rel}", std::to_string(result.frameRelative));
-    replaceAll(result.text, "{frame}", std::to_string(result.frame));
-    replaceAll(result.text, "{timecode}", result.timecode);
+    switch (field) {
+      case CalculatedField::None:
+        break;
+      case CalculatedField::FrameRelative:
+        result.text += std::to_string(result.frameRelative);
+        break;
+      case CalculatedField::Frame:
+        result.text += std::to_string(result.frame);
+        break;
+      case CalculatedField::Timecode:
+        result.text += result.timecode;
+        break;
+      case CalculatedField::Date:
+        result.text += settings.reviewDate;
+        break;
+      case CalculatedField::SourceFrame:
+        result.text += settings.sourceFrame;
+        break;
+      case CalculatedField::SourceFilename:
+        result.text += settings.sourceFilename;
+        break;
+    }
     return result;
   } catch (...) {
     return {};
   }
 }
 
-}  // namespace wipreview::tokens
+}  // namespace wipreview::fields

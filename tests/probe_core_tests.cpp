@@ -1,6 +1,6 @@
 #include "probe_core.hpp"
 #include "text_rasterizer.hpp"
-#include "token_resolver.hpp"
+#include "calculated_field_resolver.hpp"
 
 #include <algorithm>
 #include <array>
@@ -648,51 +648,69 @@ void testTextOverflowLayout() {
   assert(result.overflowed && result.clipped);  // styled bounds, not fill alone
 }
 
-void testDynamicTokensAndTimecode() {
-  using wipreview::tokens::DropFrameMode;
-  wipreview::tokens::Settings settings;
-  auto result = wipreview::tokens::resolve(
-      "REL {frame_rel} ABS {frame} TC {timecode} UNKNOWN {shot}", 0.0, settings);
-  assert(result.text == "REL 1 ABS 1001 TC 00:00:00:00 UNKNOWN {shot}");
-  assert(result.containsDynamicTokens);
+void testCalculatedFieldsAndTimecode() {
+  using wipreview::fields::CalculatedField;
+  using wipreview::fields::DropFrameMode;
+  wipreview::fields::Settings settings;
+  auto result = wipreview::fields::resolve(
+      "FR: ", CalculatedField::Frame, 0.0, settings);
+  assert(result.text == "FR: 1001");
+  assert(result.containsCalculatedField);
   assert(result.frameRelative == 1 && result.frame == 1001);
-  assert(!wipreview::tokens::containsDynamicToken("UNKNOWN {shot}"));
-  assert(wipreview::tokens::containsDynamicToken("{frame_rel}"));
 
-  result = wipreview::tokens::resolve("{frame_rel}/{frame}", 1.5, settings);
-  assert(result.text == "3/1003");  // std::round semantics: half away from zero
+  result = wipreview::fields::resolve(
+      "REL ", CalculatedField::FrameRelative, 1.5, settings);
+  assert(result.text == "REL 3");  // std::round semantics: half away from zero
+
+  result = wipreview::fields::resolve(
+      "Literal {frame}", CalculatedField::None, 0.0, settings);
+  assert(result.text == "Literal {frame}" && !result.containsCalculatedField);
+
+  settings.reviewDate = "2026-08-20";
+  settings.sourceFrame = "42";
+  settings.sourceFilename = "A001.mov";
+  assert(wipreview::fields::resolve(
+             "DATE: ", CalculatedField::Date, 0.0, settings).text ==
+         "DATE: 2026-08-20");
+  assert(wipreview::fields::resolve(
+             "SRC: ", CalculatedField::SourceFrame, 0.0, settings).text ==
+         "SRC: 42");
+  assert(wipreview::fields::resolve(
+             "FILE: ", CalculatedField::SourceFilename, 0.0, settings).text ==
+         "FILE: A001.mov");
 
   settings.dropFrameMode = DropFrameMode::NonDrop;
   for (const auto rate : {24.0, 25.0, 30.0, 24000.0 / 1001.0}) {
     settings.fps = rate;
     const int nominal = static_cast<int>(std::lround(rate));
-    result = wipreview::tokens::resolve("{timecode}", nominal, settings);
+    result = wipreview::fields::resolve(
+        "", CalculatedField::Timecode, nominal, settings);
     assert(result.text == "00:00:01:00");
     assert(!result.dropApplied && !result.usedTimecodeFallback);
   }
 
   settings.fps = 30000.0 / 1001.0;
   settings.dropFrameMode = DropFrameMode::Auto;
-  result = wipreview::tokens::resolve("{timecode}", 1799.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 1799.0, settings);
   assert(result.text == "00:00:59;29");
-  result = wipreview::tokens::resolve("{timecode}", 1800.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 1800.0, settings);
   assert(result.text == "00:01:00;02");
-  result = wipreview::tokens::resolve("{timecode}", 17982.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 17982.0, settings);
   assert(result.text == "00:10:00;00");
 
   settings.timecodeStart = "01:00:00;00";
-  result = wipreview::tokens::resolve("{timecode}", 0.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
   assert(result.text == "01:00:00;00");
 
   settings.timecodeStart = "invalid";
-  result = wipreview::tokens::resolve("{timecode}", 0.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
   assert(!result.timecodeStartValid && result.usedTimecodeFallback);
   assert(result.text == "00:00:00;01");
 
   settings.timecodeStart = "00:00:00:00";
   settings.fps = 25.0;
   settings.dropFrameMode = DropFrameMode::Drop;
-  result = wipreview::tokens::resolve("{timecode}", 0.0, settings);
+  result = wipreview::fields::resolve("", CalculatedField::Timecode, 0.0, settings);
   assert(!result.dropCompatible && !result.dropApplied && result.usedTimecodeFallback);
   assert(result.text == "00:00:00:01");
 }
@@ -721,6 +739,6 @@ int main() {
   testOutlineUsesGlyphAlpha();
   testShadowUsesGlyphAlpha();
   testTextOverflowLayout();
-  testDynamicTokensAndTimecode();
+  testCalculatedFieldsAndTimecode();
   return 0;
 }

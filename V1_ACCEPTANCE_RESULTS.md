@@ -39,7 +39,7 @@ Detalle: [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 |---|---|---|
 | B01–B04 | Automatizado y visual | Letterbox 2.00, opacity 0.5, Off y pillarbox Custom. |
 | T01–T06 | Automatizado y visual | Padding independiente, crecimiento top/bottom, outline, shadow, UTF-8 y overflow por celda. |
-| D01–D03 | Automatizado y visual | `{frame_rel}`, `{frame}` y timecode a 24, 25, 30, 23.976 y 29.97 DF. |
+| D01–D03 | Automatizado y visual | Prefijo literal + Frame Relative, Frame y Timecode a 24, 25, 30, 23.976 y 29.97 DF. |
 
 Las evidencias detalladas están en los documentos P1B, P2A–P2D y P3.
 
@@ -91,7 +91,7 @@ commit `39345d4`:
 - descriptor único en Fusion General: Requested 1920×1080 desde Source
   4608×3164;
 - Host Raster y los cinco placements aprobados;
-- blanking, seis zonas, outline, shadow, overflow y tokens aprobados;
+- blanking, seis zonas, outline, shadow, overflow y campos calculados aprobados;
 - Rec.709, PQ y HLG aprobados;
 - firma ad-hoc, símbolos OFX y arquitecturas arm64/x86_64 verificados.
 

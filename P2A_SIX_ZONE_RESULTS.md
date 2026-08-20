@@ -25,7 +25,7 @@ overflow.
 - celdas lógicas, `zoneGap` y overflow;
 - `Clip`, `Ellipsis` y `ShrinkToFit`;
 - outline y drop shadow;
-- tokens dinámicos;
+- campos calculados;
 - transformaciones OCIO de píxel, GPU y presets.
 
 ## Tests host-independent

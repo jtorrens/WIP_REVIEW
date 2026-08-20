@@ -1,7 +1,7 @@
 # P2c Drop Shadow — estado de implementación
 
 **Versión de desarrollo:** `WIPReviewProbe.ofx` 0.7.0  
-**Alcance:** drop shadow global de las seis zonas; sin overflow ni tokens.
+**Alcance:** drop shadow global de las seis zonas; sin overflow ni campos calculados.
 
 ## Contrato implementado
 
@@ -61,7 +61,7 @@ La composición visual añade:
 ## Fuera de alcance
 
 - `Clip`, `Ellipsis`, `ShrinkToFit`, celdas lógicas y `zoneGap`;
-- tokens dinámicos;
+- campos calculados;
 - transformaciones OCIO de píxeles, GPU y presets.
 
 ## Resultado automático — aprobado

@@ -1,7 +1,7 @@
 # P2b Outline — estado de implementación
 
 **Versión de desarrollo:** `WIPReviewProbe.ofx` 0.6.0  
-**Alcance:** outline global de las seis zonas; sin shadow, overflow ni tokens.
+**Alcance:** outline global de las seis zonas; sin shadow, overflow ni campos calculados.
 
 ## Contrato implementado
 
@@ -54,7 +54,7 @@ La composición visual añade:
 
 - drop shadow;
 - `Clip`, `Ellipsis`, `ShrinkToFit`, celdas lógicas y `zoneGap`;
-- tokens dinámicos;
+- campos calculados;
 - transformaciones OCIO de píxeles, GPU y presets.
 
 ## Resultado automático — aprobado

@@ -1,7 +1,7 @@
 # P2d Overflow — estado de implementación
 
 **Versión de desarrollo:** `WIPReviewProbe.ofx` 0.8.0  
-**Alcance:** celdas lógicas y overflow global de las seis zonas; sin tokens.
+**Alcance:** celdas lógicas y overflow global de las seis zonas; sin campos calculados.
 
 ## Contrato implementado
 
@@ -75,7 +75,7 @@ La composición visual añade:
 
 ## Fuera de alcance
 
-- tokens `{frame_rel}`, `{frame}` y `{timecode}`;
+- campos calculados Frame Relative, Frame y Timecode;
 - transformaciones OCIO de píxeles, GPU y presets.
 
 ## Resultado automático — aprobado

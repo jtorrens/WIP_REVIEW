@@ -39,7 +39,7 @@ target_include_directories(openfx_sdk_headers SYSTEM INTERFACE
 add_library(wipreview_probe_core STATIC
   src/color_pipeline.cpp
   src/probe_core.cpp
-  src/token_resolver.cpp
+  src/calculated_field_resolver.cpp
 )
 target_include_directories(wipreview_probe_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_features(wipreview_probe_core PUBLIC cxx_std_17)

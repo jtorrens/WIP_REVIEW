@@ -1,6 +1,6 @@
 #include "probe_core.hpp"
 #include "text_rasterizer.hpp"
-#include "token_resolver.hpp"
+#include "calculated_field_resolver.hpp"
 
 #include <ofxColour.h>
 #include <ofx-native-v1.5_aces-v1.3_ocio-v2.3.h>
@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -75,12 +76,13 @@ constexpr char kParamTextGroup[] = "textGlobalGroup";
 constexpr char kParamZoneGap[] = "zoneGap";
 constexpr char kParamOverflowMode[] = "overflowMode";
 constexpr char kParamMinimumFontScale[] = "minimumFontScale";
-constexpr char kParamDynamicTextGroup[] = "dynamicTextGroup";
+constexpr char kParamCalculatedFieldsGroup[] = "calculatedFieldsGroup";
 constexpr char kParamFrameRelativeBase[] = "frameRelativeBase";
 constexpr char kParamFrameStart[] = "frameStart";
 constexpr char kParamFpsMode[] = "fpsMode";
 constexpr char kParamFpsOverride[] = "fpsOverride";
 constexpr char kParamTimecodeStart[] = "timecodeStart";
+constexpr char kParamReviewDate[] = "reviewDate";
 constexpr char kParamDropFrameMode[] = "dropFrameMode";
 constexpr char kParamOutlineEnabled[] = "outlineEnabled";
 constexpr char kParamOutlineWidth[] = "outlineWidth";
@@ -111,7 +113,8 @@ struct ZoneParamNames {
   const char* label;
   const char* group;
   const char* enabled;
-  const char* text;
+  const char* prefix;
+  const char* calculatedField;
   const char* useSize;
   const char* size;
   const char* useColour;
@@ -123,26 +126,28 @@ struct ZoneParamNames {
 };
 
 constexpr std::array<ZoneParamNames, 6> kZoneParams{{
-    {"TL", "tlZone", "tlEnabled", "tlText", "tlUseSizeOverride", "tlSize",
+    {"TL", "tlZone", "tlEnabled", "tlPrefix", "tlCalculatedField", "tlUseSizeOverride", "tlSize",
      "tlUseColorOverride", "tlColor", "tlUseOpacityOverride", "tlOpacity",
      "tlOffsetX", "tlOffsetY"},
-    {"TC", "tcZone", "tcEnabled", "tcText", "tcUseSizeOverride", "tcSize",
+    {"TC", "tcZone", "tcEnabled", "tcPrefix", "tcCalculatedField", "tcUseSizeOverride", "tcSize",
      "tcUseColorOverride", "tcColor", "tcUseOpacityOverride", "tcOpacity",
      "tcOffsetX", "tcOffsetY"},
-    {"TR", "trZone", "trEnabled", "trText", "trUseSizeOverride", "trSize",
+    {"TR", "trZone", "trEnabled", "trPrefix", "trCalculatedField", "trUseSizeOverride", "trSize",
      "trUseColorOverride", "trColor", "trUseOpacityOverride", "trOpacity",
      "trOffsetX", "trOffsetY"},
-    {"BL", "blZone", "blEnabled", "blText", "blUseSizeOverride", "blSize",
+    {"BL", "blZone", "blEnabled", "blPrefix", "blCalculatedField", "blUseSizeOverride", "blSize",
      "blUseColorOverride", "blColor", "blUseOpacityOverride", "blOpacity",
      "blOffsetX", "blOffsetY"},
-    {"BC", "bcZone", "bcEnabled", "bcText", "bcUseSizeOverride", "bcSize",
+    {"BC", "bcZone", "bcEnabled", "bcPrefix", "bcCalculatedField", "bcUseSizeOverride", "bcSize",
      "bcUseColorOverride", "bcColor", "bcUseOpacityOverride", "bcOpacity",
      "bcOffsetX", "bcOffsetY"},
-    {"BR", "brZone", "brEnabled", "brText", "brUseSizeOverride", "brSize",
+    {"BR", "brZone", "brEnabled", "brPrefix", "brCalculatedField", "brUseSizeOverride", "brSize",
      "brUseColorOverride", "brColor", "brUseOpacityOverride", "brOpacity",
      "brOffsetX", "brOffsetY"},
 }};
 constexpr char kNativeConfig[] = "ofx-native-v1.5_aces-v1.3_ocio-v2.3";
+constexpr char kResolveSourceFilePath[] = "OfxImageEffectPropSrcFilePath";
+constexpr char kResolveSourceFrame[] = "OfxImageEffectPropSrcFrame";
 constexpr char kOutputClipPARPreference[] = "OfxImageClipPropPAR_Output";
 constexpr char kSourcePreferredColourspaces[] =
     "OfxImageClipPropPreferredColourspaces_Source";
@@ -154,6 +159,7 @@ const OfxParameterSuiteV1* gParameterSuite = nullptr;
 const OfxMessageSuiteV2* gMessageSuite = nullptr;
 const OfxMultiThreadSuiteV1* gMultiThreadSuite = nullptr;
 bool gRequestedReviewRasterSupported = false;
+bool gResolveHost = false;
 
 const char* statusName(OfxStatus status) noexcept {
   switch (status) {
@@ -345,6 +351,21 @@ bool stringPropertyEquals(OfxPropertySetHandle properties, const char* name,
       value && std::strcmp(value, expected) == 0;
 }
 
+std::string currentLocalDate() {
+  const std::time_t now = std::time(nullptr);
+  std::tm local{};
+#if defined(_WIN32)
+  if (localtime_s(&local, &now) != 0) return {};
+#else
+  if (!localtime_r(&now, &local)) return {};
+#endif
+  std::array<char, 11> date{};
+  if (std::strftime(date.data(), date.size(), "%Y-%m-%d", &local) == 0) {
+    return {};
+  }
+  return date.data();
+}
+
 std::string getInt(OfxPropertySetHandle properties, const char* name) {
   if (!gPropertySuite || !properties) return "<unavailable>";
   int value = 0;
@@ -433,7 +454,8 @@ struct CachedZoneText {
 struct InstanceData {
   struct ZoneHandles {
     OfxParamHandle enabled = nullptr;
-    OfxParamHandle text = nullptr;
+    OfxParamHandle prefix = nullptr;
+    OfxParamHandle calculatedField = nullptr;
     OfxParamHandle useSize = nullptr;
     OfxParamHandle size = nullptr;
     OfxParamHandle useColour = nullptr;
@@ -477,6 +499,7 @@ struct InstanceData {
   OfxParamHandle fpsMode = nullptr;
   OfxParamHandle fpsOverride = nullptr;
   OfxParamHandle timecodeStart = nullptr;
+  OfxParamHandle reviewDate = nullptr;
   OfxParamHandle dropFrameMode = nullptr;
   OfxParamHandle outlineEnabled = nullptr;
   OfxParamHandle outlineWidth = nullptr;
@@ -1125,6 +1148,8 @@ TextRenderSettings readGlobalTextSettings(const InstanceData* instance, OfxTime 
 
 struct ZoneTextSettings {
   TextRenderSettings layer;
+  wipreview::fields::CalculatedField calculatedField =
+      wipreview::fields::CalculatedField::None;
   bool useSizeOverride = false;
   bool useColourOverride = false;
   bool useOpacityOverride = false;
@@ -1152,7 +1177,8 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   int useSize = 0;
   int useColour = 0;
   int useOpacity = 0;
-  char* text = nullptr;
+  char* prefix = nullptr;
+  int calculatedField = 0;
   double size = global.normalizedSize;
   double colour[4] = {
       global.overlay.colour[0], global.overlay.colour[1],
@@ -1161,7 +1187,13 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   double offsetX = 0.0;
   double offsetY = 0.0;
   if (handles.enabled) gParameterSuite->paramGetValueAtTime(handles.enabled, time, &enabled);
-  if (handles.text) gParameterSuite->paramGetValueAtTime(handles.text, time, &text);
+  if (handles.prefix) {
+    gParameterSuite->paramGetValueAtTime(handles.prefix, time, &prefix);
+  }
+  if (handles.calculatedField) {
+    gParameterSuite->paramGetValueAtTime(
+        handles.calculatedField, time, &calculatedField);
+  }
   if (handles.useSize) gParameterSuite->paramGetValueAtTime(handles.useSize, time, &useSize);
   if (handles.size) gParameterSuite->paramGetValueAtTime(handles.size, time, &size);
   if (handles.useColour) gParameterSuite->paramGetValueAtTime(handles.useColour, time, &useColour);
@@ -1178,7 +1210,18 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   settings.useColourOverride = useColour != 0;
   settings.useOpacityOverride = useOpacity != 0;
   settings.layer.overlay.enabled = enabled != 0;
-  settings.layer.text = text ? text : "";
+  settings.layer.text = prefix ? prefix : "";
+  const auto calculatedFields = std::array{
+      wipreview::fields::CalculatedField::None,
+      wipreview::fields::CalculatedField::FrameRelative,
+      wipreview::fields::CalculatedField::Frame,
+      wipreview::fields::CalculatedField::Timecode,
+      wipreview::fields::CalculatedField::Date,
+      wipreview::fields::CalculatedField::SourceFrame,
+      wipreview::fields::CalculatedField::SourceFilename};
+  const int maximumField = gResolveHost ? 6 : 4;
+  settings.calculatedField = calculatedFields[static_cast<std::size_t>(
+      std::clamp(calculatedField, 0, maximumField))];
   settings.layer.overlay.offsetX = std::clamp(offsetX, -1.0, 1.0);
   settings.layer.overlay.offsetY = std::clamp(offsetY, -1.0, 1.0);
   if (settings.useSizeOverride) settings.layer.normalizedSize = std::clamp(size, 0.001, 1.0);
@@ -1193,19 +1236,21 @@ ZoneTextSettings readZoneTextSettings(const InstanceData* instance, std::size_t 
   return settings;
 }
 
-struct DynamicTextSettings {
-  wipreview::tokens::Settings resolver;
+struct CalculatedFieldSettings {
+  wipreview::fields::Settings resolver;
   int fpsMode = 0;
   double hostFps = 0.0;
 };
 
-DynamicTextSettings readDynamicTextSettings(const InstanceData* instance) {
-  DynamicTextSettings settings;
+CalculatedFieldSettings readCalculatedFieldSettings(
+    const InstanceData* instance, OfxPropertySetHandle renderInArgs) {
+  CalculatedFieldSettings settings;
   int frameRelativeBase = 1;
   int frameStart = 1001;
   int fpsMode = 0;
   double fpsOverride = 24.0;
   char* timecodeStart = nullptr;
+  char* reviewDate = nullptr;
   int dropFrameMode = 0;
   if (instance->frameRelativeBase) {
     gParameterSuite->paramGetValue(instance->frameRelativeBase, &frameRelativeBase);
@@ -1220,6 +1265,9 @@ DynamicTextSettings readDynamicTextSettings(const InstanceData* instance) {
   if (instance->timecodeStart) {
     gParameterSuite->paramGetValue(instance->timecodeStart, &timecodeStart);
   }
+  if (instance->reviewDate) {
+    gParameterSuite->paramGetValue(instance->reviewDate, &reviewDate);
+  }
   if (instance->dropFrameMode) {
     gParameterSuite->paramGetValue(instance->dropFrameMode, &dropFrameMode);
   }
@@ -1232,10 +1280,33 @@ DynamicTextSettings readDynamicTextSettings(const InstanceData* instance) {
   settings.resolver.frameStart = frameStart;
   settings.resolver.fps = settings.fpsMode == 0 ? settings.hostFps : fpsOverride;
   settings.resolver.timecodeStart = timecodeStart ? timecodeStart : "00:00:00:00";
+  settings.resolver.reviewDate = reviewDate ? reviewDate : "";
+  if (gResolveHost) {
+    int sourceFrame = 0;
+    if (renderInArgs &&
+        gPropertySuite->propGetInt(
+            renderInArgs, kResolveSourceFrame, 0, &sourceFrame) == kOfxStatOK) {
+      settings.resolver.sourceFrame = std::to_string(sourceFrame);
+    }
+    OfxPropertySetHandle effectProperties = nullptr;
+    gImageSuite->getPropertySet(instance->effect, &effectProperties);
+    char* sourcePath = nullptr;
+    if (effectProperties &&
+        gPropertySuite->propGetString(
+            effectProperties, kResolveSourceFilePath, 0, &sourcePath) == kOfxStatOK &&
+        sourcePath) {
+      try {
+        settings.resolver.sourceFilename =
+            std::filesystem::path(sourcePath).filename().string();
+      } catch (...) {
+        settings.resolver.sourceFilename.clear();
+      }
+    }
+  }
   const auto modes = std::array{
-      wipreview::tokens::DropFrameMode::Auto,
-      wipreview::tokens::DropFrameMode::NonDrop,
-      wipreview::tokens::DropFrameMode::Drop};
+      wipreview::fields::DropFrameMode::Auto,
+      wipreview::fields::DropFrameMode::NonDrop,
+      wipreview::fields::DropFrameMode::Drop};
   settings.resolver.dropFrameMode = modes[
       static_cast<std::size_t>(std::clamp(dropFrameMode, 0, 2))];
   return settings;
@@ -1256,6 +1327,8 @@ OfxStatus load() {
   gRequestedReviewRasterSupported =
       stringPropertyEquals(gHost->host, kOfxPropName,
                            "com.blackmagicdesign.Fusion");
+  gResolveHost = stringPropertyEquals(
+      gHost->host, kOfxPropName, "DaVinciResolve");
 
   if (!gImageSuite || !gPropertySuite || !gParameterSuite) {
     return kOfxStatErrMissingHostFeature;
@@ -1318,7 +1391,7 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   for (std::size_t index = 0; index < kZoneParams.size(); ++index) {
     gPropertySuite->propSetString(
         properties, kOfxImageEffectPropClipPreferencesSlaveParam,
-        static_cast<int>(index), kZoneParams[index].text);
+        static_cast<int>(index), kZoneParams[index].calculatedField);
   }
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropClipPreferencesSlaveParam,
@@ -1435,8 +1508,17 @@ void defineZoneParams(OfxParamSetHandle params, const ZoneParamNames& zone) {
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
   gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, zone.group);
 
-  defineStringParam(params, zone.text, "Text", "", false,
-                    "UTF-8 text. Supports {frame_rel}, {frame} and {timecode}.", zone.group);
+  defineStringParam(params, zone.prefix, "Text", "", false,
+                    "Literal UTF-8 text shown before the calculated field.", zone.group);
+  std::vector<const char*> calculatedFields{
+      "None", "Frame Relative", "Frame", "Timecode", "Date"};
+  if (gResolveHost) {
+    calculatedFields.push_back("Source Frame");
+    calculatedFields.push_back("Source Filename");
+  }
+  defineChoiceParam(params, zone.calculatedField, "Calculated Field",
+                    calculatedFields, 0,
+                    "Appends one host-supported value after Text.", zone.group);
 
   defineDoubleParam(params, zone.offsetX, "Offset X", 0.0,
                     -1.0, 1.0, -0.25, 0.25,
@@ -1793,35 +1875,39 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   for (const auto& zone : kZoneParams) defineZoneParams(params, zone);
 
   gParameterSuite->paramDefine(
-      params, kOfxParamTypeGroup, kParamDynamicTextGroup, &properties);
+      params, kOfxParamTypeGroup, kParamCalculatedFieldsGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Timing");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
   gPropertySuite->propSetString(
       properties, kOfxParamPropHint, 0,
-      "Supported text tokens: {frame_rel}, {frame}, {timecode}.");
+      "Calculated fields available in every zone: Frame Relative, Frame and Timecode.");
   defineIntegerParam(params, kParamFrameRelativeBase, "Frame Relative Base", 1,
                      -1000000000, 1000000000, -10000, 10000,
-                     "Added to round(effectTime) for {frame_rel}.",
-                     kParamDynamicTextGroup);
+                     "Global first-frame number used by Frame Relative.",
+                     kParamCalculatedFieldsGroup);
   defineIntegerParam(params, kParamFrameStart, "Frame Start", 1001,
                      -1000000000, 1000000000, -10000, 100000,
-                     "Added to round(effectTime) for {frame}; set explicitly from workflow data.",
-                     kParamDynamicTextGroup);
+                     "Global absolute frame number at the first frame of the effect.",
+                     kParamCalculatedFieldsGroup);
+  defineStringParam(params, kParamReviewDate, "Review Date", "", false,
+                    "Global stable date appended by the Date field; initialized when the effect is created.",
+                    kParamCalculatedFieldsGroup);
   defineChoiceParam(params, kParamFpsMode, "FPS Mode",
                     {"AutoFromHost", "Override"}, 0,
                     "Use the effect frame rate published by the host or FPS Override.",
-                    kParamDynamicTextGroup);
+                    kParamCalculatedFieldsGroup);
   defineDoubleParam(params, kParamFpsOverride, "FPS Override", 24.0,
                     1.0, 240.0, 1.0, 120.0,
-                    "Frame rate used for {timecode} when FPS Mode is Override.",
-                    kParamDynamicTextGroup);
+                    "Frame rate used by Timecode when FPS Mode is Override.",
+                    kParamCalculatedFieldsGroup);
   defineStringParam(params, kParamTimecodeStart, "Timecode Start", "00:00:00:00",
-                    false, "HH:MM:SS:FF or HH:MM:SS;FF start value.",
-                    kParamDynamicTextGroup);
+                    false,
+                    "Global timecode at the first frame of the effect: HH:MM:SS:FF or HH:MM:SS;FF.",
+                    kParamCalculatedFieldsGroup);
   defineChoiceParam(params, kParamDropFrameMode, "Drop Frame Mode",
                     {"Auto", "NonDrop", "Drop"}, 0,
                     "Auto enables drop-frame for 29.97/59.94; incompatible Drop requests are logged and use NonDrop.",
-                    kParamDynamicTextGroup);
+                    kParamCalculatedFieldsGroup);
 
   gParameterSuite->paramDefine(
       params, kOfxParamTypeGroup, kParamColorGroup, &properties);
@@ -1870,10 +1956,11 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
     definedPages.push_back(kParamTypographyPage);
   }
   std::vector<const char*> zonePageChildren;
-  zonePageChildren.reserve(kZoneParams.size() * 10);
+  zonePageChildren.reserve(kZoneParams.size() * 11);
   for (const auto& zone : kZoneParams) {
     zonePageChildren.insert(zonePageChildren.end(),
-                            {zone.enabled, zone.text, zone.offsetX, zone.offsetY,
+                            {zone.enabled, zone.prefix, zone.calculatedField,
+                             zone.offsetX, zone.offsetY,
                              zone.useSize, zone.size, zone.useColour,
                              zone.colour, zone.useOpacity, zone.opacity});
   }
@@ -1881,7 +1968,8 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
     definedPages.push_back(kParamZonesPage);
   }
   if (definePage(params, kParamTimingPage, "Timing",
-                 {kParamFrameRelativeBase, kParamFrameStart, kParamFpsMode,
+                 {kParamFrameRelativeBase, kParamFrameStart, kParamReviewDate,
+                  kParamFpsMode,
                   kParamFpsOverride, kParamTimecodeStart,
                   kParamDropFrameMode})) {
     definedPages.push_back(kParamTimingPage);
@@ -1968,6 +2056,8 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(
       params, kParamTimecodeStart, &instance->timecodeStart, nullptr);
   gParameterSuite->paramGetHandle(
+      params, kParamReviewDate, &instance->reviewDate, nullptr);
+  gParameterSuite->paramGetHandle(
       params, kParamDropFrameMode, &instance->dropFrameMode, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineEnabled, &instance->outlineEnabled, nullptr);
   gParameterSuite->paramGetHandle(params, kParamOutlineWidth, &instance->outlineWidth, nullptr);
@@ -1987,7 +2077,9 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
     const auto& names = kZoneParams[index];
     auto& handles = instance->zones[index];
     gParameterSuite->paramGetHandle(params, names.enabled, &handles.enabled, nullptr);
-    gParameterSuite->paramGetHandle(params, names.text, &handles.text, nullptr);
+    gParameterSuite->paramGetHandle(params, names.prefix, &handles.prefix, nullptr);
+    gParameterSuite->paramGetHandle(
+        params, names.calculatedField, &handles.calculatedField, nullptr);
     gParameterSuite->paramGetHandle(params, names.useSize, &handles.useSize, nullptr);
     gParameterSuite->paramGetHandle(params, names.size, &handles.size, nullptr);
     gParameterSuite->paramGetHandle(params, names.useColour, &handles.useColour, nullptr);
@@ -1996,6 +2088,17 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
     gParameterSuite->paramGetHandle(params, names.opacity, &handles.opacity, nullptr);
     gParameterSuite->paramGetHandle(params, names.offsetX, &handles.offsetX, nullptr);
     gParameterSuite->paramGetHandle(params, names.offsetY, &handles.offsetY, nullptr);
+  }
+  if (instance->reviewDate) {
+    char* reviewDate = nullptr;
+    if (gParameterSuite->paramGetValue(instance->reviewDate, &reviewDate) ==
+            kOfxStatOK &&
+        (!reviewDate || reviewDate[0] == '\0')) {
+      const std::string today = currentLocalDate();
+      if (!today.empty()) {
+        gParameterSuite->paramSetValue(instance->reviewDate, today.c_str());
+      }
+    }
   }
   gPropertySuite->propSetPointer(effectProperties, kOfxPropInstanceData, 0, instance);
   updateUiState(instance);
@@ -2129,9 +2232,12 @@ OfxStatus getClipPreferences(OfxImageEffectHandle effect,
       outArgs, kOutputClipPARPreference, 0, 1.0);
   bool outputFrameVarying = false;
   for (const auto& zone : instance->zones) {
-    char* text = nullptr;
-    if (zone.text && gParameterSuite->paramGetValue(zone.text, &text) == kOfxStatOK &&
-        text && wipreview::tokens::containsDynamicToken(text)) {
+    int calculatedField = 0;
+    if (zone.calculatedField &&
+        gParameterSuite->paramGetValue(
+            zone.calculatedField, &calculatedField) == kOfxStatOK &&
+        (calculatedField == 1 || calculatedField == 2 ||
+         calculatedField == 3 || calculatedField == 5)) {
       outputFrameVarying = true;
       break;
     }
@@ -2428,9 +2534,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     auto globalText = readGlobalTextSettings(
         instance, time, outputImage, displayLinearView);
     globalText.overlay.outputPremultiplied = true;
-    const auto dynamicText = readDynamicTextSettings(instance);
+    const auto calculatedFields = readCalculatedFieldSettings(instance, inArgs);
     std::array<ZoneTextSettings, 6> zoneSettings{};
-    std::array<wipreview::tokens::Resolution, 6> zoneTokens{};
+    std::array<wipreview::fields::Resolution, 6> zoneFields{};
     std::array<std::shared_ptr<const CachedZoneText>, 6> zoneTextEntries{};
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
@@ -2443,13 +2549,15 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           instance, index, time, globalText, displayLinearView);
       const auto& layer = zoneSettings[index].layer;
       if (layer.overlay.enabled) {
-        zoneTokens[index] = wipreview::tokens::resolve(
-            layer.text, time, dynamicText.resolver);
+        zoneFields[index] = wipreview::fields::resolve(
+            layer.text, zoneSettings[index].calculatedField,
+            time, calculatedFields.resolver);
         timecodeResolutionFallback = timecodeResolutionFallback ||
-            (layer.text.find("{timecode}") != std::string::npos &&
-             zoneTokens[index].usedTimecodeFallback);
+            (zoneSettings[index].calculatedField ==
+                 wipreview::fields::CalculatedField::Timecode &&
+             zoneFields[index].usedTimecodeFallback);
         wipreview::text::TextLayoutRequest layoutRequest;
-        layoutRequest.text = zoneTokens[index].text;
+        layoutRequest.text = zoneFields[index].text;
         layoutRequest.fontFamily = layer.fontFamily;
         layoutRequest.fontStyle = layer.fontStyle;
         layoutRequest.overflowMode = layer.overflowMode;
@@ -2525,7 +2633,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           zoneGlyph ? zoneGlyph->height : 0,
           layer.overlay);
       zoneRasterizationFailed = zoneRasterizationFailed ||
-          (layer.overlay.enabled && !layer.text.empty() &&
+          (layer.overlay.enabled && !zoneFields[index].text.empty() &&
            (!zoneGlyph || zoneGlyph->fillPixels.empty()));
     }
     unsigned int managedEncodeThreads = 1;
@@ -2643,18 +2751,22 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " normalized_zone_gap=" + std::to_string(globalText.normalizedZoneGap) +
         " minimum_font_scale=" + std::to_string(globalText.minimumFontScale) +
         " minimum_policy=clip");
-    Logger::instance().write("DYNAMIC_TEXT",
+    Logger::instance().write("CALCULATED_FIELDS",
         instancePrefix(instance) +
         " time=" + std::to_string(time) +
-        " fps_mode=" + std::to_string(dynamicText.fpsMode) +
-        " host_fps=" + std::to_string(dynamicText.hostFps) +
-        " selected_fps=" + std::to_string(dynamicText.resolver.fps) +
+        " fps_mode=" + std::to_string(calculatedFields.fpsMode) +
+        " host_fps=" + std::to_string(calculatedFields.hostFps) +
+        " selected_fps=" + std::to_string(calculatedFields.resolver.fps) +
         " frame_relative_base=" +
-            std::to_string(dynamicText.resolver.frameRelativeBase) +
-        " frame_start=" + std::to_string(dynamicText.resolver.frameStart) +
-        " timecode_start=" + quoted(dynamicText.resolver.timecodeStart.c_str()) +
+            std::to_string(calculatedFields.resolver.frameRelativeBase) +
+        " frame_start=" + std::to_string(calculatedFields.resolver.frameStart) +
+        " timecode_start=" + quoted(calculatedFields.resolver.timecodeStart.c_str()) +
+        " review_date=" + quoted(calculatedFields.resolver.reviewDate.c_str()) +
+        " source_frame=" + quoted(calculatedFields.resolver.sourceFrame.c_str()) +
+        " source_filename=" +
+            quoted(calculatedFields.resolver.sourceFilename.c_str()) +
         " drop_frame_mode=" + std::to_string(
-            static_cast<int>(dynamicText.resolver.dropFrameMode)));
+            static_cast<int>(calculatedFields.resolver.dropFrameMode)));
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
@@ -2662,14 +2774,16 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       const auto& layout = zoneTextEntries[index]
           ? zoneTextEntries[index]->layout : emptyLayout;
       const auto& zoneMask = layout.glyph;
-      const auto& token = zoneTokens[index];
+      const auto& field = zoneFields[index];
       const auto& origin = zoneOrigins[index];
       Logger::instance().write("TEXT_ZONE",
           instancePrefix(instance) +
           " zone=" + quoted(kZoneParams[index].label) +
           " enabled=" + (layer.overlay.enabled ? "true" : "false") +
-          " text=" + quoted(layer.text.c_str()) +
-          " resolved_text=" + quoted(token.text.c_str()) +
+          " prefix=" + quoted(layer.text.c_str()) +
+          " calculated_field=" + std::to_string(
+              static_cast<int>(zone.calculatedField)) +
+          " resolved_text=" + quoted(field.text.c_str()) +
           " rendered_text=" + quoted(layout.renderedText.c_str()) +
           " use_size_override=" + (zone.useSizeOverride ? "true" : "false") +
           " use_color_override=" + (zone.useColourOverride ? "true" : "false") +
@@ -2698,24 +2812,24 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
                           std::to_string(layer.overlay.colour[2]) + ',' +
                           std::to_string(layer.overlay.colour[3]) + ']' +
           " opacity=" + std::to_string(layer.overlay.opacity));
-      if (token.containsDynamicTokens) {
-        Logger::instance().write("TOKEN_ZONE",
+      if (field.containsCalculatedField) {
+        Logger::instance().write("CALCULATED_FIELD_ZONE",
             instancePrefix(instance) +
             " zone=" + quoted(kZoneParams[index].label) +
-            " source=" + quoted(layer.text.c_str()) +
-            " resolved=" + quoted(token.text.c_str()) +
-            " effect_frame=" + std::to_string(token.effectFrame) +
-            " frame_rel=" + std::to_string(token.frameRelative) +
-            " frame=" + std::to_string(token.frame) +
-            " timecode=" + quoted(token.timecode.c_str()) +
-            " nominal_fps=" + std::to_string(token.nominalFps) +
-            " fps_valid=" + (token.fpsValid ? "true" : "false") +
-            " drop_compatible=" + (token.dropCompatible ? "true" : "false") +
-            " drop_applied=" + (token.dropApplied ? "true" : "false") +
+            " prefix=" + quoted(layer.text.c_str()) +
+            " resolved=" + quoted(field.text.c_str()) +
+            " effect_frame=" + std::to_string(field.effectFrame) +
+            " frame_rel=" + std::to_string(field.frameRelative) +
+            " frame=" + std::to_string(field.frame) +
+            " timecode=" + quoted(field.timecode.c_str()) +
+            " nominal_fps=" + std::to_string(field.nominalFps) +
+            " fps_valid=" + (field.fpsValid ? "true" : "false") +
+            " drop_compatible=" + (field.dropCompatible ? "true" : "false") +
+            " drop_applied=" + (field.dropApplied ? "true" : "false") +
             " timecode_start_valid=" +
-                (token.timecodeStartValid ? "true" : "false") +
+                (field.timecodeStartValid ? "true" : "false") +
             " used_timecode_fallback=" +
-                (token.usedTimecodeFallback ? "true" : "false"));
+                (field.usedTimecodeFallback ? "true" : "false"));
       }
     }
     if (outputView.pixelBytes == 0) {
