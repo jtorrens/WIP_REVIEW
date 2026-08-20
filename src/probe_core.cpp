@@ -360,41 +360,6 @@ std::array<float, 4> sampleManagedRows(
 
 }  // namespace
 
-void copyProbeFrame(const ImageView& source,
-                    const ImageView& destination,
-                    RectI renderWindow) noexcept {
-  if (!destination.data || destination.pixelBytes == 0) {
-    return;
-  }
-
-  const RectI writable = intersect(renderWindow, destination.bounds);
-  if (empty(writable)) {
-    return;
-  }
-
-  const auto writableBytes = static_cast<std::size_t>(writable.x2 - writable.x1)
-                           * destination.pixelBytes;
-  for (int y = writable.y1; y < writable.y2; ++y) {
-    std::memset(pixelAddress(destination, writable.x1, y), 0, writableBytes);
-  }
-
-  if (!source.data || source.pixelBytes != destination.pixelBytes) {
-    return;
-  }
-
-  const RectI copyArea = intersect(writable, source.bounds);
-  if (empty(copyArea)) {
-    return;
-  }
-
-  const auto copyBytes = static_cast<std::size_t>(copyArea.x2 - copyArea.x1)
-                       * destination.pixelBytes;
-  for (int y = copyArea.y1; y < copyArea.y2; ++y) {
-    std::memcpy(pixelAddress(destination, copyArea.x1, y),
-                pixelAddress(source, copyArea.x1, y), copyBytes);
-  }
-}
-
 PlacementTransform computePlacement(RectI sourceBounds, RectI outputBounds,
                                     const RenderOptions& options) noexcept {
   const double sourceWidth = std::max(1, sourceBounds.x2 - sourceBounds.x1);

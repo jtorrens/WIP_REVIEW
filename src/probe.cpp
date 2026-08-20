@@ -47,11 +47,8 @@ namespace {
 
 constexpr char kPluginIdentifier[] = "com.jtorrens.WIPReviewProbe";
 constexpr char kFilterPluginIdentifier[] = "com.jtorrens.WIPReviewProbe.Filter";
-constexpr char kParamRequestRod[] = "requestCustomRoD";
 constexpr char kParamWidth[] = "requestedWidth";
 constexpr char kParamHeight[] = "requestedHeight";
-constexpr char kParamScenario[] = "scenarioLabel";
-constexpr char kParamAnimatedString[] = "animatedStringProbe";
 constexpr char kParamCanvasMode[] = "canvasMode";
 constexpr char kParamPlacement[] = "placementMode";
 constexpr char kParamResample[] = "resampleFilter";
@@ -146,6 +143,7 @@ const OfxPropertySuiteV1* gPropertySuite = nullptr;
 const OfxParameterSuiteV1* gParameterSuite = nullptr;
 const OfxMessageSuiteV2* gMessageSuite = nullptr;
 const OfxMultiThreadSuiteV1* gMultiThreadSuite = nullptr;
+bool gRequestedReviewRasterSupported = false;
 
 const char* statusName(OfxStatus status) noexcept {
   switch (status) {
@@ -383,11 +381,8 @@ struct InstanceData {
   OfxImageEffectHandle effect = nullptr;
   OfxImageClipHandle source = nullptr;
   OfxImageClipHandle output = nullptr;
-  OfxParamHandle requestRod = nullptr;
   OfxParamHandle width = nullptr;
   OfxParamHandle height = nullptr;
-  OfxParamHandle scenario = nullptr;
-  OfxParamHandle animatedString = nullptr;
   OfxParamHandle canvasMode = nullptr;
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
@@ -519,28 +514,29 @@ void logImage(const InstanceData* instance, const char* label,
       " colourspace=" + getString(image, kOfxImageClipPropColourspace));
 }
 
-bool readRodRequest(const InstanceData* instance, bool& enabled, int& width, int& height) {
+bool readRequestedRaster(
+    const InstanceData* instance, bool& enabled, int& width, int& height) {
   if (!instance || !gParameterSuite) return false;
-  int request = 1;
   width = 1920;
   height = 1080;
-  const OfxStatus a = gParameterSuite->paramGetValue(instance->requestRod, &request);
-  const OfxStatus b = gParameterSuite->paramGetValue(instance->width, &width);
-  const OfxStatus c = gParameterSuite->paramGetValue(instance->height, &height);
   int canvasMode = 1;
-  if (instance->canvasMode) {
-    gParameterSuite->paramGetValue(instance->canvasMode, &canvasMode);
-  }
-  request = request && canvasMode == 1;
-  enabled = request != 0;
+  const OfxStatus modeStatus = gParameterSuite->paramGetValue(
+      instance->canvasMode, &canvasMode);
+  const OfxStatus widthStatus = gParameterSuite->paramGetValue(
+      instance->width, &width);
+  const OfxStatus heightStatus = gParameterSuite->paramGetValue(
+      instance->height, &height);
+  enabled = gRequestedReviewRasterSupported && canvasMode == 1;
   width = std::max(1, width);
   height = std::max(1, height);
-  return a == kOfxStatOK && b == kOfxStatOK && c == kOfxStatOK;
+  return modeStatus == kOfxStatOK && widthStatus == kOfxStatOK &&
+      heightStatus == kOfxStatOK;
 }
 
 void defineChoiceParam(OfxParamSetHandle params, const char* name, const char* label,
                        const std::vector<const char*>& choices, int defaultValue,
-                       const char* hint, const char* parent = nullptr) {
+                       const char* hint, const char* parent = nullptr,
+                       bool enabled = true) {
   OfxPropertySetHandle properties = nullptr;
   if (gParameterSuite->paramDefine(params, kOfxParamTypeChoice, name, &properties) != kOfxStatOK) return;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, label);
@@ -550,6 +546,7 @@ void defineChoiceParam(OfxParamSetHandle params, const char* name, const char* l
   }
   gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, defaultValue);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetInt(properties, kOfxParamPropEnabled, 0, enabled ? 1 : 0);
   gPropertySuite->propSetString(properties, kOfxParamPropHint, 0, hint);
   if (parent) gPropertySuite->propSetString(properties, kOfxParamPropParent, 0, parent);
 }
@@ -1134,6 +1131,8 @@ OfxStatus load() {
       gHost->fetchSuite(gHost->host, kOfxMessageSuite, 2));
   gMultiThreadSuite = static_cast<const OfxMultiThreadSuiteV1*>(
       gHost->fetchSuite(gHost->host, kOfxMultiThreadSuite, 1));
+  gRequestedReviewRasterSupported =
+      getString(gHost->host, kOfxPropName) == "com.blackmagicdesign.Fusion";
 
   if (!gImageSuite || !gPropertySuite || !gParameterSuite) {
     return kOfxStatErrMissingHostFeature;
@@ -1146,6 +1145,11 @@ OfxStatus load() {
       std::string("image_effect_v1=true property_v1=true parameter_v1=true message_v2=") +
       (gMessageSuite ? "true" : "false") +
       " multithread_v1=" + (gMultiThreadSuite ? "true" : "false"));
+  Logger::instance().write(
+      "HOST_RASTER_CAPABILITY",
+      std::string("requested_review_raster=") +
+          (gRequestedReviewRasterSupported ? "true" : "false") +
+      " source=validated_host_matrix");
   logHostCapabilities();
   return kOfxStatOK;
 }
@@ -1167,17 +1171,17 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P5 Filter Only)"
-                                          : "WIP Review Probe (P5)");
+                               filterOnly ? "WIP Review — Filter Only"
+                                          : "WIP Review");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
-                               filterOnly ? "WIP Probe Filter" : "WIP Probe");
+                               filterOnly ? "WIP Review Filter" : "WIP Review");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Performance P5 — Filter Only"
-                                          : "WIP Review Performance P5");
+                               filterOnly ? "WIP Review OFX — Filter Only"
+                                          : "WIP Review OFX");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P5 CPU overlay: review-raster geometry, managed display-light composition and host-managed multithreading.");
+      "Review-raster placement, editorial blanking and six-zone display-light text overlay.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
-                               "WIP Review/Diagnostics");
+                               "WIP Review");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
                                kOfxImageEffectContextFilter);
   if (!filterOnly) {
@@ -1355,16 +1359,11 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   if (status != kOfxStatOK) return status;
 
   OfxPropertySetHandle properties = nullptr;
-  gParameterSuite->paramDefine(params, kOfxParamTypeBoolean, kParamRequestRod, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Request Custom Output RoD");
-  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 1);
-  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-  gPropertySuite->propSetString(properties, kOfxParamPropHint, 0,
-      "P0 diagnostic gate. When enabled with Requested Review Raster, requests the width and height below.");
-
   defineChoiceParam(params, kParamCanvasMode, "Canvas Mode",
-                    {"Host Raster", "Requested Review Raster"}, 1,
-                    "Host Raster keeps the host output size; Requested Review Raster uses Requested Width/Height when the host accepts plugin RoD.");
+                    {"Host Raster", "Requested Review Raster"},
+                    gRequestedReviewRasterSupported ? 1 : 0,
+                    "Host Raster keeps the host output size; Requested Review Raster uses Requested Width/Height when the validated host path accepts plugin RoD.",
+                    nullptr, gRequestedReviewRasterSupported);
 
   defineChoiceParam(params, kParamPlacement, "Placement",
                     {"Identity", "Fit", "Fill / Crop", "Stretch", "1:1"}, 1,
@@ -1587,6 +1586,9 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMin, 0, 16);
   gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMax, 0, 8192);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
+  gPropertySuite->propSetInt(
+      properties, kOfxParamPropEnabled, 0,
+      gRequestedReviewRasterSupported ? 1 : 0);
 
   gParameterSuite->paramDefine(params, kOfxParamTypeInteger, kParamHeight, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Requested Height");
@@ -1596,12 +1598,9 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
   gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMin, 0, 16);
   gPropertySuite->propSetInt(properties, kOfxParamPropDisplayMax, 0, 8192);
   gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-
-  defineStringParam(params, kParamScenario, "Scenario Label",
-                    "UNSET — name Edit Filter / Color Filter / Fusion General / Fusion Filter",
-                    false, "Written into every record so the four mandatory cases remain separable.");
-  defineStringParam(params, kParamAnimatedString, "Animated String Probe", "P0 string value",
-                    true, "Animate this value on two frames; P0 logs value-at-time, key count and is-animating.");
+  gPropertySuite->propSetInt(
+      properties, kOfxParamPropEnabled, 0,
+      gRequestedReviewRasterSupported ? 1 : 0);
 
   const std::string context = getString(inArgs, kOfxImageEffectPropContext);
   Logger::instance().write("DESCRIBE_IN_CONTEXT", "context=" + context);
@@ -1624,11 +1623,8 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
 
   gImageSuite->clipGetHandle(effect, kOfxImageEffectSimpleSourceClipName, &instance->source, nullptr);
   gImageSuite->clipGetHandle(effect, kOfxImageEffectOutputClipName, &instance->output, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamRequestRod, &instance->requestRod, nullptr);
   gParameterSuite->paramGetHandle(params, kParamWidth, &instance->width, nullptr);
   gParameterSuite->paramGetHandle(params, kParamHeight, &instance->height, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamScenario, &instance->scenario, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamAnimatedString, &instance->animatedString, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasMode, &instance->canvasMode, nullptr);
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
@@ -1724,7 +1720,7 @@ OfxStatus getRegionOfDefinition(OfxImageEffectHandle effect,
   bool request = true;
   int width = 1920;
   int height = 1080;
-  readRodRequest(instance, request, width, height);
+  readRequestedRaster(instance, request, width, height);
 
   double outputPAR = 1.0;
   OfxPropertySetHandle outputProperties = nullptr;
@@ -1883,25 +1879,6 @@ OfxStatus getTimeDomain(OfxImageEffectHandle effect, OfxPropertySetHandle outArg
   return gPropertySuite->propSetDoubleN(outArgs, kOfxImageEffectPropFrameRange, 2, range);
 }
 
-void logTemporalParameters(const InstanceData* instance, OfxTime time) {
-  char* scenario = nullptr;
-  char* animated = nullptr;
-  const OfxStatus scenarioStatus = gParameterSuite->paramGetValueAtTime(
-      instance->scenario, time, &scenario);
-  const OfxStatus animatedStatus = gParameterSuite->paramGetValueAtTime(
-      instance->animatedString, time, &animated);
-  unsigned int keyCount = 0;
-  const OfxStatus keyStatus = gParameterSuite->paramGetNumKeys(instance->animatedString, &keyCount);
-  OfxPropertySetHandle parameterProperties = nullptr;
-  gParameterSuite->paramGetPropertySet(instance->animatedString, &parameterProperties);
-  Logger::instance().write("TEMPORAL_STRING_PROBE",
-      instancePrefix(instance) + " time=" + std::to_string(time) +
-      " scenario=" + quoted(scenario) + " scenario_status=" + statusName(scenarioStatus) +
-      " animated_value=" + quoted(animated) + " value_status=" + statusName(animatedStatus) +
-      " is_animating=" + getInt(parameterProperties, kOfxParamPropIsAnimating) +
-      " key_count=" + std::to_string(keyCount) + " key_status=" + statusName(keyStatus));
-}
-
 constexpr unsigned int kMaxManagedThreads = 24;
 
 wipreview::probe::RectI threadBand(
@@ -2051,7 +2028,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       " render_scale=" + joinDoubles(inArgs, kOfxImageEffectPropRenderScale) +
       " sequential=" + getInt(inArgs, kOfxImageEffectPropSequentialRenderStatus) +
       " interactive=" + getInt(inArgs, kOfxImageEffectPropInteractiveRenderStatus));
-  logTemporalParameters(instance, time);
   logClip(instance, "Source", instance->source, time);
   logClip(instance, "Output", instance->output, time);
 

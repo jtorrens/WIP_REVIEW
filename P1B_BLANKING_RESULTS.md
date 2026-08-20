@@ -64,11 +64,8 @@ La matriz acumulativa de once renders pasó con el bundle universal 0.3.0:
 
 Tiempo orientativo de la matriz completa: 32,8 s en la máquina de desarrollo.
 
-Fusion 21 devolvió `scenarioLabel=""` en B01–B03 después de cambiar el preset,
-aunque el registro de renderer contenía todos los parámetros correctos; Custom
-B04 sí conservó el marker. El runner documenta esta inconsistencia de string y
-valida los presets por `EDITORIAL_BLANKING`, no por el string auxiliar. No se ha
-añadido ningún workaround al plugin.
+El runner valida cada caso mediante el registro geométrico
+`EDITORIAL_BLANKING`; no depende de parámetros auxiliares de diagnóstico.
 
 ## Validación visual — Fusion Studio 21.0.4
 

@@ -1,8 +1,7 @@
 # P1a Geometry/Placement — estado de implementación
 
-**Versión:** `WIPReviewProbe.ofx` 0.2.0  
-**Alcance:** checkpoint intermedio acordado; no equivale al P1 completo de la
-especificación.
+**Versión:** contrato V1
+**Alcance:** geometría y placement vigentes.
 
 ## Incluido
 
@@ -20,19 +19,9 @@ especificación.
   del kernel y se des-premultiplica solo si el Output negociado es straight.
 - Log `STATIC_FORMATTER` con placement, filtro, PAR, premultiplicación y canvas.
 
-## Deliberadamente fuera de P1a
-
-- blanking;
-- texto y tipografía;
-- seis zonas;
-- transformaciones OCIO de píxeles;
-- GPU;
-- presets.
-
-El parámetro P0 `Request Custom Output RoD` se conserva como gate diagnóstico.
-`Canvas Mode = Requested Review Raster` solo solicita el RoD configurado si ese
-gate está activo. No existe detección por nombre del host ni un workaround
-silencioso de Resolve.
+`Canvas Mode` es la única puerta del raster. Requested Review Raster se habilita
+solo para la ruta Fusion validada; Resolve y hosts no validados quedan en Host
+Raster y el plugin no intenta modificar su RoD.
 
 ## Semántica geométrica
 
@@ -58,7 +47,7 @@ bytes negativos. El smoke test de Fusion crea una composición privada con
 Source `4608×3164`, ejecuta los cinco placements en Filter-only con Output
 `1920×1080`, repite Fit en General y prueba Host Raster `4608×3164`. Todos usan
 `AllowResize=1` y Lanczos3. El arnés valida bounds, renderWindow, contexto,
-scenario, cada valor de placement, el warning de Identity incompatible y el
+cada valor de placement, el warning de Identity incompatible y el
 evento `STATIC_FORMATTER`.
 
 ```sh

@@ -29,31 +29,21 @@ void testIntersection() {
   assert(wipreview::probe::empty({1, 1, 1, 4}));
 }
 
-void testCopyAndClear() {
-  std::array<std::uint8_t, 16> source{};
-  std::array<std::uint8_t, 36> destination{};
-  for (std::size_t i = 0; i < source.size(); ++i) {
-    source[i] = static_cast<std::uint8_t>(i + 1);
-  }
-  destination.fill(0xff);
-
-  const ImageView src{reinterpret_cast<std::byte*>(source.data()), {1, 1, 5, 5}, 4, 1};
-  const ImageView dst{reinterpret_cast<std::byte*>(destination.data()), {0, 0, 6, 6}, 6, 1};
-  wipreview::probe::copyProbeFrame(src, dst, {0, 0, 6, 6});
-
-  assert(destination[0] == 0);
-  assert(destination[1 + 1 * 6] == 1);
-  assert(destination[4 + 4 * 6] == 16);
-  assert(destination[5 + 5 * 6] == 0);
-}
-
 void testNegativeRowBytes() {
-  std::array<std::uint8_t, 4> source{1, 2, 3, 4};
-  std::array<std::uint8_t, 4> destination{};
-
-  const ImageView src{reinterpret_cast<std::byte*>(source.data() + 2), {0, 0, 2, 2}, -2, 1};
-  const ImageView dst{reinterpret_cast<std::byte*>(destination.data() + 2), {0, 0, 2, 2}, -2, 1};
-  wipreview::probe::copyProbeFrame(src, dst, {0, 0, 2, 2});
+  std::array<float, 16> source{
+      1.0F, 0.0F, 0.0F, 1.0F, 2.0F, 0.0F, 0.0F, 1.0F,
+      3.0F, 0.0F, 0.0F, 1.0F, 4.0F, 0.0F, 0.0F, 1.0F};
+  std::array<float, 16> destination{};
+  const auto stride = -static_cast<std::ptrdiff_t>(8 * sizeof(float));
+  const ImageView src{reinterpret_cast<std::byte*>(source.data() + 8),
+                      {0, 0, 2, 2}, stride, sizeof(float) * 4, 4,
+                      ChannelType::Float32};
+  const ImageView dst{reinterpret_cast<std::byte*>(destination.data() + 8),
+                      {0, 0, 2, 2}, stride, sizeof(float) * 4, 4,
+                      ChannelType::Float32};
+  RenderOptions options;
+  options.placement = PlacementMode::Identity;
+  wipreview::probe::renderStaticFrame(src, dst, {0, 0, 2, 2}, options);
   assert(destination == source);
 }
 
@@ -711,7 +701,6 @@ void testDynamicTokensAndTimecode() {
 
 int main() {
   testIntersection();
-  testCopyAndClear();
   testNegativeRowBytes();
   testPlacementTransformsAndPAR();
   testFitCanvasAndRenderWindow();

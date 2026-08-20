@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
   }
   if (getCount() != 2) {
     dlclose(library);
-    return fail("bundle must expose the general-preferred and filter-only probes");
+    return fail("bundle must expose the general-preferred and filter-only effects");
   }
   const char* expectedIdentifiers[] = {
       "com.jtorrens.WIPReviewProbe",

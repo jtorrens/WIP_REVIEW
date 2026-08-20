@@ -102,7 +102,7 @@ pero no para normalizar de forma fiable PAR no cuadrado a PAR 1 en Fusion 21.
 | Resolve Edit / Filter, clip UHD en timeline HD | `[1,1]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | Crop y Fit entregan el mismo raster HD al OFX; solo cambia el encuadre upstream |
 | Resolve Color / Filter, full | `[1,1]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | Clip UHD ya conformado a la timeline antes del OFX |
 | Resolve Color / Filter, proxy observado | `[0.15,0.15]` | `[0,0,288,162]` | `[0,0,288,162]` | `[0,0,288,162]` | Render proxy coherente con raster base 1920×1080 |
-| Fusion 21 / General, fallback B | `[1,1]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | Custom RoD desactivado; conserva correctamente el raster upstream |
+| Fusion 21 / General, ruta B | `[1,1]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | `[0,0,1920,1080]` | Host Raster conserva correctamente el raster upstream |
 
 ## Color OFX 1.5.1 y OCIO
 
@@ -190,13 +190,13 @@ es que Fusion entrega simultáneamente Source 4608×3164 y Output 1920×1080. El
 renderer futuro deberá implementar explícitamente el muestreo y placement
 full-res → review raster.
 
-### Validación del fallback B — Fusion Standalone 21 / General
+### Validación de la ruta B — Fusion Standalone 21 / General
 
 Topología:
 
 ```text
 Loader → ColorSpaceTransform → BetterResize 1920×1080
-       → WIPReviewProbe con Request Custom Output RoD = Off
+       → WIPReviewProbe con Canvas Mode = Host Raster
 ```
 
 Observado repetidamente en los frames `30–35`:
@@ -209,7 +209,7 @@ renderScale                     = [1,1]
 PAR                             = 1
 ```
 
-El fallback B queda validado para Fusion General: cuando el raster de review se
+La ruta B queda validada para Fusion General: cuando el raster de review se
 prepara upstream, el OFX conserva correctamente esa geometría.
 
 ## Workarounds específicos de Resolve/Fusion

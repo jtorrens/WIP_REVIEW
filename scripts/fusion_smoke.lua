@@ -67,7 +67,6 @@ local ok, failure = pcall(function()
         local probe = require_tool(reg_id, x, y)
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = source.Output
-        probe.requestCustomRoD = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
         probe.canvasMode = canvas_mode
@@ -99,9 +98,6 @@ local ok, failure = pcall(function()
         probe.graphicsWhiteNits = 203.0
         probe.hlgPeakNits = 1000.0
         if configure_zones ~= nil then configure_zones(probe) end
-        -- Fusion may reset string values while subsequent geometry parameters
-        -- invalidate the OFX node, so the diagnostic marker is assigned last.
-        probe.scenarioLabel = name
         comp:SetActiveTool(probe)
         comp:Unlock()
         local times = render_times or {0}

@@ -125,13 +125,6 @@ struct ManagedRenderStats {
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
 
-// Clears the requested destination window, then copies the coordinate-aligned
-// source intersection when the two formats have the same pixel size. This is
-// deliberately not a resize: P0 must observe host geometry, not hide it.
-void copyProbeFrame(const ImageView& source,
-                    const ImageView& destination,
-                    RectI renderWindow) noexcept;
-
 [[nodiscard]] PlacementTransform computePlacement(
     RectI sourceBounds,
     RectI outputBounds,

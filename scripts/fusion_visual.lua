@@ -45,7 +45,6 @@ local ok, failure = pcall(function()
         if probe == nil then error("Unable to create geometry probe " .. names[placement + 1]) end
         probe:SetAttrs({TOOLS_Name = "GEOMETRY_" .. names[placement + 1]})
         probe.Source = loader.Output
-        probe.requestCustomRoD = 1
         probe.canvasMode = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
@@ -53,7 +52,6 @@ local ok, failure = pcall(function()
         probe.resampleFilter = 2
         probe.colorSpaceMode = 1
         probe.manualColorSpace = 0
-        probe.scenarioLabel = "VISUAL_GEOMETRY_" .. names[placement + 1]
         probe.AllowResize = 1
         probes[placement + 1] = probe
     end
@@ -62,13 +60,11 @@ local ok, failure = pcall(function()
     if host == nil then error("Unable to create Host Raster probe") end
     host:SetAttrs({TOOLS_Name = "GEOMETRY_HOST_RASTER_IDENTITY"})
     host.Source = loader.Output
-    host.requestCustomRoD = 1
     host.canvasMode = 0
     host.placementMode = 0
     host.resampleFilter = 2
     host.colorSpaceMode = 1
     host.manualColorSpace = 0
-    host.scenarioLabel = "VISUAL_GEOMETRY_HOST_RASTER"
     host.AllowResize = 1
 
     local function add_blanking(name, preset, custom_aspect, opacity, enabled, x)
@@ -76,7 +72,6 @@ local ok, failure = pcall(function()
         if probe == nil then error("Unable to create blanking probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output
-        probe.requestCustomRoD = 1
         probe.canvasMode = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
@@ -90,7 +85,6 @@ local ok, failure = pcall(function()
         probe.blankingAspectPreset = preset
         probe.blankingAspectCustom = custom_aspect
         probe.blankingOpacity = opacity
-        probe.scenarioLabel = "VISUAL_" .. name
         probe.AllowResize = 1
         return probe
     end
@@ -106,7 +100,6 @@ local ok, failure = pcall(function()
         if probe == nil then error("Unable to create static-text probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output
-        probe.requestCustomRoD = 1
         probe.canvasMode = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
@@ -148,7 +141,6 @@ local ok, failure = pcall(function()
         elseif anchor == 3 then probe.blEnabled = 1; probe.blText = text
         elseif anchor == 4 then probe.bcEnabled = 1; probe.bcText = text
         else probe.brEnabled = 1; probe.brText = text end
-        probe.scenarioLabel = "VISUAL_" .. name
         probe.AllowResize = 1
         return probe
     end
@@ -172,7 +164,6 @@ local ok, failure = pcall(function()
         if probe == nil then error("Unable to create six-zone probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output
-        probe.requestCustomRoD = 1
         probe.canvasMode = 1
         probe.requestedWidth = 1920
         probe.requestedHeight = 1080
@@ -202,7 +193,6 @@ local ok, failure = pcall(function()
         probe.paddingTop = 0.020
         probe.paddingBottom = 0.020
         configure(probe)
-        probe.scenarioLabel = "VISUAL_" .. name
         probe.AllowResize = 1
         return probe
     end

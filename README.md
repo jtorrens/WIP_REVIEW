@@ -1,177 +1,135 @@
-# WIP Review OFX — P5 CPU Performance
+# WIP Review OFX — V1
 
-`WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
-checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
-resampling CPU de referencia. P1b añade blanking editorial independiente, P2a
-incorpora seis zonas simultáneas, P2b añade outline global, P2c añade drop
-shadow global, P2d limita cada zona a una celda lógica, P3 resuelve tokens
-temporales sin semántica de producción y P4 compone gráficos en luz de display.
+`WIPReviewProbe.ofx` es un efecto OpenFX de review para DaVinci Resolve y
+Fusion. Coloca una imagen en un raster de review, aplica blanking editorial y
+compone seis zonas de texto en CPU. No incluye GPU, presets ni una
+transformación fotográfica interna.
 
-P4 delega la transformación fotográfica al Color Space Transform nativo del
-host. WIPReview decodifica Rec.709/PQ/HLG, compone blanking y texto en
-display-light linear y codifica una sola vez. No implementa un segundo tone
-mapper, GPU ni presets semánticos.
+La imagen fotográfica debe llegar ya transformada al espacio display-referred
+de review mediante el Color Space Transform nativo del host. El plugin recibe y
+devuelve el mismo espacio, decodifica Rec.709/PQ/HLG a luz lineal de display,
+compone los gráficos y codifica una sola vez.
 
-P5 conserva ese contrato y optimiza la ruta CPU con pesos de resampling
-precomputados, cache acotado de filas decodificadas y bandas gestionadas por la
-suite multithread del host. No mantiene una ruta CPU anterior ni añade un
-backend GPU inactivo.
+## Contrato de raster
 
-## P4 — Managed Color
+**Canvas Mode** es la única selección de raster:
 
-Input y Output usan el mismo espacio display-referred, seleccionado mediante
-**Auto from Host** o **Manual Override**. Auto no fuerza conversiones; Manual
-puede solicitar Rec.709 Gamma 2.4, Rec.2100 PQ o Rec.2100 HLG mediante OFX
-1.5.1, pero el plugin siempre verifica lo realmente entregado. `Raw`, vacío o
-un espacio no reconocido activa la interpretación manual y un warning visible.
+- **Requested Review Raster** solicita Width/Height al host. Está habilitado y
+  seleccionado por defecto únicamente en Fusion, cuya ruta fue validada con
+  `Settings → Use plugin RoD for output size` (`AllowResize=1`).
+- **Host Raster** conserva el raster publicado por el host. Es el único modo
+  disponible en Resolve y en hosts no validados.
 
-Graphics White automático usa 100 nits en SDR, 203 nits en PQ y el 20.3 % del
-peak HLG. Véase [P4_MANAGED_COLOR_RESULTS.md](P4_MANAGED_COLOR_RESULTS.md).
+Esto implementa la matriz medida, sin rutas privadas del host:
 
-## P3 — Dynamic Tokens
+- Fusion General/Filter permite **A) Full-res → OFX → Review Raster**, con
+  `Use plugin RoD for output size` activo.
+- Resolve Edit/Color entrega al OFX el raster ya conformado a timeline y usa
+  **B) Full-res → Crop/Resize → OFX → Review HD**.
+- Una fuente con PAR no cuadrado se normaliza upstream en Fusion 21 porque el
+  host no materializa de forma consistente el Output PAR solicitado.
 
-P3 resuelve `{frame_rel}`, `{frame}` y `{timecode}` dentro de cualquiera de las
-seis strings. `{frame_rel}` suma **Frame Relative Base** a `round(effectTime)`;
-`{frame}` suma **Frame Start**, sin fingir conocer el frame absoluto de Resolve.
-Los tokens desconocidos permanecen literales.
+La evidencia está en [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 
-Timecode usa FPS del host o **FPS Override**, un start explícito y modos
-`Auto`, `NonDrop` o `Drop`. Auto activa drop-frame únicamente para 29.97/59.94.
-El output se declara frame-varying solo cuando una string contiene un token
-soportado. Véase [P3_DYNAMIC_TOKENS_RESULTS.md](P3_DYNAMIC_TOKENS_RESULTS.md).
+## Geometry/Placement
 
-## P2d — Overflow
-
-P2d divide el ancho en tres celdas lógicas por fila y añade **Zone Gap**,
-**Overflow Mode** (`Clip`, `Ellipsis`, `ShrinkToFit`) y **Minimum Font
-Scale**. El default es `ShrinkToFit`, gap `0.010` y escala mínima `0.60`.
-
-El gap es el espacio completo entre celdas. Padding izquierdo/derecho limita
-los extremos externos. Fill, outline y shadow se miden y recortan juntos, por
-lo que ninguna capa puede invadir la celda vecina. `ShrinkToFit` nunca aumenta
-el tamaño solicitado; si el mínimo tampoco cabe, conserva esa escala y aplica
-Clip. Véase [P2D_OVERFLOW_RESULTS.md](P2D_OVERFLOW_RESULTS.md).
-
-## P2c — Drop Shadow
-
-P2c añade los controles globales **Shadow Enabled**, **Shadow Offset X/Y**,
-**Shadow Softness**, **Shadow Colour** y **Shadow Opacity**. La sombra está
-desactivada por defecto; sus valores candidatos son offset `0.0015, 0.0020`,
-softness `0.0020`, negro y opacity `0.60`.
-
-X se normaliza al ancho del Output y Y/softness a su altura; X positivo mueve
-a la derecha y Y positivo visualmente hacia abajo. El renderer desplaza y
-difumina la máscara alpha real antes de aplicar color, y compone en orden
-`blanking → shadow → outline → fill`. Las tres capas comparten canvas y origen.
-Véase [P2C_DROP_SHADOW_RESULTS.md](P2C_DROP_SHADOW_RESULTS.md).
-
-## P2b — Outline
-
-P2b añade los controles globales **Outline Enabled**, **Outline Width**,
-**Outline Colour** y **Outline Opacity**. El default es negro opaco, activado,
-con radio `0.0010` normalizado a la altura del Output.
-
-El renderer dilata la máscara alfa real de cada glifo con un elemento circular.
-No duplica el texto en varias direcciones. Fill y outline comparten un único
-canvas expandido y una única ancla; el outline se compone primero y el fill
-encima, después de placement y blanking. Véase
-[P2B_OUTLINE_RESULTS.md](P2B_OUTLINE_RESULTS.md).
-
-## P2a — Six Zones
-
-P2a añade las zonas estáticas `TL`, `TC`, `TR`, `BL`, `BC` y `BR`. Cada zona
-tiene enabled, string UTF-8, offsets normalizados y overrides opcionales de
-tamaño, color y opacity. La alineación se deduce de la zona; fuente, estilo,
-padding y valores base siguen siendo globales.
-
-Las zonas se componen en orden `TL → TC → TR → BL → BC → BR` después del
-blanking. El contrato es clean-forward: no conserva parámetros ni rutas de
-render de versiones anteriores. En macOS el raster usa CoreText/CoreGraphics,
-admite UTF-8 y cae a la fuente de sistema si la familia vigente no está
-disponible. Véase
-[P2A_SIX_ZONE_RESULTS.md](P2A_SIX_ZONE_RESULTS.md).
-
-## P1b — Editorial Blanking
-
-El blanking se compone después del placement y nunca cambia el raster ni recorta
-físicamente la imagen. Controles:
-
-- **Blanking Enabled**, desactivado por defecto;
-- presets de display aspect `1.78`, `1.85`, `2.00`, `2.39` y **Custom**;
-- color RGBA y opacity `0–1`.
-
-La geometría incorpora Output PAR, genera letterbox o pillarbox sin asumir una
-orientación fija y usa cobertura de píxel en límites fraccionales. La composición
-se realiza en premult incluso cuando el Output negociado es straight-alpha. Véase
-[P1B_BLANKING_RESULTS.md](P1B_BLANKING_RESULTS.md).
-
-## P1a — Geometry/Placement
-
-Controles implementados:
-
-- **Canvas Mode**: Host Raster o Requested Review Raster;
-- **Placement**: Identity, Fit, Fill / Crop, Stretch y 1:1;
-- **Resample Filter**: Bilinear, Bicubic Catmull-Rom y Lanczos3;
+- **Placement**: Identity, Fit, Fill / Crop, Stretch y 1:1.
+- **Resample Filter**: Bilinear, Bicubic Catmull-Rom y Lanczos3.
 - **Canvas Colour**: RGBA, negro opaco por defecto.
 
-Fit y Fill calculan el aspect ratio de display incorporando Source/Output PAR.
-Identity copia por coordenadas sin resize implícito y registra warning si los
-rasters no coinciden. 1:1 centra píxeles físicos. El renderer limita toda
-escritura al `renderWindow`, admite row bytes negativos y Byte/Short/Half/Float,
-y filtra alpha en premult para evitar halos. La implementación y sus límites
-están versionados en [P1A_GEOMETRY_RESULTS.md](P1A_GEOMETRY_RESULTS.md).
+Fit y Fill incorporan Source/Output PAR. Identity alinea coordenadas sin resize
+implícito; 1:1 centra píxeles físicos. El renderer limita las escrituras al
+`renderWindow`, admite row bytes negativos y Byte/Short/Half/Float, y filtra
+alpha en premult para evitar halos. Detalles en
+[P1A_GEOMETRY_RESULTS.md](P1A_GEOMETRY_RESULTS.md).
 
-## Qué mide
+## Editorial Blanking
 
-El log registra, por acción e instancia:
+El blanking se compone después del placement y no cambia el raster. Ofrece
+presets 1.78, 1.85, 2.00, 2.39 y Custom, además de color y opacidad. Su
+geometría incorpora Output PAR y genera letterbox o pillarbox según corresponda.
+Véase [P1B_BLANKING_RESULTS.md](P1B_BLANKING_RESULTS.md).
 
-- identidad, versión y versión de API del host;
-- contextos y capacidades globales: multi-resolution, tiles, múltiples depths,
-  múltiples PAR y animación de strings;
-- tamaño, extent, offset, PAR y frame rate del proyecto;
-- Source y Output: conexión, componentes, depth, PAR, frame range, frame rate,
-  premultiplicación, colourspace y RoD;
-- imágenes realmente entregadas: bounds, RoD, render scale, row bytes y formato;
-- `renderWindow`, `renderScale`, tiempo, estado interactivo/secuencial;
-- estilo de color negociado, config nativa, ruta/URI OCIO, display y view;
-- valor del string animable en el tiempo, estado de animación y número de keys;
-- RoD solicitado por el probe y Source RoI solicitado al host.
+## Seis zonas y tipografía
 
-El control **Request Custom Output RoD** está activo por defecto con
-`1920 × 1080`. Width representa píxeles físicos. El probe solicita Output PAR
-`1.0` mediante `GetClipPreferences`; al calcular el RoD usa el PAR que publique
-el clip Output y cae de forma explícita a `1.0` si el host no lo publica. El log
-permite comparar esa negociación con el PAR de la imagen realmente entregada.
+Las zonas `TL`, `TC`, `TR`, `BL`, `BC` y `BR` tienen enabled, string UTF-8,
+offsets y overrides opcionales de tamaño, color y opacidad. Fuente, estilo,
+padding y valores base son globales. CoreText/CoreGraphics rasteriza el texto
+en macOS; si la familia vigente no existe, usa la fuente de sistema.
 
-El bundle expone dos descriptores con el mismo renderer diagnóstico:
+El orden de composición es `blanking → shadow → outline → fill`. Outline usa
+dilatación de la máscara real del glifo. Shadow desplaza y difumina esa máscara.
+Cada zona está limitada a su celda lógica mediante Clip, Ellipsis o
+ShrinkToFit. Detalles:
 
-- `WIP Review Probe (P5)`: anuncia Filter y General;
-- `WIP Review Probe (P5 Filter Only)`: anuncia únicamente Filter para impedir
-  que Fusion elija General durante la prueba comparativa.
+- [P2A_SIX_ZONE_RESULTS.md](P2A_SIX_ZONE_RESULTS.md)
+- [P2B_OUTLINE_RESULTS.md](P2B_OUTLINE_RESULTS.md)
+- [P2C_DROP_SHADOW_RESULTS.md](P2C_DROP_SHADOW_RESULTS.md)
+- [P2D_OVERFLOW_RESULTS.md](P2D_OVERFLOW_RESULTS.md)
+
+## Texto dinámico
+
+Las seis strings aceptan `{frame_rel}`, `{frame}` y `{timecode}`. El frame
+absoluto y el inicio de timecode proceden de parámetros explícitos; no se
+infiere semántica editorial inexistente en OFX. Timecode admite FPS del host u
+override y modos Auto, NonDrop y Drop. Solo un texto con un token soportado
+declara el output frame-varying. Véase
+[P3_DYNAMIC_TOKENS_RESULTS.md](P3_DYNAMIC_TOKENS_RESULTS.md).
+
+## Color gestionado
+
+Input y Output usan el mismo espacio display-referred, seleccionado mediante
+**Auto from Host** o **Manual Override**. Manual admite Rec.709 Gamma 2.4,
+Rec.2100 PQ y Rec.2100 HLG. `Raw`, vacío o un nombre desconocido requieren la
+interpretación manual y generan un warning visible.
+
+Graphics White automático usa 100 nits en SDR, 203 nits en PQ y el 20,3 % del
+peak HLG. La transformación de cámara/scene/ACEScg hacia ese espacio se hace
+upstream con el CST nativo de Fusion/Resolve. No hay una configuración OCIO
+paralela dentro del plugin. Véase
+[P4_MANAGED_COLOR_RESULTS.md](P4_MANAGED_COLOR_RESULTS.md).
+
+## Registro de capacidades y render
+
+El log registra identidad/API del host, contextos, multi-resolution, tiles,
+depths, PAR, Source/Output, bounds y RoD entregados, `renderWindow`,
+`renderScale`, premultiplicación, colourspace y negociación de color. También
+registra placement, blanking, capas tipográficas, tokens y uso de la ruta
+multithread.
+
+Ruta por defecto:
+
+```text
+~/Library/Logs/WIPReviewProbe/WIPReviewProbe.log
+```
+
+Puede cambiarse antes de iniciar el host:
+
+```sh
+export WIPREVIEW_PROBE_LOG=/ruta/escribible/WIPReviewProbe.log
+```
+
+Los eventos principales son `INSTANCE_CREATE`,
+`GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`, `RENDER`, `CLIP`,
+`IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`, `STATIC_FORMATTER`,
+`EDITORIAL_BLANKING`, `TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW`,
+`DYNAMIC_TEXT`, `TOKEN_ZONE` y `TEXT_ZONE`.
 
 ## Dependencia OpenFX aislada
 
-CMake descarga únicamente los headers del repositorio oficial ASWF OpenFX en
-el directorio privado `_deps` del build. El commit está fijado a:
+CMake usa solo los headers del SDK oficial ASWF OpenFX. El checkout vive en
+`_deps` dentro del build y está fijado al commit:
 
 ```text
 3de640d6f645fe6e346acd57e568d8b0a5ae4574
 ```
 
-No se incorporan al target la support library, ejemplos, tests ni dependencias
-de terceros del SDK. Para un build offline puede proporcionarse un checkout
-existente mediante `WIPREVIEW_OPENFX_SDK_ROOT`.
+No se enlazan support library, ejemplos, tests ni dependencias de terceros. Un
+checkout existente puede indicarse con `WIPREVIEW_OPENFX_SDK_ROOT`.
 
 ## Build macOS
 
-Requisitos:
-
-- Xcode Command Line Tools;
-- CMake 3.24 o posterior;
-- acceso a GitHub durante la primera configuración, salvo que se use un SDK
-  local.
-
-Build universal recomendado para Resolve/Fusion Intel y Apple Silicon:
+Requisitos: Xcode Command Line Tools y CMake 3.24 o posterior.
 
 ```sh
 cmake -S . -B build \
@@ -181,7 +139,7 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-Build offline con un checkout existente del SDK:
+Build offline:
 
 ```sh
 cmake -S . -B build \
@@ -190,17 +148,10 @@ cmake -S . -B build \
 cmake --build build --parallel
 ```
 
-El bundle queda en:
+El artefacto queda en `build/WIPReviewProbe.ofx.bundle`. CMake aplica una firma
+ad-hoc por defecto; puede desactivarse con `-DWIPREVIEW_ADHOC_SIGN=OFF`.
 
-```text
-build/WIPReviewProbe.ofx.bundle
-```
-
-Por defecto CMake aplica una firma ad-hoc al bundle para que el artefacto local
-sea verificable por macOS. Puede desactivarse con
-`-DWIPREVIEW_ADHOC_SIGN=OFF`; no es lógica ni un workaround del host.
-
-Verificación rápida del artefacto:
+Verificación rápida:
 
 ```sh
 file build/WIPReviewProbe.ofx.bundle/Contents/MacOS/WIPReviewProbe.ofx
@@ -211,179 +162,65 @@ nm -gU build/WIPReviewProbe.ofx.bundle/Contents/MacOS/WIPReviewProbe.ofx \
 
 ## Instalación macOS
 
-Cierra Resolve/Fusion e instala para todos los usuarios:
+Cierra Resolve y Fusion. La instalación para todos los usuarios es:
 
 ```sh
 sudo cmake --install build --prefix /Library/OFX/Plugins
 ```
 
-El resultado debe ser:
+El resultado es
+`/Library/OFX/Plugins/WIPReviewProbe.ofx.bundle`. Reinicia el host después de
+reemplazar el bundle. Los efectos aparecen en `WIP Review` como `WIP Review` y
+`WIP Review — Filter Only`.
 
-```text
-/Library/OFX/Plugins/WIPReviewProbe.ofx.bundle
-```
+## Validación automática en Fusion Standalone
 
-Vuelve a abrir Resolve/Fusion. Los dos descriptores aparecen bajo
-`WIP Review/Diagnostics`. Tras reemplazar un build, reinicia el host para evitar
-que conserve el binario anterior en memoria.
-
-## Log
-
-Ruta por defecto:
-
-```text
-~/Library/Logs/WIPReviewProbe/WIPReviewProbe.log
-```
-
-Cada línea contiene timestamp, PID, evento y pares `clave=valor`. Los eventos
-`INSTANCE_CREATE`, `GET_REGION_OF_DEFINITION`, `GET_REGIONS_OF_INTEREST`,
-`RENDER`, `CLIP`, `IMAGE`, `INSTANCE_COLOUR_NEGOTIATION`,
-`TEMPORAL_STRING_PROBE`, `STATIC_FORMATTER`, `EDITORIAL_BLANKING`,
-`TEXT_OUTLINE`, `TEXT_SHADOW`, `TEXT_OVERFLOW`, `DYNAMIC_TEXT`, `TOKEN_ZONE` y
-`TEXT_ZONE` forman el registro tipográfico principal.
-
-Para usar otra ruta, inicia el host desde un entorno que contenga:
-
-```sh
-export WIPREVIEW_PROBE_LOG=/ruta/escribible/WIPReviewProbe.log
-```
-
-El logger usa append, está protegido para renders concurrentes y nunca eleva
-un error de I/O al host.
-
-## Test automático en Fusion Standalone
-
-El harness macOS crea una composición privada y genera un Source `4608×3164`.
-Prueba los cinco placements en Filter-only con Output `1920×1080`, repite Fit en
-General y valida además `Canvas Mode = Host Raster` con Output `4608×3164`.
-Activa `AllowResize`, fuerza cada render y valida exclusivamente el tramo nuevo
-del log. La composición temporal se cierra bloqueada para que Fusion no muestre
-un diálogo de guardado; la composición que estuviera activa se restaura y nunca
-se modifica.
-
-P1b añade los escenarios B01–B04: aspect 2.00, opacity 0.5, blanking off y
-pillarbox Custom 1.33. El mismo runner mantiene toda la cobertura P1a.
-
-La cobertura tipográfica valida UTF-8, crecimiento desde anclajes
-superior/inferior, fuente ausente, texto sobre blanking, seis zonas simultáneas,
-overrides, offsets, outline, shadow, las tres políticas de overflow, celdas,
-escala mínima, tokens, timecode y frame-varying.
-
-Con el bundle ya instalado:
+Con el bundle instalado:
 
 ```sh
 scripts/run_fusion_smoke.sh
 ```
 
-También está disponible como target explícito, fuera de `ctest` porque necesita
-la aplicación gráfica instalada:
+El harness crea una composición privada con Source `4608×3164`, valida los
+cinco placements en Output `1920×1080`, Host Raster, blanking, seis zonas,
+outline, shadow, overflow, tokens, Rec.709/PQ/HLG y la ruta CPU multithread. La
+composición activa se restaura y no se modifica.
+
+También puede ejecutarse mediante:
 
 ```sh
 cmake --build build --target fusion_host_smoke
 ```
 
-### Benchmark CPU P5
-
-El benchmark de rendimiento es opt-in y no altera el build normal:
-
-```sh
-cmake -S . -B build-p5 \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DWIPREVIEW_BUILD_BENCHMARKS=ON \
-  -DWIPREVIEW_OPENFX_SDK_ROOT=/ruta/al/openfx-fijado
-cmake --build build-p5 --target wipreview_cpu_benchmark
-./build-p5/wipreview_cpu_benchmark \
-  --case fullres_to_hd --encoding all --threads 1
-```
-
-Casos disponibles: `equivalence_probe`, `fullres_to_hd`, `uhd_identity` y
-`dci_fit`. `--threads N` permite medir el particionado por bandas sin depender
-de un host OFX; el plugin usa la suite multithread del host. Resultados y
-metodología: [P5_PERFORMANCE_RESULTS.md](P5_PERFORMANCE_RESULTS.md).
-
-El script abre Fusion si no está ejecutándose y conecta mediante el `fuscript`
-incluido en Fusion 21. Un crash, bloqueo de licencia o diálogo excepcional del
-sistema sigue siendo una condición externa al harness.
-
-### Composición de validación visual
-
-Con `ffmpeg` disponible, este comando genera una carta temporal `4608×3164` y
-deja abierta una composición aislada con Identity, Fit, Fill/Crop, Stretch,
-1:1, Host Raster, los casos de blanking y la matriz tipográfica P3:
+Para chequeo visual:
 
 ```sh
 scripts/open_fusion_visual.sh
 ```
 
-Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
-`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. La salida Rec.709 se visualiza
-directamente. Para comprobar PQ o HLG en un viewer SDR, conecta después un
-Color Space Transform nativo `Rec.2100 ST2084 → Rec.709` o
-`Rec.2100 HLG EOTF → Rec.709`, respectivamente, con
+Selecciona nodos `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
+`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. Rec.709 se visualiza directamente.
+Para PQ/HLG en un viewer SDR, conecta después un CST nativo hacia Rec.709 con
 `HDR 203 Nits Diffuse White` activo.
-La composición se llama `WIPReview_VISUAL_VALIDATION_DO_NOT_SAVE`; es
-intencionadamente temporal y no modifica la composición que estuviera activa.
 
-## Protocolo P0-Raster obligatorio
+## Benchmark CPU
 
-1. Usa una entrada real `4608 × 3164` con PAR 1.0. Evita que un nodo upstream
-   la reduzca sin registrarlo.
-2. Mantén `Request Custom Output RoD = On`, Width `1920`, Height `1080`.
-3. Asigna una etiqueta única en **Scenario Label** antes de renderizar.
-4. Fuerza al menos un render completo a escala 1.0 y guarda captura/export para
-   detectar un resize posterior al OFX que el API no revela.
-5. Repite separadamente:
+El benchmark es opt-in:
 
-   - `Resolve Edit / OFX Filter`;
-   - `Resolve Color / OFX Filter`;
-   - `Fusion / OFX General`;
-   - `Fusion / OFX Filter`, solo si el host lo ofrece.
+```sh
+cmake -S . -B build-perf \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DWIPREVIEW_BUILD_BENCHMARKS=ON \
+  -DWIPREVIEW_OPENFX_SDK_ROOT=/ruta/al/openfx-fijado
+cmake --build build-perf --target wipreview_cpu_benchmark
+./build-perf/wipreview_cpu_benchmark \
+  --case fullres_to_hd --encoding all --threads 1
+```
 
-   En Fusion activa en la pestaña común `Settings` del nodo
-   **Use plugin RoD for output size** (`AllowResize=1`). Sin esa opción Fusion
-   conserva el raster upstream aunque llame a `GetRegionOfDefinition`.
+Casos: `equivalence_probe`, `fullres_to_hd`, `uhd_identity` y `dci_fit`.
+Resultados en [P5_PERFORMANCE_RESULTS.md](P5_PERFORMANCE_RESULTS.md).
 
-6. En **Animated String Probe**, crea dos keys con textos distintos y renderiza
-   ambos frames. El log debe mostrar `is_animating`, `key_count` y el valor
-   devuelto para cada tiempo.
-7. Repite un frame con proxy/render scale distinto de 1.0.
-8. Para PAR/premultiplicación, añade pruebas separadas con media anamórfica y
-   RGBA premultiplicado/no premultiplicado; no mezcles esos resultados con el
-   caso raster base.
-9. Para color, repite en la configuración de gestión de color que vaya a usar
-   producción y registra el estilo/config que negocia el host.
-10. Transcribe las evidencias a [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
+## Aceptación V1
 
-No hay detección basada en nombre de host ni rutas privadas de Resolve. El mismo
-binario ejecuta el contrato OpenFX publicado en todos los contextos. Las opciones
-o limitaciones específicas del host descubiertas durante P0 se documentan en
-`HOST_PROBE_RESULTS.md`; no se activan silenciosamente desde el plugin.
-
-## Regla de decisión A/B
-
-Un contexto habilita **A) Full-res → OFX → Review Raster HD** solo si a escala
-1.0 se cumplen simultáneamente:
-
-- Source conserva el RoD/bounds full-res esperado;
-- Output RoD y bounds físicos son `1920 × 1080`;
-- `renderWindow` es coherente con ese output;
-- el Source RoI permite acceder a la imagen necesaria;
-- viewer y export confirman que el host no vuelve a imponer el project extent
-  después del efecto.
-
-Si falla cualquiera de esas condiciones, ese contexto usa
-**B) Full-res → Crop/Resize → OFX → Review HD**. La decisión se toma por
-contexto; no se extrapola un resultado de Fusion General a Edit/Color Filter.
-
-## Resultado P0 medido
-
-- Fusion Standalone 21 General y Filter permiten **A**, condicionado a
-  `Use plugin RoD for output size`. Source `4608×3164` y Output físico
-  `1920×1080` fueron observados simultáneamente.
-- Resolve 21 Edit y Color usan **B** internamente: con clip UHD en timeline HD,
-  el Source entregado al OFX ya es `1920×1080`.
-- Fusion no materializó Output PAR `1` desde Source PAR `2`, aunque aceptó la
-  preferencia con status `OK`; una fuente no cuadrada debe normalizarse upstream.
-
-La evidencia completa y versionada está en
-[HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
+La matriz formal de HD/UHD/DCI, PAR, rutas A/B, Identity, alpha, depths, color y
+host está en [V1_ACCEPTANCE_RESULTS.md](V1_ACCEPTANCE_RESULTS.md).

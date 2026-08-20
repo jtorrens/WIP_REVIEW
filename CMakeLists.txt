@@ -75,6 +75,7 @@ else()
   )
   target_link_libraries(wipreview_text_rasterizer PUBLIC wipreview_probe_core)
 endif()
+
 target_include_directories(wipreview_text_rasterizer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_compile_features(wipreview_text_rasterizer PUBLIC cxx_std_17)
 set_target_properties(wipreview_text_rasterizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -137,6 +138,12 @@ if(WIPREVIEW_BUILD_TESTS)
   )
   add_test(NAME wipreview_probe_core COMMAND wipreview_probe_tests)
 
+  add_executable(wipreview_v1_acceptance_tests tests/v1_acceptance_tests.cpp)
+  target_link_libraries(wipreview_v1_acceptance_tests PRIVATE
+    wipreview_probe_core
+  )
+  add_test(NAME wipreview_v1_acceptance COMMAND wipreview_v1_acceptance_tests)
+
   add_executable(wipreview_color_pipeline_tests tests/color_pipeline_tests.cpp)
   target_link_libraries(wipreview_color_pipeline_tests PRIVATE
     wipreview_probe_core
@@ -154,8 +161,16 @@ if(WIPREVIEW_BUILD_TESTS)
     add_custom_target(fusion_host_smoke
       COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_smoke.sh"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMENT "Running cumulative Fusion Standalone P1/P5 OFX host smoke test"
+      COMMENT "Running cumulative Fusion Standalone V1 OFX host smoke test"
       USES_TERMINAL
     )
   endif()
 endif()
+
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_PACKAGE_NAME "WIPReviewProbe")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME
+    "WIPReviewProbe-${PROJECT_VERSION}-macOS-universal")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+include(CPack)
