@@ -113,54 +113,52 @@ local ok, failure = pcall(function()
     end
 
     local placement_names = {"IDENTITY", "FIT", "FILL", "STRETCH", "ONE_TO_ONE"}
-    local probe = nil
     for placement = 0, 4 do
-        probe = render_probe(
-            "ofx.com.jtorrens.WIPReviewProbe.Filter",
-            "AUTOMATED_GEOMETRY_FILTER_" .. placement_names[placement + 1],
+        render_probe(
+            "ofx.com.jtorrens.WIPReviewProbe",
+            "AUTOMATED_GEOMETRY_" .. placement_names[placement + 1],
             placement, 1, placement + 1, 0)
     end
-    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_GEOMETRY_GENERAL_FIT", 1, 1, 1, 1)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_GEOMETRY_HOST_RASTER", 0, 0, 2, 1)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B01_2_00", 0, 1, 1, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_GEOMETRY_HOST_RASTER", 0, 0, 2, 1)
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B01_2_00", 0, 1, 1, 2,
                  1, 2, 2.0, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B02_HALF", 0, 1, 2, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B02_HALF", 0, 1, 2, 2,
                  1, 2, 2.0, 0.5)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B03_OFF", 0, 1, 3, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B03_OFF", 0, 1, 3, 2,
                  0, 2, 2.0, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_BLANKING_B04_PILLAR", 0, 1, 4, 2,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_BLANKING_B04_PILLAR", 0, 1, 4, 2,
                  1, 4, 1.33, 1.0)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_UTF8_TL", 0, 1, 1, 3,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_TEXT_UTF8_TL", 0, 1, 1, 3,
                  0, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.tlText = "SECUENCIA ÁRTICO — VERSIÓN 03"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_TOP_LARGE", 0, 1, 2, 3,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_TEXT_TOP_LARGE", 0, 1, 2, 3,
                  0, 2, 2.0, 1.0, function(p)
         p.fontStyle = 1; p.fontSize = 0.056
         p.tlEnabled = 1; p.tlText = "TOP GROWS DOWN"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_BOTTOM_LARGE", 0, 1, 3, 3,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_TEXT_BOTTOM_LARGE", 0, 1, 3, 3,
                  0, 2, 2.0, 1.0, function(p)
         p.fontStyle = 1; p.fontSize = 0.056
         p.blEnabled = 1; p.blText = "BOTTOM GROWS UP"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_FONT_FALLBACK", 0, 1, 4, 3,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_TEXT_FONT_FALLBACK", 0, 1, 4, 3,
                  0, 2, 2.0, 1.0, function(p)
         p.fontFamily = "WIPReview Font That Does Not Exist 7F3A"
         p.trEnabled = 1; p.trText = "FONT FALLBACK"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_TEXT_OVER_BLANKING", 0, 1, 5, 3,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_TEXT_OVER_BLANKING", 0, 1, 5, 3,
                  1, 2, 2.0, 1.0, function(p)
         p.tcEnabled = 1; p.tcText = "TEXT OVER BLANKING"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_SIX_ZONES", 2, 1, 1, 4,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_SIX_ZONES", 2, 1, 1, 4,
                  0, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.tcEnabled = 1; p.trEnabled = 1
         p.blEnabled = 1; p.bcEnabled = 1; p.brEnabled = 1
         p.tlText = "TL Á"; p.tcText = "TC —"; p.trText = "TR Ó"
         p.blText = "BL"; p.bcText = "BC"; p.brText = "BR"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_OVERRIDES", 2, 1, 2, 4,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_OVERRIDES", 2, 1, 2, 4,
                  0, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.tcEnabled = 1; p.brEnabled = 1; p.blEnabled = 1
         p.tlUseSizeOverride = 1; p.tlSize = 0.056
@@ -172,17 +170,17 @@ local ok, failure = pcall(function()
         p.tlText = "TL LARGE"; p.tcText = "TC GREEN"
         p.brText = "BR 25%"; p.blText = "BL OFFSET"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2A_WITH_BLANKING", 2, 1, 3, 4,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2A_WITH_BLANKING", 2, 1, 3, 4,
                  1, 2, 2.0, 1.0, function(p)
         p.tlEnabled = 1; p.brEnabled = 1
         p.tlText = "TL OVER BLANKING"; p.brText = "BR OVER BLANKING"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2B_OUTLINE_DEFAULT", 2, 1, 4, 4,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2B_OUTLINE_DEFAULT", 2, 1, 4, 4,
                  0, 2, 2.0, 1.0, function(p)
         p.outlineEnabled = 1; p.outlineWidth = 0.001
         p.tlEnabled = 1; p.tlText = "P2B DEFAULT OUTLINE"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2B_OUTLINE_WIDE_RED_HALF", 2, 1, 5, 4,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2B_OUTLINE_WIDE_RED_HALF", 2, 1, 5, 4,
                  0, 2, 2.0, 1.0, function(p)
         p.outlineEnabled = 1; p.outlineWidth = 0.006
         p.outlineColorRed = 1.0; p.outlineColorGreen = 0.0
@@ -190,12 +188,12 @@ local ok, failure = pcall(function()
         p.outlineOpacity = 0.5
         p.tcEnabled = 1; p.tcText = "P2B RED 50% OUTLINE"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2C_SHADOW_DEFAULT", 2, 1, 1, 5,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2C_SHADOW_DEFAULT", 2, 1, 1, 5,
                  0, 2, 2.0, 1.0, function(p)
         p.shadowEnabled = 1
         p.tlEnabled = 1; p.tlText = "P2C DEFAULT SHADOW"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2C_SHADOW_HARD_BLUE", 2, 1, 2, 5,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2C_SHADOW_HARD_BLUE", 2, 1, 2, 5,
                  0, 2, 2.0, 1.0, function(p)
         p.shadowEnabled = 1
         p.shadowOffsetX = -0.01; p.shadowOffsetY = -0.01
@@ -205,30 +203,30 @@ local ok, failure = pcall(function()
         p.shadowOpacity = 1.0
         p.brEnabled = 1; p.brText = "P2C HARD BLUE SHADOW"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2D_OVERFLOW_CLIP", 2, 1, 1, 6,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_CLIP", 2, 1, 1, 6,
                  0, 2, 2.0, 1.0, function(p)
         p.overflowMode = 0; p.fontSize = 0.060
         p.tlEnabled = 1
         p.tlText = "CLIP KEEPS THIS COMPLETE UTF-8 STRING ÁRTICO OUTSIDE CELL"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2D_OVERFLOW_ELLIPSIS", 2, 1, 2, 6,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_ELLIPSIS", 2, 1, 2, 6,
                  0, 2, 2.0, 1.0, function(p)
         p.overflowMode = 1; p.fontSize = 0.060
         p.tcEnabled = 1
         p.tcText = "ELLIPSIS PRESERVES UTF-8 ÁRTICO AND REPLACES THE TAIL"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2D_OVERFLOW_SHRINK", 2, 1, 3, 6,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_SHRINK", 2, 1, 3, 6,
                  0, 2, 2.0, 1.0, function(p)
         p.overflowMode = 2; p.fontSize = 0.060; p.minimumFontScale = 0.60
         p.trEnabled = 1; p.trText = "SHRINK TO FIT THIS CELL"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P2D_OVERFLOW_MIN_CLIP", 2, 1, 4, 6,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P2D_OVERFLOW_MIN_CLIP", 2, 1, 4, 6,
                  0, 2, 2.0, 1.0, function(p)
         p.overflowMode = 2; p.fontSize = 0.060; p.minimumFontScale = 0.60
         p.blEnabled = 1
         p.blText = "MINIMUM SCALE STILL CANNOT FIT THIS DELIBERATELY VERY LONG STRING AND MUST CLIP"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_TOKENS", 2, 1, 1, 7,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_TOKENS", 2, 1, 1, 7,
                  0, 2, 2.0, 1.0, function(p)
         p.frameRelativeBase = 1; p.frameStart = 1001
         p.fpsMode = 1; p.fpsOverride = 24.0
@@ -236,36 +234,36 @@ local ok, failure = pcall(function()
         p.tlEnabled = 1
         p.tlText = "REL {frame_rel} ABS {frame} TC {timecode} UNKNOWN {shot}"
     end, {0, 1})
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_TIMECODE_DF", 2, 1, 2, 7,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_TIMECODE_DF", 2, 1, 2, 7,
                  0, 2, 2.0, 1.0, function(p)
         p.fpsMode = 1; p.fpsOverride = 30000.0 / 1001.0
         p.timecodeStart = "00:00:00;00"; p.dropFrameMode = 2
         p.tcEnabled = 1; p.tcText = "DF {timecode}"
     end, {1799, 1800})
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P3_INVALID_TIMECODE", 2, 1, 3, 7,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P3_INVALID_TIMECODE", 2, 1, 3, 7,
                  0, 2, 2.0, 1.0, function(p)
         p.fpsMode = 1; p.fpsOverride = 25.0
         p.timecodeStart = "invalid"; p.dropFrameMode = 2
         p.brEnabled = 1; p.brText = "INVALID TC {timecode}"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_REC709_LINEAR_BLEND", 0, 1, 1, 8,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P4_REC709_LINEAR_BLEND", 0, 1, 1, 8,
                  1, 2, 2.0, 0.5, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 0
         p.graphicsWhiteMode = 0
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_PQ_GRAPHICS_WHITE", 0, 1, 2, 8,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P4_PQ_GRAPHICS_WHITE", 0, 1, 2, 8,
                  0, 2, 2.0, 1.0, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 1
         p.graphicsWhiteMode = 0
         p.tcEnabled = 1; p.tcText = "PQ WHITE 203 NITS"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_HLG_GRAPHICS_WHITE", 0, 1, 3, 8,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P4_HLG_GRAPHICS_WHITE", 0, 1, 3, 8,
                  0, 2, 2.0, 1.0, function(p)
         p.colorSpaceMode = 1; p.manualColorSpace = 2
         p.graphicsWhiteMode = 0; p.hlgPeakNits = 1000.0
         p.tcEnabled = 1; p.tcText = "HLG WHITE 203 NITS"
     end)
-    render_probe("ofx.com.jtorrens.WIPReviewProbe.Filter", "AUTOMATED_P4_AUTO_UNKNOWN", 0, 1, 4, 8,
+    render_probe("ofx.com.jtorrens.WIPReviewProbe", "AUTOMATED_P4_AUTO_UNKNOWN", 0, 1, 4, 8,
                  0, 2, 2.0, 1.0, function(p)
         p.colorSpaceMode = 0; p.manualColorSpace = 0
         p.tcEnabled = 1; p.tcText = "AUTO UNKNOWN WARNING"

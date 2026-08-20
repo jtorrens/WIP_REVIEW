@@ -46,7 +46,6 @@
 namespace {
 
 constexpr char kPluginIdentifier[] = "com.jtorrens.WIPReviewProbe";
-constexpr char kFilterPluginIdentifier[] = "com.jtorrens.WIPReviewProbe.Filter";
 constexpr char kParamWidth[] = "requestedWidth";
 constexpr char kParamHeight[] = "requestedHeight";
 constexpr char kParamCanvasMode[] = "canvasMode";
@@ -1169,35 +1168,23 @@ OfxStatus unload() {
   return kOfxStatOK;
 }
 
-enum class DescriptorProfile {
-  GeneralPreferred,
-  FilterOnly,
-};
-
-OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
+OfxStatus describe(OfxImageEffectHandle effect) {
   OfxPropertySetHandle properties = nullptr;
   OfxStatus status = gImageSuite->getPropertySet(effect, &properties);
   if (status != kOfxStatOK) return status;
 
-  const bool filterOnly = profile == DescriptorProfile::FilterOnly;
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review — Filter Only"
-                                          : "WIP Review");
-  gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
-                               filterOnly ? "WIP Review Filter" : "WIP Review");
+  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "WIP Review");
+  gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0, "WIP Review");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review OFX — Filter Only"
-                                          : "WIP Review OFX");
+                               "WIP Review OFX");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
       "Review-raster placement, editorial blanking and six-zone display-light text overlay.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
                                kOfxImageEffectContextFilter);
-  if (!filterOnly) {
-    gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 1,
-                                 kOfxImageEffectContextGeneral);
-  }
+  gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 1,
+                               kOfxImageEffectContextGeneral);
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedPixelDepths, 0,
                                kOfxBitDepthByte);
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedPixelDepths, 1,
@@ -1232,8 +1219,7 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
   const OfxStatus configStatus = gPropertySuite->propSetString(
       properties, kOfxImageEffectPropColourManagementAvailableConfigs, 0, kNativeConfig);
   Logger::instance().write("DESCRIBE",
-      std::string("descriptor_profile=") + (filterOnly ? "FilterOnly" : "GeneralPreferred") +
-      (filterOnly ? " declared_contexts=[Filter]" : " declared_contexts=[Filter,General]") +
+      std::string("declared_contexts=[Filter,General]") +
       " multi_resolution=true tiles=false" +
       " colour_style_request=OCIO colour_style_status=" + statusName(colourStyleStatus) +
       " native_config_status=" + statusName(configStatus));
@@ -2401,15 +2387,15 @@ OfxStatus instanceChanged(OfxImageEffectHandle effect, OfxPropertySetHandle inAr
   return kOfxStatReplyDefault;
 }
 
-OfxStatus pluginMainForProfile(DescriptorProfile profile, const char* action,
-                               const void* handle, OfxPropertySetHandle inArgs,
-                               OfxPropertySetHandle outArgs) noexcept {
+OfxStatus pluginMain(const char* action, const void* handle,
+                     OfxPropertySetHandle inArgs,
+                     OfxPropertySetHandle outArgs) noexcept {
   try {
     const auto effect = reinterpret_cast<OfxImageEffectHandle>(const_cast<void*>(handle));
     OfxStatus status = kOfxStatReplyDefault;
     if (std::strcmp(action, kOfxActionLoad) == 0) status = load();
     else if (std::strcmp(action, kOfxActionUnload) == 0) status = unload();
-    else if (std::strcmp(action, kOfxActionDescribe) == 0) status = describe(effect, profile);
+    else if (std::strcmp(action, kOfxActionDescribe) == 0) status = describe(effect);
     else if (std::strcmp(action, kOfxImageEffectActionDescribeInContext) == 0)
       status = describeInContext(effect, inArgs);
     else if (std::strcmp(action, kOfxActionCreateInstance) == 0) status = createInstance(effect);
@@ -2442,19 +2428,6 @@ OfxStatus pluginMainForProfile(DescriptorProfile profile, const char* action,
   }
 }
 
-OfxStatus pluginMain(const char* action, const void* handle,
-                     OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs) noexcept {
-  return pluginMainForProfile(DescriptorProfile::GeneralPreferred, action, handle,
-                              inArgs, outArgs);
-}
-
-OfxStatus filterPluginMain(const char* action, const void* handle,
-                           OfxPropertySetHandle inArgs,
-                           OfxPropertySetHandle outArgs) noexcept {
-  return pluginMainForProfile(DescriptorProfile::FilterOnly, action, handle,
-                              inArgs, outArgs);
-}
-
 void setHost(OfxHost* host) {
   gHost = host;
 }
@@ -2469,26 +2442,15 @@ OfxPlugin gPlugin = {
     pluginMain,
 };
 
-OfxPlugin gFilterPlugin = {
-    kOfxImageEffectPluginApi,
-    1,
-    kFilterPluginIdentifier,
-    0,
-    1,
-    setHost,
-    filterPluginMain,
-};
-
 }  // namespace
 
 extern "C" WIPREVIEW_EXPORT OfxPlugin* OfxGetPlugin(int index) {
   if (index == 0) return &gPlugin;
-  if (index == 1) return &gFilterPlugin;
   return nullptr;
 }
 
 extern "C" WIPREVIEW_EXPORT int OfxGetNumberOfPlugins() {
-  return 2;
+  return 1;
 }
 
 extern "C" WIPREVIEW_EXPORT OfxStatus OfxSetHost(const OfxHost* host) {

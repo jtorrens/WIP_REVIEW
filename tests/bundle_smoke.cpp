@@ -32,24 +32,19 @@ int main(int argc, char** argv) {
     dlclose(library);
     return fail("mandatory OpenFX exports are missing");
   }
-  if (getCount() != 2) {
+  if (getCount() != 1) {
     dlclose(library);
-    return fail("bundle must expose the general-preferred and filter-only effects");
+    return fail("bundle must expose exactly one WIP Review effect");
   }
-  const char* expectedIdentifiers[] = {
-      "com.jtorrens.WIPReviewProbe",
-      "com.jtorrens.WIPReviewProbe.Filter",
-  };
-  for (int index = 0; index < 2; ++index) {
-    OfxPlugin* plugin = getPlugin(index);
-    if (!plugin || std::strcmp(plugin->pluginApi, kOfxImageEffectPluginApi) != 0 ||
-        plugin->apiVersion != 1 || !plugin->setHost || !plugin->mainEntry ||
-        std::strcmp(plugin->pluginIdentifier, expectedIdentifiers[index]) != 0) {
-      dlclose(library);
-      return fail("plugin metadata or entry points are invalid");
-    }
+  OfxPlugin* plugin = getPlugin(0);
+  if (!plugin || std::strcmp(plugin->pluginApi, kOfxImageEffectPluginApi) != 0 ||
+      plugin->apiVersion != 1 || !plugin->setHost || !plugin->mainEntry ||
+      std::strcmp(plugin->pluginIdentifier,
+                  "com.jtorrens.WIPReviewProbe") != 0) {
+    dlclose(library);
+    return fail("plugin metadata or entry points are invalid");
   }
-  if (getPlugin(2) != nullptr) {
+  if (getPlugin(1) != nullptr) {
     dlclose(library);
     return fail("out-of-range plugin lookup should return null");
   }

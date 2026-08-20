@@ -41,7 +41,7 @@ local ok, failure = pcall(function()
     local names = {"IDENTITY", "FIT", "FILL_CROP", "STRETCH", "ONE_TO_ONE"}
     local probes = {}
     for placement = 0, 4 do
-        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", placement + 1, 0)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe", placement + 1, 0)
         if probe == nil then error("Unable to create geometry probe " .. names[placement + 1]) end
         probe:SetAttrs({TOOLS_Name = "GEOMETRY_" .. names[placement + 1]})
         probe.Source = loader.Output
@@ -56,7 +56,7 @@ local ok, failure = pcall(function()
         probes[placement + 1] = probe
     end
 
-    local host = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", 3, 1)
+    local host = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe", 3, 1)
     if host == nil then error("Unable to create Host Raster probe") end
     host:SetAttrs({TOOLS_Name = "GEOMETRY_HOST_RASTER_IDENTITY"})
     host.Source = loader.Output
@@ -68,7 +68,7 @@ local ok, failure = pcall(function()
     host.AllowResize = 1
 
     local function add_blanking(name, preset, custom_aspect, opacity, enabled, x)
-        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 2)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe", x, 2)
         if probe == nil then error("Unable to create blanking probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output
@@ -96,7 +96,7 @@ local ok, failure = pcall(function()
 
     local function add_text(name, text, anchor, font_size, font_style,
                             font_family, blanking_enabled, x)
-        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 4)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe", x, 4)
         if probe == nil then error("Unable to create static-text probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output
@@ -160,7 +160,7 @@ local ok, failure = pcall(function()
              0.040, 0, "WIPReview Font That Does Not Exist 7F3A", 0, 6)
 
     local function add_zones(name, blanking_enabled, configure, x)
-        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe.Filter", x, 6)
+        local probe = comp:AddTool("ofx.com.jtorrens.WIPReviewProbe", x, 6)
         if probe == nil then error("Unable to create six-zone probe " .. name) end
         probe:SetAttrs({TOOLS_Name = name})
         probe.Source = loader.Output

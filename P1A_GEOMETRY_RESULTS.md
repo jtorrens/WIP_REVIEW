@@ -44,8 +44,8 @@ natural el raster correspondiente a su `renderScale`.
 Los tests host-independent cubren intersección, canvas, renderWindow, Fit,
 Fill/Crop, Stretch, 1:1, Identity, PAR, UInt16, alpha straight/premult y row
 bytes negativos. El smoke test de Fusion crea una composición privada con
-Source `4608×3164`, ejecuta los cinco placements en Filter-only con Output
-`1920×1080`, repite Fit en General y prueba Host Raster `4608×3164`. Todos usan
+Source `4608×3164`, ejecuta los cinco placements con Output `1920×1080` y
+prueba Host Raster `4608×3164`. Usa el único descriptor vigente,
 `AllowResize=1` y Lanczos3. El arnés valida bounds, renderWindow, contexto,
 cada valor de placement, el warning de Identity incompatible y el
 evento `STATIC_FORMATTER`.

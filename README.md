@@ -170,8 +170,8 @@ sudo cmake --install build --prefix /Library/OFX/Plugins
 
 El resultado es
 `/Library/OFX/Plugins/WIPReviewProbe.ofx.bundle`. Reinicia el host después de
-reemplazar el bundle. Los efectos aparecen en `WIP Review` como `WIP Review` y
-`WIP Review — Filter Only`.
+reemplazar el bundle. El único efecto aparece en `WIP Review` como
+`WIP Review`; el mismo descriptor declara Filter y General.
 
 ## Validación automática en Fusion Standalone
 

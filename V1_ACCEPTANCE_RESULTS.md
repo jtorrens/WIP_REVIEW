@@ -81,7 +81,8 @@ Validado el 20 de agosto de 2026 en Fusion Studio 21.0.4 con el binario del
 commit `7d47575`:
 
 - smoke acumulativo: 36 renders aprobados;
-- General y Filter: Requested 1920×1080 desde Source 4608×3164;
+- descriptor único en Fusion General: Requested 1920×1080 desde Source
+  4608×3164;
 - Host Raster y los cinco placements aprobados;
 - blanking, seis zonas, outline, shadow, overflow y tokens aprobados;
 - Rec.709, PQ y HLG aprobados;

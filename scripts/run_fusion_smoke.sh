@@ -61,7 +61,6 @@ require_record() {
     fi
 }
 
-require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextFilter"' 'Filter context'
 require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextGeneral"' 'General context'
 require_record 'IMAGE .*clip=Source bounds=\[0,0,4608,3164\]' '4608x3164 Source image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,1920,1080\]' '1920x1080 Output image'
