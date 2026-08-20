@@ -336,7 +336,7 @@ local function definition(name, values)
                     PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = PipeRouterInfo { Pos = { -275, 82.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { -275, 72 } },
                     },
                     BetterResize_ReviewRaster = BetterResize {
                         CtrlWShown = false,
@@ -351,7 +351,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -110, 82.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 72 } },
                     },
                     Background_ReviewCanvas = Background {
                         CtrlWShown = false,
@@ -364,7 +364,7 @@ local function definition(name, values)
                             TopLeftBlue = Input { Value = 0, },
                             TopLeftAlpha = Input { Value = 1, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 55, 181.5 } },
+                        ViewInfo = OperatorInfo { Pos = { 55, 144 } },
                     },
                     Merge_ReviewRaster = Merge {
                         CtrlWShown = false,
@@ -380,7 +380,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -110, 181.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 144 } },
                     },
                     Switch_ReviewRaster = Switch {
                         CtrlWShown = false,
@@ -398,7 +398,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -110, 247.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 216 } },
                     },
                     Custom_AppliedData = Custom {
                         CtrlWShown = false,
@@ -406,7 +406,7 @@ local function definition(name, values)
                         Inputs = {
                             NumberIn1 = Input { Value = %.12g, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -165, 16.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -165, 0 } },
                     },
                     WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
@@ -426,7 +426,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 110, 313.5 } },
+                        ViewInfo = OperatorInfo { Pos = { 110, 288 } },
                     },
                     Switch_WIP = Switch {
                         CtrlWShown = false,
@@ -444,7 +444,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -55, 313.5 } },
+                        ViewInfo = OperatorInfo { Pos = { -55, 288 } },
                     },
                     PipeRouter_Output = PipeRouter {
                         CtrlWShown = false,
@@ -455,7 +455,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { -55, 412.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { -55, 360 } },
                     },
                     PipeRouter_WIPSource = PipeRouter {
                         CtrlWShown = false,
@@ -466,7 +466,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { 110, 247.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { 110, 216 } },
                     },
                     PipeRouter_GroupOutput = PipeRouter {
                         CtrlWShown = false,
@@ -477,7 +477,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { 220, 49.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { 220, 0 } },
                     },
                     PipeRouter_SourceBypass = PipeRouter {
                         CtrlWShown = false,
@@ -488,7 +488,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { -275, 247.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { -275, 216 } },
                     },
                     PipeRouter_OutputReturn = PipeRouter {
                         CtrlWShown = false,
@@ -499,7 +499,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { 220, 412.5 } },
+                        ViewInfo = PipeRouterInfo { Pos = { 220, 360 } },
                     },
                 },
                 UserControls = ordered() {
