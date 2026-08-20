@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -11,6 +12,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -41,7 +43,7 @@ constexpr std::array<RasterCase, 4> kCases{{
     {"equivalence_probe", 512, 352, 320, 180},
     {"fullres_to_hd", 4608, 3164, 1920, 1080},
     {"uhd_identity", 3840, 2160, 3840, 2160},
-    {"dci_fit", 4096, 2160, 4096, 2160},
+    {"dci_fit", 4608, 3164, 4096, 2160},
 }};
 
 ImageView floatView(std::vector<float>& pixels, int width, int height) {
@@ -116,7 +118,8 @@ const char* encodingName(DisplayEncoding encoding) {
   return "unknown";
 }
 
-void runCase(const RasterCase& raster, DisplayEncoding encoding) {
+void runCase(const RasterCase& raster, DisplayEncoding encoding,
+             unsigned int requestedThreads) {
   const std::size_t sourcePixels =
       static_cast<std::size_t>(raster.sourceWidth) * raster.sourceHeight * 4;
   const std::size_t outputPixels =
@@ -124,11 +127,6 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
   std::vector<float> source(sourcePixels);
   std::vector<float> working(outputPixels, 0.0F);
   std::vector<float> output(outputPixels, 0.0F);
-  const bool directIdentityDecode =
-      raster.sourceWidth == raster.outputWidth &&
-      raster.sourceHeight == raster.outputHeight;
-  std::vector<float> decodedSource(
-      directIdentityDecode ? 0 : sourcePixels, 0.0F);
   fillSource(source, raster.sourceWidth, raster.sourceHeight);
 
   auto sourceView = floatView(source, raster.sourceWidth, raster.sourceHeight);
@@ -158,17 +156,46 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
   const GlyphMaskView mask{maskPixels.data(), maskWidth, maskHeight, maskWidth};
 
   const auto renderStart = Clock::now();
-  ImageView decodedSourceView;
-  if (!directIdentityDecode) {
-    decodedSourceView = floatView(
-        decodedSource, raster.sourceWidth, raster.sourceHeight);
+  const unsigned int threadCount = std::max(
+      1U, std::min(requestedThreads,
+                   static_cast<unsigned int>(raster.outputHeight)));
+  std::vector<wipreview::probe::ManagedRenderStats> threadStats(threadCount);
+  std::vector<std::thread> workers;
+  workers.reserve(threadCount > 1 ? threadCount : 0);
+  std::atomic<bool> renderFailed{false};
+  auto renderBand = [&](unsigned int index) {
+    const int y1 = raster.outputHeight * static_cast<int>(index) /
+        static_cast<int>(threadCount);
+    const int y2 = raster.outputHeight * static_cast<int>(index + 1U) /
+        static_cast<int>(threadCount);
+    try {
+      if (!wipreview::probe::renderManagedDisplayFrame(
+              sourceView, workingView, {0, y1, raster.outputWidth, y2},
+              render, color, &threadStats[index])) {
+        renderFailed.store(true, std::memory_order_relaxed);
+      }
+    } catch (...) {
+      renderFailed.store(true, std::memory_order_relaxed);
+    }
+  };
+  if (threadCount == 1) {
+    renderBand(0);
+  } else {
+    for (unsigned int index = 0; index < threadCount; ++index) {
+      workers.emplace_back(renderBand, index);
+    }
+    for (auto& worker : workers) worker.join();
   }
-  if (!wipreview::probe::renderManagedDisplayFrame(
-          sourceView, decodedSourceView, workingView, renderWindow,
-          render, color)) {
-    throw std::runtime_error("managed render scratch contract failed");
+  if (renderFailed.load(std::memory_order_relaxed)) {
+    throw std::runtime_error("managed render contract failed");
   }
   const auto renderEnd = Clock::now();
+  wipreview::probe::ManagedRenderStats renderStats;
+  for (const auto& stats : threadStats) {
+    renderStats.decodedRows += stats.decodedRows;
+    renderStats.peakCachedRows += stats.peakCachedRows;
+    renderStats.peakCacheBytes += stats.peakCacheBytes;
+  }
 
   wipreview::probe::applyBlanking(workingView, renderWindow, blanking);
   constexpr std::array<TextAnchor, 6> anchors{{
@@ -188,8 +215,32 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
   }
   const auto overlayEnd = Clock::now();
 
-  wipreview::probe::encodeManagedDisplayFrame(
-      workingView, outputView, renderWindow, color, true);
+  workers.clear();
+  renderFailed.store(false, std::memory_order_relaxed);
+  auto encodeBand = [&](unsigned int index) {
+    const int y1 = raster.outputHeight * static_cast<int>(index) /
+        static_cast<int>(threadCount);
+    const int y2 = raster.outputHeight * static_cast<int>(index + 1U) /
+        static_cast<int>(threadCount);
+    try {
+      wipreview::probe::encodeManagedDisplayFrame(
+          workingView, outputView, {0, y1, raster.outputWidth, y2},
+          color, true);
+    } catch (...) {
+      renderFailed.store(true, std::memory_order_relaxed);
+    }
+  };
+  if (threadCount == 1) {
+    encodeBand(0);
+  } else {
+    for (unsigned int index = 0; index < threadCount; ++index) {
+      workers.emplace_back(encodeBand, index);
+    }
+    for (auto& worker : workers) worker.join();
+  }
+  if (renderFailed.load(std::memory_order_relaxed)) {
+    throw std::runtime_error("managed encode failed");
+  }
   const auto encodeEnd = Clock::now();
   const std::uint64_t checksum = quantizedChecksum(output);
 
@@ -198,10 +249,13 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding) {
             << " encoding=" << encodingName(encoding)
             << " source=" << raster.sourceWidth << 'x' << raster.sourceHeight
             << " output=" << raster.outputWidth << 'x' << raster.outputHeight
+            << " threads=" << threadCount
             << " render_ms=" << milliseconds(renderStart, renderEnd)
             << " overlay_ms=" << milliseconds(renderEnd, overlayEnd)
             << " encode_ms=" << milliseconds(overlayEnd, encodeEnd)
             << " total_ms=" << milliseconds(renderStart, encodeEnd)
+            << " decoded_rows=" << renderStats.decodedRows
+            << " row_cache_peak_bytes=" << renderStats.peakCacheBytes
             << " checksum=0x" << std::hex << checksum << std::dec << '\n';
 }
 
@@ -228,20 +282,24 @@ int main(int argc, char** argv) {
   try {
     std::string caseName = "fullres_to_hd";
     std::string encodingName = "all";
+    unsigned int threadCount = 1;
     for (int index = 1; index < argc; ++index) {
       const std::string argument = argv[index];
       if (argument == "--case" && index + 1 < argc) {
         caseName = argv[++index];
       } else if (argument == "--encoding" && index + 1 < argc) {
         encodingName = argv[++index];
+      } else if (argument == "--threads" && index + 1 < argc) {
+        threadCount = static_cast<unsigned int>(std::stoul(argv[++index]));
+        if (threadCount == 0) throw std::runtime_error("threads must be positive");
       } else {
         throw std::runtime_error(
             "usage: wipreview_cpu_benchmark [--case equivalence_probe|fullres_to_hd|uhd_identity|dci_fit] "
-            "[--encoding rec709|pq|hlg|all]");
+            "[--encoding rec709|pq|hlg|all] [--threads N]");
       }
     }
     for (DisplayEncoding encoding : selectEncodings(encodingName)) {
-      runCase(selectCase(caseName), encoding);
+      runCase(selectCase(caseName), encoding, threadCount);
     }
   } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';

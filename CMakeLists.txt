@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(WIPReviewProbe VERSION 1.0.0 LANGUAGES CXX)
+project(WIPReviewProbe VERSION 1.1.0 LANGUAGES CXX)
 
 include(FetchContent)
 
@@ -154,7 +154,7 @@ if(WIPREVIEW_BUILD_TESTS)
     add_custom_target(fusion_host_smoke
       COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_fusion_smoke.sh"
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMENT "Running cumulative Fusion Standalone P1/P4 OFX host smoke test"
+      COMMENT "Running cumulative Fusion Standalone P1/P5 OFX host smoke test"
       USES_TERMINAL
     )
   endif()

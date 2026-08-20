@@ -119,9 +119,10 @@ require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:
 require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:01:00;02" effect_frame=1800 .*drop_compatible=true drop_applied=true .*used_timecode_fallback=false' 'P3 29.97 DF minute boundary'
 require_record 'TOKEN_ZONE .*zone="BR" source="INVALID TC \{timecode\}" resolved="INVALID TC 00:00:00:01" effect_frame=0 frame_rel=1 .*fps_valid=true drop_compatible=false drop_applied=false timecode_start_valid=false used_timecode_fallback=true' 'P3 invalid timecode controlled fallback'
 require_record 'RENDER_WARNING .*timecode_resolution_fallback=true' 'P3 invalid timecode warning'
-require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.709 Gamma 2\.4" graphics_white_mode=0 graphics_white_nits=100\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_source_scratch_bytes=[0-9]+ sampler_weights=precomputed encode_count=1' 'P5 Rec.709 optimized render'
-require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 PQ" graphics_white_mode=0 graphics_white_nits=203\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_source_scratch_bytes=[0-9]+ sampler_weights=precomputed encode_count=1' 'P5 PQ optimized Graphics White'
-require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 HLG" graphics_white_mode=0 graphics_white_nits=203\.000000 hlg_peak_nits=1000\.000000 .*decode_count=1 decoded_source_scratch_bytes=[0-9]+ sampler_weights=precomputed encode_count=1' 'P5 HLG optimized Graphics White'
+require_record 'SUITES .*multithread_v1=true' 'P5 OFX host multithread suite'
+require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.709 Gamma 2\.4" graphics_white_mode=0 graphics_white_nits=100\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'P5 Rec.709 optimized render'
+require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 PQ" graphics_white_mode=0 graphics_white_nits=203\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'P5 PQ optimized Graphics White'
+require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 HLG" graphics_white_mode=0 graphics_white_nits=203\.000000 hlg_peak_nits=1000\.000000 .*decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'P5 HLG optimized Graphics White'
 require_record 'MANAGED_COLOR .*mode=0 .*host_recognized=false used_manual_interpretation=true display_encoding="Rec\.709 Gamma 2\.4"' 'P4 Auto unknown deterministic interpretation'
 require_record 'RENDER_WARNING .*unknown_host_colourspace=.*manual_interpretation="Rec\.709 Gamma 2\.4"' 'P4 Auto unknown warning'
 require_record 'GET_CLIP_PREFERENCES .*color_space_mode=1 manual_color_space="Rec\.2100 PQ" requested_source_colourspace="rec2100_pq_display" preferred_colourspace_status=OK' 'P4 manual PQ OFX preference'
@@ -129,4 +130,4 @@ require_record 'GET_CLIP_PREFERENCES .*color_space_mode=1 manual_color_space="Re
 # records that host limitation; the action remains implemented for hosts that
 # negotiate OFX 1.5.1 output colourspace.
 
-echo "Automated Fusion cumulative P1/P4 smoke test passed"
+echo "Automated Fusion cumulative P1/P5 smoke test passed"

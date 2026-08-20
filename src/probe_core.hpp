@@ -116,6 +116,12 @@ struct PointI {
   int y = 0;
 };
 
+struct ManagedRenderStats {
+  std::size_t decodedRows = 0;
+  std::size_t peakCachedRows = 0;
+  std::size_t peakCacheBytes = 0;
+};
+
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
 
@@ -149,17 +155,17 @@ void decodeManagedDisplayFrame(
     bool sourcePremultiplied,
     const wipreview::color::DisplayConfig& colorConfig) noexcept;
 
-// Executes the managed decode and placement pass. Non-Identity placement
-// requires decodedSourceScratch to be a Float32 RGBA image with Source bounds;
-// Identity decodes directly into the destination and needs no scratch image.
-// Returns false only when the supplied views cannot satisfy that contract.
+// Executes the managed decode and placement pass. Identity decodes directly
+// into the destination. Resampled placements use a bounded decoded-row cache,
+// so transfer functions execute once per required Source row without a
+// full-raster scratch image.
 [[nodiscard]] bool renderManagedDisplayFrame(
     const ImageView& source,
-    const ImageView& decodedSourceScratch,
     const ImageView& displayLinearDestination,
     RectI renderWindow,
     const RenderOptions& options,
-    const wipreview::color::DisplayConfig& colorConfig);
+    const wipreview::color::DisplayConfig& colorConfig,
+    ManagedRenderStats* stats = nullptr);
 
 // Encodes the premultiplied display-light working image exactly once into the
 // negotiated Output representation, preserving its alpha convention.

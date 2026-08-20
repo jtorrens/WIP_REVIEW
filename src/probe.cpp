@@ -7,6 +7,7 @@
 #include <ofxCore.h>
 #include <ofxImageEffect.h>
 #include <ofxMessage.h>
+#include <ofxMultiThread.h>
 #include <ofxParam.h>
 #include <ofxProperty.h>
 
@@ -144,6 +145,7 @@ const OfxImageEffectSuiteV1* gImageSuite = nullptr;
 const OfxPropertySuiteV1* gPropertySuite = nullptr;
 const OfxParameterSuiteV1* gParameterSuite = nullptr;
 const OfxMessageSuiteV2* gMessageSuite = nullptr;
+const OfxMultiThreadSuiteV1* gMultiThreadSuite = nullptr;
 
 const char* statusName(OfxStatus status) noexcept {
   switch (status) {
@@ -1130,6 +1132,8 @@ OfxStatus load() {
       gHost->fetchSuite(gHost->host, kOfxParameterSuite, 1));
   gMessageSuite = static_cast<const OfxMessageSuiteV2*>(
       gHost->fetchSuite(gHost->host, kOfxMessageSuite, 2));
+  gMultiThreadSuite = static_cast<const OfxMultiThreadSuiteV1*>(
+      gHost->fetchSuite(gHost->host, kOfxMultiThreadSuite, 1));
 
   if (!gImageSuite || !gPropertySuite || !gParameterSuite) {
     return kOfxStatErrMissingHostFeature;
@@ -1140,7 +1144,8 @@ OfxStatus load() {
       " log_path=" + quoted(Logger::instance().path().c_str()));
   Logger::instance().write("SUITES",
       std::string("image_effect_v1=true property_v1=true parameter_v1=true message_v2=") +
-      (gMessageSuite ? "true" : "false"));
+      (gMessageSuite ? "true" : "false") +
+      " multithread_v1=" + (gMultiThreadSuite ? "true" : "false"));
   logHostCapabilities();
   return kOfxStatOK;
 }
@@ -1162,15 +1167,15 @@ OfxStatus describe(OfxImageEffectHandle effect, DescriptorProfile profile) {
 
   const bool filterOnly = profile == DescriptorProfile::FilterOnly;
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0,
-                               filterOnly ? "WIP Review Probe (P4 Filter Only)"
-                                          : "WIP Review Probe (P4)");
+                               filterOnly ? "WIP Review Probe (P5 Filter Only)"
+                                          : "WIP Review Probe (P5)");
   gPropertySuite->propSetString(properties, kOfxPropShortLabel, 0,
                                filterOnly ? "WIP Probe Filter" : "WIP Probe");
   gPropertySuite->propSetString(properties, kOfxPropLongLabel, 0,
-                               filterOnly ? "WIP Review Managed Color P4 — Filter Only"
-                                          : "WIP Review Managed Color P4");
+                               filterOnly ? "WIP Review Performance P5 — Filter Only"
+                                          : "WIP Review Performance P5");
   gPropertySuite->propSetString(properties, kOfxPropPluginDescription, 0,
-      "P4 managed-color overlay: review-raster geometry, display-light linear blanking and six styled dynamic text zones.");
+      "P5 CPU overlay: review-raster geometry, managed display-light composition and host-managed multithreading.");
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginPropGrouping, 0,
                                "WIP Review/Diagnostics");
   gPropertySuite->propSetString(properties, kOfxImageEffectPropSupportedContexts, 0,
@@ -1897,6 +1902,142 @@ void logTemporalParameters(const InstanceData* instance, OfxTime time) {
       " key_count=" + std::to_string(keyCount) + " key_status=" + statusName(keyStatus));
 }
 
+constexpr unsigned int kMaxManagedThreads = 24;
+
+wipreview::probe::RectI threadBand(
+    wipreview::probe::RectI window, unsigned int threadIndex,
+    unsigned int threadCount) noexcept {
+  const int height = std::max(0, window.y2 - window.y1);
+  return {window.x1,
+          window.y1 + height * static_cast<int>(threadIndex) /
+              static_cast<int>(threadCount),
+          window.x2,
+          window.y1 + height * static_cast<int>(threadIndex + 1U) /
+              static_cast<int>(threadCount)};
+}
+
+unsigned int managedThreadCount(wipreview::probe::RectI window) noexcept {
+  const unsigned int height = static_cast<unsigned int>(
+      std::max(1, window.y2 - window.y1));
+  if (!gMultiThreadSuite) return 1;
+  unsigned int hostCPUs = 1;
+  if (gMultiThreadSuite->multiThreadNumCPUs(&hostCPUs) != kOfxStatOK) return 1;
+  return std::max(1U, std::min({hostCPUs, kMaxManagedThreads, height}));
+}
+
+struct ManagedRenderBands {
+  const wipreview::probe::ImageView* source = nullptr;
+  const wipreview::probe::ImageView* destination = nullptr;
+  wipreview::probe::RectI window{};
+  const wipreview::probe::RenderOptions* options = nullptr;
+  const wipreview::color::DisplayConfig* color = nullptr;
+  std::vector<wipreview::probe::ManagedRenderStats> stats;
+  std::atomic<bool> failed{false};
+  std::atomic<unsigned int> actualThreads{1};
+};
+
+void renderManagedBand(unsigned int threadIndex, unsigned int threadMax,
+                       void* customArg) {
+  auto& bands = *static_cast<ManagedRenderBands*>(customArg);
+  bands.actualThreads.store(threadMax, std::memory_order_relaxed);
+  try {
+    if (!wipreview::probe::renderManagedDisplayFrame(
+            *bands.source, *bands.destination,
+            threadBand(bands.window, threadIndex, threadMax),
+            *bands.options, *bands.color, &bands.stats[threadIndex])) {
+      bands.failed.store(true, std::memory_order_relaxed);
+    }
+  } catch (...) {
+    bands.failed.store(true, std::memory_order_relaxed);
+  }
+}
+
+bool runManagedRenderBands(
+    const wipreview::probe::ImageView& source,
+    const wipreview::probe::ImageView& destination,
+    wipreview::probe::RectI window,
+    const wipreview::probe::RenderOptions& options,
+    const wipreview::color::DisplayConfig& color,
+    wipreview::probe::ManagedRenderStats& combinedStats,
+    unsigned int& actualThreads) {
+  const unsigned int requestedThreads = managedThreadCount(window);
+  ManagedRenderBands bands;
+  bands.source = &source;
+  bands.destination = &destination;
+  bands.window = window;
+  bands.options = &options;
+  bands.color = &color;
+  bands.stats.resize(requestedThreads);
+  OfxStatus status = kOfxStatOK;
+  if (requestedThreads > 1 && gMultiThreadSuite) {
+    status = gMultiThreadSuite->multiThread(
+        renderManagedBand, requestedThreads, &bands);
+  } else {
+    renderManagedBand(0, 1, &bands);
+  }
+  if (status != kOfxStatOK ||
+      bands.failed.load(std::memory_order_relaxed)) return false;
+  actualThreads = bands.actualThreads.load(std::memory_order_relaxed);
+  combinedStats = {};
+  for (unsigned int index = 0; index < actualThreads; ++index) {
+    combinedStats.decodedRows += bands.stats[index].decodedRows;
+    combinedStats.peakCachedRows += bands.stats[index].peakCachedRows;
+    combinedStats.peakCacheBytes += bands.stats[index].peakCacheBytes;
+  }
+  return true;
+}
+
+struct ManagedEncodeBands {
+  const wipreview::probe::ImageView* source = nullptr;
+  const wipreview::probe::ImageView* destination = nullptr;
+  wipreview::probe::RectI window{};
+  const wipreview::color::DisplayConfig* color = nullptr;
+  bool outputPremultiplied = true;
+  std::atomic<bool> failed{false};
+  std::atomic<unsigned int> actualThreads{1};
+};
+
+void encodeManagedBand(unsigned int threadIndex, unsigned int threadMax,
+                       void* customArg) {
+  auto& bands = *static_cast<ManagedEncodeBands*>(customArg);
+  bands.actualThreads.store(threadMax, std::memory_order_relaxed);
+  try {
+    wipreview::probe::encodeManagedDisplayFrame(
+        *bands.source, *bands.destination,
+        threadBand(bands.window, threadIndex, threadMax),
+        *bands.color, bands.outputPremultiplied);
+  } catch (...) {
+    bands.failed.store(true, std::memory_order_relaxed);
+  }
+}
+
+bool runManagedEncodeBands(
+    const wipreview::probe::ImageView& source,
+    const wipreview::probe::ImageView& destination,
+    wipreview::probe::RectI window,
+    const wipreview::color::DisplayConfig& color,
+    bool outputPremultiplied,
+    unsigned int& actualThreads) {
+  const unsigned int requestedThreads = managedThreadCount(window);
+  ManagedEncodeBands bands;
+  bands.source = &source;
+  bands.destination = &destination;
+  bands.window = window;
+  bands.color = &color;
+  bands.outputPremultiplied = outputPremultiplied;
+  OfxStatus status = kOfxStatOK;
+  if (requestedThreads > 1 && gMultiThreadSuite) {
+    status = gMultiThreadSuite->multiThread(
+        encodeManagedBand, requestedThreads, &bands);
+  } else {
+    encodeManagedBand(0, 1, &bands);
+  }
+  if (status != kOfxStatOK ||
+      bands.failed.load(std::memory_order_relaxed)) return false;
+  actualThreads = bands.actualThreads.load(std::memory_order_relaxed);
+  return true;
+}
+
 OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
   InstanceData* instance = getInstance(effect);
   if (!instance) return kOfxStatErrBadHandle;
@@ -1961,40 +2102,14 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         wipreview::probe::ChannelType::Float32};
     const wipreview::probe::RectI requestedWindow{
         renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
-    const bool sourceAvailable = sourceView.data && sourceView.pixelBytes > 0 &&
-        sourceView.channels > 0 &&
-        !wipreview::probe::empty(sourceView.bounds);
-    const auto writableWindow = wipreview::probe::intersect(
-        requestedWindow, outputView.bounds);
-    const auto identitySourceArea = wipreview::probe::intersect(
-        writableWindow, sourceView.bounds);
-    const bool directIdentityDecode = sourceAvailable &&
-        options.placement == wipreview::probe::PlacementMode::Identity &&
-        identitySourceArea.x1 == writableWindow.x1 &&
-        identitySourceArea.y1 == writableWindow.y1 &&
-        identitySourceArea.x2 == writableWindow.x2 &&
-        identitySourceArea.y2 == writableWindow.y2;
-    const bool needsDecodedScratch = sourceAvailable && !directIdentityDecode;
-    const int sourceWidth = needsDecodedScratch
-        ? sourceView.bounds.x2 - sourceView.bounds.x1 : 0;
-    const int sourceHeight = needsDecodedScratch
-        ? sourceView.bounds.y2 - sourceView.bounds.y1 : 0;
-    std::vector<float> decodedSourcePixels(
-        static_cast<std::size_t>(sourceWidth) *
-        static_cast<std::size_t>(sourceHeight) * 4U);
-    const wipreview::probe::ImageView decodedSourceView{
-        reinterpret_cast<std::byte*>(decodedSourcePixels.data()),
-        needsDecodedScratch ? sourceView.bounds : wipreview::probe::RectI{},
-        static_cast<std::ptrdiff_t>(sourceWidth * 4 * sizeof(float)),
-        sizeof(float) * 4,
-        4,
-        wipreview::probe::ChannelType::Float32};
-    if (!wipreview::probe::renderManagedDisplayFrame(
-            sourceView, decodedSourceView, displayLinearView, requestedWindow,
-            options, managedColor.config)) {
+    wipreview::probe::ManagedRenderStats managedRenderStats;
+    unsigned int managedRenderThreads = 1;
+    if (!runManagedRenderBands(
+            sourceView, displayLinearView, requestedWindow, options,
+            managedColor.config, managedRenderStats, managedRenderThreads)) {
       Logger::instance().write(
           "RENDER_ERROR", instancePrefix(instance) +
-          " invalid_managed_render_scratch=true");
+          " managed_render_bands_failed=true");
       result = kOfxStatFailed;
     }
     auto blanking = readBlankingOptions(instance, time, outputImage);
@@ -2082,9 +2197,15 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       zoneRasterizationFailed = zoneRasterizationFailed ||
           (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].fillPixels.empty());
     }
-    wipreview::probe::encodeManagedDisplayFrame(
-        displayLinearView, outputView, requestedWindow, managedColor.config,
-        options.outputPremultiplied);
+    unsigned int managedEncodeThreads = 1;
+    if (!runManagedEncodeBands(
+            displayLinearView, outputView, requestedWindow, managedColor.config,
+            options.outputPremultiplied, managedEncodeThreads)) {
+      Logger::instance().write(
+          "RENDER_ERROR", instancePrefix(instance) +
+          " managed_encode_bands_failed=true");
+      result = kOfxStatFailed;
+    }
     Logger::instance().write("MANAGED_COLOR",
         instancePrefix(instance) +
         " mode=" + std::to_string(managedColor.colorSpaceMode) +
@@ -2100,9 +2221,16 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             std::to_string(managedColor.config.graphicsWhiteNits) +
         " hlg_peak_nits=" + std::to_string(managedColor.config.peakNits) +
         " working_space=display-light-linear working_premult=true" +
-        " decode_count=1 decoded_source_scratch_bytes=" +
-            std::to_string(decodedSourcePixels.size() * sizeof(float)) +
+        " decode_count=1 decoded_rows=" +
+            std::to_string(managedRenderStats.decodedRows) +
+        " decoded_row_cache_peak_rows=" +
+            std::to_string(managedRenderStats.peakCachedRows) +
+        " decoded_row_cache_peak_bytes=" +
+            std::to_string(managedRenderStats.peakCacheBytes) +
         " sampler_weights=precomputed" +
+        " multithread_suite=" + (gMultiThreadSuite ? "true" : "false") +
+        " render_threads=" + std::to_string(managedRenderThreads) +
+        " encode_threads=" + std::to_string(managedEncodeThreads) +
         " encode_count=1 output_premult=" +
             (options.outputPremultiplied ? "true" : "false"));
     if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {

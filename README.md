@@ -1,4 +1,4 @@
-# WIP Review OFX — P0 Probe + P1 Formatter + P4 Managed Color
+# WIP Review OFX — P5 CPU Performance
 
 `WIPReviewProbe.ofx` conserva el probe P0 de capacidades OpenFX y añade el
 checkpoint **P1a — Geometry/Placement**: canvas de review, colocación estática y
@@ -11,6 +11,11 @@ P4 delega la transformación fotográfica al Color Space Transform nativo del
 host. WIPReview decodifica Rec.709/PQ/HLG, compone blanking y texto en
 display-light linear y codifica una sola vez. No implementa un segundo tone
 mapper, GPU ni presets semánticos.
+
+P5 conserva ese contrato y optimiza la ruta CPU con pesos de resampling
+precomputados, cache acotado de filas decodificadas y bandas gestionadas por la
+suite multithread del host. No mantiene una ruta CPU anterior ni añade un
+backend GPU inactivo.
 
 ## P4 — Managed Color
 
@@ -140,8 +145,8 @@ permite comparar esa negociación con el PAR de la imagen realmente entregada.
 
 El bundle expone dos descriptores con el mismo renderer diagnóstico:
 
-- `WIP Review Probe (P4)`: anuncia Filter y General;
-- `WIP Review Probe (P4 Filter Only)`: anuncia únicamente Filter para impedir
+- `WIP Review Probe (P5)`: anuncia Filter y General;
+- `WIP Review Probe (P5 Filter Only)`: anuncia únicamente Filter para impedir
   que Fusion elija General durante la prueba comparativa.
 
 ## Dependencia OpenFX aislada
@@ -288,11 +293,13 @@ cmake -S . -B build-p5 \
   -DWIPREVIEW_OPENFX_SDK_ROOT=/ruta/al/openfx-fijado
 cmake --build build-p5 --target wipreview_cpu_benchmark
 ./build-p5/wipreview_cpu_benchmark \
-  --case fullres_to_hd --encoding all
+  --case fullres_to_hd --encoding all --threads 1
 ```
 
 Casos disponibles: `equivalence_probe`, `fullres_to_hd`, `uhd_identity` y
-`dci_fit`. Resultados y metodología: [P5_PERFORMANCE_RESULTS.md](P5_PERFORMANCE_RESULTS.md).
+`dci_fit`. `--threads N` permite medir el particionado por bandas sin depender
+de un host OFX; el plugin usa la suite multithread del host. Resultados y
+metodología: [P5_PERFORMANCE_RESULTS.md](P5_PERFORMANCE_RESULTS.md).
 
 El script abre Fusion si no está ejecutándose y conecta mediante el `fuscript`
 incluido en Fusion 21. Un crash, bloqueo de licencia o diálogo excepcional del
@@ -309,7 +316,7 @@ scripts/open_fusion_visual.sh
 ```
 
 Selecciona cada nodo `GEOMETRY_*`, `BLANKING_*`, `P2A_*`, `P2B_*`, `P2C_*`,
-`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. La salida Rec.709 P4 se visualiza
+`P2D_*`, `P3_*` o `P4_*` y pulsa `1` o `2`. La salida Rec.709 se visualiza
 directamente. Para comprobar PQ o HLG en un viewer SDR, conecta después un
 Color Space Transform nativo `Rec.2100 ST2084 → Rec.709` o
 `Rec.2100 HLG EOTF → Rec.709`, respectivamente, con

@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <deque>
 #include <limits>
 #include <vector>
 
@@ -282,6 +283,81 @@ std::array<float, 4> samplePlanned(
   return result;
 }
 
+struct DecodedRow {
+  int sourceY = 0;
+  std::vector<std::array<float, 4>> pixels;
+};
+
+class ManagedRowCache {
+ public:
+  ManagedRowCache(const ImageView& source, bool sourcePremultiplied,
+                  const wipreview::color::DisplayConfig& colorConfig,
+                  std::size_t capacity)
+      : source_(source), sourcePremultiplied_(sourcePremultiplied),
+        colorConfig_(colorConfig), capacity_(std::max<std::size_t>(1, capacity)) {}
+
+  const std::array<float, 4>* get(int sourceY) {
+    for (const auto& row : rows_) {
+      if (row.sourceY == sourceY) return row.pixels.data();
+    }
+    if (rows_.size() >= capacity_) rows_.pop_front();
+    DecodedRow row;
+    row.sourceY = sourceY;
+    const int width = source_.bounds.x2 - source_.bounds.x1;
+    row.pixels.resize(static_cast<std::size_t>(width));
+    for (int x = source_.bounds.x1; x < source_.bounds.x2; ++x) {
+      row.pixels[static_cast<std::size_t>(x - source_.bounds.x1)] =
+          readManagedRGBA(
+              source_, x, sourceY, sourcePremultiplied_, colorConfig_);
+    }
+    rows_.push_back(std::move(row));
+    ++decodedRows_;
+    peakRows_ = std::max(peakRows_, rows_.size());
+    return rows_.back().pixels.data();
+  }
+
+  [[nodiscard]] std::size_t decodedRows() const noexcept { return decodedRows_; }
+  [[nodiscard]] std::size_t peakRows() const noexcept { return peakRows_; }
+
+ private:
+  const ImageView& source_;
+  bool sourcePremultiplied_ = true;
+  const wipreview::color::DisplayConfig& colorConfig_;
+  std::size_t capacity_ = 1;
+  std::deque<DecodedRow> rows_;
+  std::size_t decodedRows_ = 0;
+  std::size_t peakRows_ = 0;
+};
+
+std::array<float, 4> sampleManagedRows(
+    const ImageView& source, const AxisPlan& xPlan, const AxisPlan& yPlan,
+    int outputX, int outputY,
+    const std::vector<const std::array<float, 4>*>& decodedRows) noexcept {
+  const AxisSpan& xSpan = spanAt(xPlan, outputX);
+  const AxisSpan& ySpan = spanAt(yPlan, outputY);
+  std::array<double, 4> sum{};
+  double weightSum = 0.0;
+  for (std::size_t yIndex = 0; yIndex < ySpan.count; ++yIndex) {
+    const AxisTap& yTap = yPlan.taps[ySpan.first + yIndex];
+    const auto* row = decodedRows[yIndex];
+    for (std::size_t xIndex = 0; xIndex < xSpan.count; ++xIndex) {
+      const AxisTap& xTap = xPlan.taps[xSpan.first + xIndex];
+      const double weight = yTap.weight * xTap.weight;
+      const auto& rgba = row[xTap.source - source.bounds.x1];
+      for (std::size_t channel = 0; channel < 4; ++channel) {
+        sum[channel] += static_cast<double>(rgba[channel]) * weight;
+      }
+      weightSum += weight;
+    }
+  }
+  std::array<float, 4> result{};
+  if (std::abs(weightSum) < std::numeric_limits<double>::epsilon()) return result;
+  for (std::size_t channel = 0; channel < 4; ++channel) {
+    result[channel] = static_cast<float>(sum[channel] / weightSum);
+  }
+  return result;
+}
+
 }  // namespace
 
 void copyProbeFrame(const ImageView& source,
@@ -428,10 +504,11 @@ void decodeManagedDisplayFrame(
 }
 
 bool renderManagedDisplayFrame(
-    const ImageView& source, const ImageView& decodedSourceScratch,
-    const ImageView& destination, RectI renderWindow,
+    const ImageView& source, const ImageView& destination, RectI renderWindow,
     const RenderOptions& options,
-    const wipreview::color::DisplayConfig& colorConfig) {
+    const wipreview::color::DisplayConfig& colorConfig,
+    ManagedRenderStats* stats) {
+  if (stats) *stats = {};
   if (!destination.data || destination.pixelBytes != sizeof(float) * 4 ||
       destination.channels != 4 ||
       destination.channelType != ChannelType::Float32) return false;
@@ -450,6 +527,8 @@ bool renderManagedDisplayFrame(
   if (directIdentityDecode) {
     decodeManagedDisplayFrame(
         source, destination, writable, options.sourcePremultiplied, colorConfig);
+    if (stats) stats->decodedRows = static_cast<std::size_t>(
+        writable.y2 - writable.y1);
     return true;
   }
 
@@ -460,20 +539,56 @@ bool renderManagedDisplayFrame(
     renderStaticFrame({}, destination, writable, linearOptions);
     return true;
   }
-  if (!decodedSourceScratch.data ||
-      decodedSourceScratch.pixelBytes != sizeof(float) * 4 ||
-      decodedSourceScratch.channels != 4 ||
-      decodedSourceScratch.channelType != ChannelType::Float32 ||
-      decodedSourceScratch.bounds.x1 != source.bounds.x1 ||
-      decodedSourceScratch.bounds.y1 != source.bounds.y1 ||
-      decodedSourceScratch.bounds.x2 != source.bounds.x2 ||
-      decodedSourceScratch.bounds.y2 != source.bounds.y2) return false;
 
-  decodeManagedDisplayFrame(
-      source, decodedSourceScratch, source.bounds,
-      options.sourcePremultiplied, colorConfig);
-  renderStaticFrame(
-      decodedSourceScratch, destination, writable, linearOptions);
+  const PlacementTransform transform = computePlacement(
+      source.bounds, destination.bounds, options);
+  const AxisPlan xPlan = buildAxisPlan(
+      writable.x1, writable.x2, source.bounds.x1, source.bounds.x2,
+      transform.sourceCenterX, transform.outputCenterX,
+      transform.scaleX, options.filter);
+  const AxisPlan yPlan = buildAxisPlan(
+      writable.y1, writable.y2, source.bounds.y1, source.bounds.y2,
+      transform.sourceCenterY, transform.outputCenterY,
+      transform.scaleY, options.filter);
+  std::size_t maximumYSpan = 1;
+  for (const auto& span : yPlan.spans) {
+    maximumYSpan = std::max(maximumYSpan, span.count);
+  }
+  ManagedRowCache cache(
+      source, options.sourcePremultiplied, colorConfig, maximumYSpan * 2);
+  std::vector<const std::array<float, 4>*> decodedRows;
+  decodedRows.reserve(maximumYSpan);
+  std::array<float, 4> canvas{
+      options.canvas[0] * options.canvas[3],
+      options.canvas[1] * options.canvas[3],
+      options.canvas[2] * options.canvas[3],
+      options.canvas[3]};
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    const AxisSpan& ySpan = spanAt(yPlan, y);
+    decodedRows.clear();
+    if (ySpan.inside) {
+      for (std::size_t yIndex = 0; yIndex < ySpan.count; ++yIndex) {
+        const AxisTap& yTap = yPlan.taps[ySpan.first + yIndex];
+        decodedRows.push_back(cache.get(yTap.source));
+      }
+    }
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      if (!ySpan.inside || !spanAt(xPlan, x).inside) {
+        writePixel(destination, x, y, canvas);
+        continue;
+      }
+      writePixel(destination, x, y, sampleManagedRows(
+          source, xPlan, yPlan, x, y, decodedRows));
+    }
+  }
+  if (stats) {
+    stats->decodedRows = cache.decodedRows();
+    stats->peakCachedRows = cache.peakRows();
+    const std::size_t sourceWidth = static_cast<std::size_t>(
+        source.bounds.x2 - source.bounds.x1);
+    stats->peakCacheBytes = cache.peakRows() * sourceWidth *
+        sizeof(std::array<float, 4>);
+  }
   return true;
 }
 

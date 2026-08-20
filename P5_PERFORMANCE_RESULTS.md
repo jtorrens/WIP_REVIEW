@@ -1,7 +1,7 @@
-# P5 Performance — baseline CPU
+# P5 Performance — renderer CPU
 
 **Rama:** `p5-performance`  
-**Estado:** primera optimización CPU validada fuera del host.
+**Estado:** renderer CPU optimizado; pendiente smoke final en Fusion.
 
 ## Contrato
 
@@ -18,7 +18,7 @@ cmake -S . -B build-p5 \
   -DWIPREVIEW_OPENFX_SDK_ROOT=/ruta/al/openfx-fijado
 cmake --build build-p5 --target wipreview_cpu_benchmark
 ./build-p5/wipreview_cpu_benchmark \
-  --case fullres_to_hd --encoding all
+  --case fullres_to_hd --encoding all --threads 1
 ```
 
 No forma parte de `ctest` ni de builds normales. Procesa una fuente RGBA float
@@ -91,10 +91,9 @@ Los checksums arm64 del raster completo permanecen idénticos al baseline. El
 probe universal `512×352 → 320×180` conserva también exactamente sus tres
 checksums previos tanto en arm64 como en x86_64.
 
-El tradeoff actual es memoria: un placement con resampling reserva un scratch
-RGBA float equivalente al raster Source; `4608×3164` requiere aproximadamente
-222 MiB. P5 debe evaluar a continuación pesos precomputados y un cache de filas
-decodificadas para reducir tiempo y memoria sin reintroducir decode por tap.
+El primer paso utilizaba un scratch RGBA float equivalente al raster Source;
+`4608×3164` requería aproximadamente 222 MiB. La optimización 3 elimina esa
+superficie completa.
 
 ## Optimización 2 — pesos de resampling precomputados
 
@@ -111,11 +110,69 @@ solo desaparecen las evaluaciones repetidas de `sin`, divisiones y coordenadas.
 Los checksums completos arm64 siguen siendo idénticos al baseline. No se ha
 introducido SIMD, threading ni GPU.
 
+## Optimización 3 — cache acotado de filas decodificadas
+
+El sampler procesa el `renderWindow` de arriba abajo. Mantiene únicamente las
+filas Source necesarias para el soporte vertical Lanczos actual y las reutiliza
+entre filas de salida adyacentes. Cada fila requerida se decodifica una vez;
+Identity continúa decodificando directamente al working image y usa cero bytes
+de cache.
+
+| Encoding | Baseline total | Opt. 2 | Cache de filas | Ganancia total |
+| --- | ---: | ---: | ---: | ---: |
+| Rec.709 Gamma 2.4 | 19 181.2 ms | 3 082.3 ms | 1 109.3 ms | 17.29× |
+| Rec.2100 PQ | 42 517.5 ms | 3 841.0 ms | 1 822.2 ms | 23.33× |
+| Rec.2100 HLG | 22 131.5 ms | 3 364.8 ms | 1 073.4 ms | 20.62× |
+
+En `4608×3164 → 1920×1080` se decodifican 3164 filas y el cache pico es
+2 654 208 bytes, aproximadamente 2.53 MiB: una reducción de alrededor del
+98.9 % respecto al scratch completo. Los tres checksums permanecen idénticos.
+
+UHD Identity conserva sus checksums, no usa cache de filas y mejora levemente:
+497 ms Rec.709, 1273 ms PQ y 708 ms HLG.
+
+## Optimización 4 — bandas mediante la suite OFX del host
+
+El plugin no crea un pool privado. Consulta `OfxMultiThreadSuiteV1` y entrega al
+host bandas Y disjuntas para el render y el encode. El número de workers queda
+limitado a 24: en este host 32 hilos no aportan una mejora consistente y elevan
+el cache agregado de filas. Si la suite no está disponible, el mismo contrato
+actual se ejecuta en una sola banda y el log deja constancia de la capacidad.
+
+Medición `4608×3164 → 1920×1080`, 24 bandas, incluyendo encode paralelo:
+
+| Encoding | Render | Overlays | Encode | Total | Ganancia vs. baseline |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Rec.709 Gamma 2.4 | 57.7 ms | 4.5 ms | 4.2 ms | 66.4 ms | 289× |
+| Rec.2100 PQ | 97.5 ms | 4.5 ms | 11.0 ms | 113.0 ms | 376× |
+| Rec.2100 HLG | 54.6 ms | 4.4 ms | 7.0 ms | 66.0 ms | 335× |
+
+El cache pico agregado de las 24 bandas es 63 700 992 bytes, unos 60.75 MiB.
+Los checksums completos coinciden exactamente con una banda para las tres
+curvas. El benchmark usa `std::thread` únicamente para aislar esta evaluación;
+la implementación OFX de producción usa exclusivamente la suite del host.
+
+## Decisión SIMD y GPU
+
+P5 los ha evaluado y no añade una segunda ruta de render:
+
+- SIMD manual exigiría implementaciones distintas para arm64 y x86_64, además
+  de una validación numérica separada. Con 66–113 ms para el caso crítico CPU
+  de referencia, no hay evidencia que justifique esa complejidad en V1.
+- GPU obligaría a duplicar sampler, color, blanking y composición, y a negociar
+  una suite adicional del host. Se pospone hasta disponer de una medición real
+  de Fusion que muestre que el renderer CPU host-threaded no cumple el objetivo.
+
+Esta decisión mantiene una única implementación actual y no reserva una ruta
+legacy ni un selector inactivo. La interfaz pública permanece preparada para
+reemplazar internamente el backend en una fase futura si la evidencia lo exige.
+
 ## Equivalencia
 
 El benchmark emite un checksum cuantizado útil para comparar ejecuciones dentro
 de una misma arquitectura. arm64 y x86_64 no producen un hash global idéntico
 por diferencias de `libm`; por ello el hash no se usa como requisito universal.
 La aceptación de una optimización se hace con comparación dentro de cada
-arquitectura, tests acumulativos y smoke visual de Fusion. Decode once conserva
-los checksums cuantizados exactos de cada arquitectura.
+arquitectura, tests acumulativos y smoke visual de Fusion. Todas las
+optimizaciones P5 conservan los checksums cuantizados exactos de cada
+arquitectura con una y 24 bandas.
