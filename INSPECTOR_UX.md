@@ -67,3 +67,14 @@ Las páginas usan `kOfxParamTypePage`, `kOfxParamPropPageChild` y
 `kOfxPluginPropParamPageOrder`. Si un host no admite páginas, los grupos siguen
 presentando el mismo orden y contenido. Esto es una adaptación de presentación
 del contrato actual.
+
+## Validación en hosts
+
+Validado el 20 de agosto de 2026 con el bundle universal del commit `f42c34c`:
+
+- Fusion Studio 21.0.4 informó `max_pages=-1`, aceptó la definición de cinco
+  páginas y presentó la jerarquía de grupos. Los estados contextuales se
+  reflejaron correctamente en el inspector.
+- DaVinci Resolve Studio 21.0.4 informó `max_pages=0`, cargó el descriptor sin
+  errores y presentó la misma jerarquía. Canvas Mode, Review Raster y Custom
+  Width/Height quedaron deshabilitados en Host Raster, según el contrato.

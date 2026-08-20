@@ -78,9 +78,13 @@ scripts/open_fusion_visual.sh
 ## Estado del artefacto final
 
 Validado el 20 de agosto de 2026 en Fusion Studio 21.0.4 con el binario del
-commit `7d47575`:
+commit `f42c34c`:
 
-- smoke acumulativo del descriptor único: 35 renders aprobados;
+- smoke acumulativo del descriptor único: 36 renders aprobados;
+- inspector organizado por Canvas, Typography, Zones, Timing y Color, con
+  jerarquía equivalente validada en Fusion y Resolve;
+- presets HD, UHD, DCI 2K, DCI 4K y Custom; el caso Custom HD se validó en
+  Fusion con Source 4608×3164 y Output 1920×1080;
 - descriptor único en Fusion General: Requested 1920×1080 desde Source
   4608×3164;
 - Host Raster y los cinco placements aprobados;
@@ -92,7 +96,7 @@ Paquete:
 
 ```text
 build-universal/WIPReviewProbe-1.1.0-macOS-universal.zip
-SHA-256 918e47b835282b8556de344a199ea338d143d3c6ffffc9d424ad0a6ae1b18621
+SHA-256 59730aa5ab528da6b5e96c1bd64f3c62896eab27f7ea30655d563dbe1f56c6d7
 ```
 
 Resolve 21.0.4 cargó correctamente el descriptor único el 20 de agosto de 2026.
