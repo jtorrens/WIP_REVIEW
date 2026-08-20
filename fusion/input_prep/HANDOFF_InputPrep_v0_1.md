@@ -161,6 +161,12 @@ escala uniformemente y se centra hasta cubrirlo por completo:
 - puede perderse imagen fuera del rectángulo;
 - no se introducen barras vacías.
 
+Implementación validada en Fusion Standalone 21: `BetterResize` usa
+`KeepAspect = 1` y toma el ancho como dimensión rectora. El builder calcula el
+menor ancho par cuya altura derivada cubre también `Working Height`; el crop
+centrado se aplica después. Las pruebas de host cubren fuentes cuadrada,
+panorámica y vertical.
+
 ### Crop Ratio
 
 `Crop Ratio` es `ancho / alto` y debe ser mayor que cero.

@@ -26,7 +26,9 @@ fusion/input_prep/examples/InputPrep_Prototype.comp
 ```
 
 Selecciona `InputPrep1` y pulsa `1` o `2` para mostrar su salida en un Viewer.
-La fuente de prueba es un `Background` de cuatro esquinas a 3840 × 2160.
+La fuente de prueba es un `Background` cuadrado de cuatro esquinas a
+2160 × 2160. El resultado permite ver el fill y el crop sobre una fuente cuyo
+aspect ratio no coincide con el working raster.
 
 ## Grafo del prototipo
 
@@ -53,6 +55,11 @@ selectores se publican en la página `InputPrep` como:
 Cambiar cualquiera de ellos actúa directamente sobre `Switch.Source`: no
 ejecuta Lua, no reconstruye el grupo y queda persistido en la comp.
 
+`BetterResize` conserva el aspecto y usa el ancho como dimensión rectora. El
+builder calcula el menor ancho par cuya altura derivada cubre el working
+raster completo. Después `Crop` obtiene el mayor rectángulo centrado del ratio
+pedido. No se introducen barras ni se hace resize no uniforme.
+
 Configuración aplicada por defecto:
 
 - working raster: 3840 × 2160;
@@ -73,9 +80,16 @@ Con la comp del ejemplo abierta:
 ./fusion/input_prep/tests/run_prototype_test.sh
 ```
 
+La geometría con fuentes de distinto aspect ratio se valida en el host con:
+
+```sh
+./fusion/input_prep/tests/run_resize_test.sh
+```
+
 El test comprueba en el host la identidad del grupo, su conexión, el estado
 público, los cinco selectores y los valores serializados de depth, resize,
-crop y alpha.
+crop y alpha. El segundo test renderiza fuentes cuadrada, panorámica y vertical
+y comprueba las dimensiones antes y después del crop.
 
 `probe_input_prep.lua` documenta los RegIDs y controles disponibles en la
 instalación actual de Fusion. Crea una comp privada sin guardar:
@@ -87,8 +101,7 @@ instalación actual de Fusion. Crea una comp privada sin guardar:
 
 ## Pendiente antes del builder de producción
 
-Este checkpoint valida el esqueleto y la integración con el host. La siguiente
-prueba debe fijar con imágenes de distinto aspect ratio el comportamiento
-exacto de `BetterResize` para obtener fill uniforme, centrado y sin stretch.
-Después se implementarán `InputPrepConfig`, los cinco targets explícitos y el
-flujo Resolve → Validate → Apply → Verify/Rollback descrito en el handoff.
+Este checkpoint valida el esqueleto, la integración con el host y el fill
+uniforme sin stretch. A continuación se implementarán `InputPrepConfig`, los
+cinco targets explícitos y el flujo
+Resolve → Validate → Apply → Verify/Rollback descrito en el handoff.

@@ -14,6 +14,7 @@ fi
 printf '%s\n' "$output" | grep -F 'INPUTPREP_PROTOTYPE_TEST_OK' >/dev/null
 grep -F 'Width = Input { Value = 3840, }' "$EXAMPLE" >/dev/null
 grep -F 'Height = Input { Value = 2160, }' "$EXAMPLE" >/dev/null
+grep -F 'KeepAspect = Input { Value = 1, }' "$EXAMPLE" >/dev/null
 grep -F 'KeepCentered = Input { Value = 1, }' "$EXAMPLE" >/dev/null
 grep -F 'XSize = Input { Value = 3840, }' "$EXAMPLE" >/dev/null
 grep -F 'YSize = Input { Value = 1920, }' "$EXAMPLE" >/dev/null

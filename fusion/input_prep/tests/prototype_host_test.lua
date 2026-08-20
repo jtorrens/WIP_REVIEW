@@ -20,10 +20,13 @@ assert_true(input_prep ~= nil, "InputPrep prototype not found")
 assert_true(tonumber(input_prep:GetData("InputPrep.SchemaVersion")) == 1,
     "unexpected schema")
 
-local source = comp:FindTool("PrototypeSource_3840x2160")
+local source = comp:FindTool("PrototypeSource_2160x2160")
 assert_true(source ~= nil, "prototype source is missing")
 assert_true(tostring(source.Type[comp.CurrentTime]) == "Corner",
     "prototype source is not using the corner test pattern")
+assert_true(tonumber(source.Width[comp.CurrentTime]) == 2160 and
+    tonumber(source.Height[comp.CurrentTime]) == 2160,
+    "prototype source is not square")
 
 local main_input = input_prep.MainInput1
 assert_true(main_input ~= nil, "MainInput1 is missing")

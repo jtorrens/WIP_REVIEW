@@ -17,9 +17,9 @@ Composition {
 	OutputClips = {
 	},
 	Tools = {
-		PrototypeSource_3840x2160 = Background {
+		PrototypeSource_2160x2160 = Background {
 			Inputs = {
-				Width = Input { Value = 3840, },
+				Width = Input { Value = 2160, },
 				Height = Input { Value = 2160, },
 				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
 				Type = Input { Value = FuID { "Corner" }, },
@@ -39,13 +39,12 @@ Composition {
 			ViewInfo = OperatorInfo { Pos = { -165, 16.197 } },
 		},
 		InputPrep1 = GroupOperator {
-			CtrlWZoom = false,
 			CustomData = {
 				InputPrep = {
 					Role = "InputPrep",
 					SchemaVersion = 1,
 					Prototype = true
-				},
+				}
 			},
 			Inputs = ordered() {
 				IP_Status = Input { Value = "3840 x 2160  ->  3840 x 1920  |  Depth: 3  |  REC709_COLORSPACE / TWOPOINTFOUR_GAMMA  ->  REC709_COLORSPACE / LINEAR_GAMMA", },
@@ -120,7 +119,7 @@ Composition {
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "PrototypeSource_3840x2160",
+							SourceOp = "PrototypeSource_2160x2160",
 							Source = "Output",
 						}
 					},
@@ -219,6 +218,7 @@ Composition {
 					Inputs = {
 						Width = Input { Value = 3840, },
 						Height = Input { Value = 2160, },
+						KeepAspect = Input { Value = 1, },
 						PixelAspect = Input { Value = { 1, 1 }, },
 						Input = Input {
 							SourceOp = "IP_ColorSwitch",
@@ -317,10 +317,10 @@ Composition {
 				IP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
+					INP_ForceNotify = false,
 					ICS_ControlPage = "InputPrep",
 					INPID_InputControl = "TextEditControl",
-					INP_ForceNotify = false,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Applied Configuration",
 				}
 			}

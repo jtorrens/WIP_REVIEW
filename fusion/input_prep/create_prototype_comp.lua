@@ -30,9 +30,9 @@ local function add_tool(reg_id, name, x, y)
     return tool
 end
 
-local function configure_corner_source(tool)
-    tool.Width[0] = 3840
-    tool.Height[0] = 2160
+local function configure_corner_source(tool, width, height)
+    tool.Width[0] = width
+    tool.Height[0] = height
     tool.Type[0] = "Corner"
     tool.TopLeftRed[0] = 0.92
     tool.TopLeftGreen[0] = 0.12
@@ -53,11 +53,16 @@ local function configure_corner_source(tool)
 end
 
 example:Lock()
-local source = add_tool("Background", "PrototypeSource_3840x2160", -2, 0)
-configure_corner_source(source)
+local source = add_tool("Background", "PrototypeSource_2160x2160", -2, 0)
+configure_corner_source(source, 2160, 2160)
 example:Unlock()
 
+_G.INPUTPREP_OVERRIDES = {
+    sourceWidth = 2160,
+    sourceHeight = 2160,
+}
 local builder = dofile(BUILD_PATH)
+_G.INPUTPREP_OVERRIDES = nil
 local input_prep = builder.last_group
 if input_prep == nil then error("InputPrep prototype was not created") end
 input_prep.MainInput1 = source.Output

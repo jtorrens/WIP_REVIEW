@@ -1,6 +1,13 @@
 -- InputPrep v0.1 host prototype builder for Fusion Standalone 21.
 -- Creates one connected GroupOperator in the active composition.
 
+local function script_directory()
+    local source = debug.getinfo(1, "S").source
+    if source:sub(1, 1) == "@" then source = source:sub(2) end
+    return source:match("^(.*[/\\])") or "./"
+end
+
+local geometry = dofile(script_directory() .. "geometry.lua")
 local M = {}
 
 M.ROLE = "InputPrep"
@@ -8,6 +15,8 @@ M.SCHEMA_VERSION = 1
 M.DEFAULTS = {
     workingWidth = 3840,
     workingHeight = 2160,
+    sourceWidth = 3840,
+    sourceHeight = 2160,
     cropRatio = 2.0,
     sourceColorSpace = "REC709_COLORSPACE",
     sourceGamma = "TWOPOINTFOUR_GAMMA",
@@ -25,31 +34,18 @@ local function log(message)
     print("[InputPrep] " .. message)
 end
 
-local function even(value)
-    local rounded = math.floor(tonumber(value) + 0.5)
-    if rounded % 2 ~= 0 then rounded = rounded - 1 end
-    return math.max(2, rounded)
-end
-
-function M.crop_dimensions(width, height, ratio)
-    width = even(width)
-    height = even(height)
-    ratio = tonumber(ratio)
-    if ratio == nil or ratio <= 0 then error("Crop Ratio must be positive") end
-    if width / height > ratio then
-        width = even(height * ratio)
-    else
-        height = even(width / ratio)
-    end
-    return width, height
-end
+M.crop_dimensions = geometry.crop_dimensions
+M.fill_width = geometry.fill_width
 
 local function normalized_values(overrides)
     local values = {}
     for key, value in pairs(M.DEFAULTS) do values[key] = value end
     for key, value in pairs(overrides or {}) do values[key] = value end
-    values.workingWidth = even(values.workingWidth)
-    values.workingHeight = even(values.workingHeight)
+    values.workingWidth = geometry.round_even(values.workingWidth)
+    values.workingHeight = geometry.round_even(values.workingHeight)
+    values.resizeWidth = geometry.fill_width(
+        values.sourceWidth, values.sourceHeight,
+        values.workingWidth, values.workingHeight)
     values.cropWidth, values.cropHeight = M.crop_dimensions(
         values.workingWidth, values.workingHeight, values.cropRatio)
     values.depthSelection = values.enableDepth and 1 or 0
@@ -235,7 +231,7 @@ local function definition(name, values)
                         Inputs = {
                             Width = Input { Value = %d, },
                             Height = Input { Value = %d, },
-                            KeepAspect = Input { Value = 0, },
+                            KeepAspect = Input { Value = 1, },
                             FilterMethod = Input { Value = 2, },
                             Input = Input {
                                 SourceOp = "IP_ColorSwitch",
@@ -353,7 +349,7 @@ local function definition(name, values)
         values.sourceColorSpace, values.sourceGamma,
         values.workingColorSpace, values.workingGamma,
         values.colorSelection,
-        values.workingWidth, values.workingHeight,
+        values.resizeWidth, values.workingHeight,
         values.resizeSelection,
         values.cropWidth, values.cropHeight,
         values.cropSelection,
@@ -394,7 +390,7 @@ function M.run(comp_override, overrides)
 end
 
 if rawget(_G, "comp") ~= nil then
-    M.last_group = M.run(comp)
+    M.last_group = M.run(comp, rawget(_G, "INPUTPREP_OVERRIDES"))
 end
 
 return M
