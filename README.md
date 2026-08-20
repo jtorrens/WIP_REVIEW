@@ -217,6 +217,10 @@ El binario queda dentro del bundle en `Contents\Win64`. OpenCL se resuelve
 contra el ICD del sistema en tiempo de ejecución; el paquete no incluye una
 copia de `OpenCL.dll`.
 
+La validación en una máquina Windows debe hacerse desde una rama aislada. El
+procedimiento completo para Codex Windows está en
+[WINDOWS_VALIDATION_HANDOFF.md](WINDOWS_VALIDATION_HANDOFF.md).
+
 ## Validación automática en Fusion Standalone
 
 Con el bundle instalado:
