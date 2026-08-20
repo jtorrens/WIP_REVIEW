@@ -326,7 +326,7 @@ local function definition(name, values)
                 },
                 Outputs = {
                     MainOutput1 = InstanceOutput {
-                        SourceOp = "Switch_WIP",
+                        SourceOp = "PipeRouter_GroupOutput",
                         Source = "Output",
                         Name = "Output",
                     },
@@ -336,18 +336,7 @@ local function definition(name, values)
                     PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = PipeRouterInfo { Pos = { 0, -360 } },
-                    },
-                    PipeRouter_ReviewSource = PipeRouter {
-                        CtrlWShown = false,
-                        NameSet = true,
-                        Inputs = {
-                            Input = Input {
-                                SourceOp = "PipeRouter_Input",
-                                Source = "Output",
-                            },
-                        },
-                        ViewInfo = PipeRouterInfo { Pos = { 0, -260 } },
+                        ViewInfo = PipeRouterInfo { Pos = { -275, 82.5 } },
                     },
                     BetterResize_ReviewRaster = BetterResize {
                         CtrlWShown = false,
@@ -358,11 +347,11 @@ local function definition(name, values)
                             KeepAspect = Input { Value = 1, },
                             FilterMethod = Input { Value = 3, },
                             Input = Input {
-                                SourceOp = "PipeRouter_ReviewSource",
+                                SourceOp = "PipeRouter_Input",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -250, -150 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 82.5 } },
                     },
                     Background_ReviewCanvas = Background {
                         CtrlWShown = false,
@@ -375,7 +364,7 @@ local function definition(name, values)
                             TopLeftBlue = Input { Value = 0, },
                             TopLeftAlpha = Input { Value = 1, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 250, -150 } },
+                        ViewInfo = OperatorInfo { Pos = { 55, 181.5 } },
                     },
                     Merge_ReviewRaster = Merge {
                         CtrlWShown = false,
@@ -391,7 +380,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -40 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 181.5 } },
                     },
                     Switch_ReviewRaster = Switch {
                         CtrlWShown = false,
@@ -401,7 +390,7 @@ local function definition(name, values)
                             Name0 = Input { Value = "Source Raster", },
                             Name1 = Input { Value = "Review Raster", },
                             Input0 = Input {
-                                SourceOp = "PipeRouter_ReviewSource",
+                                SourceOp = "PipeRouter_SourceBypass",
                                 Source = "Output",
                             },
                             Input1 = Input {
@@ -409,7 +398,7 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 80 } },
+                        ViewInfo = OperatorInfo { Pos = { -110, 247.5 } },
                     },
                     Custom_AppliedData = Custom {
                         CtrlWShown = false,
@@ -417,7 +406,7 @@ local function definition(name, values)
                         Inputs = {
                             NumberIn1 = Input { Value = %.12g, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 250, 180 } },
+                        ViewInfo = OperatorInfo { Pos = { -165, 16.5 } },
                     },
                     WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
@@ -433,11 +422,11 @@ local function definition(name, values)
                             },
                             AllowResize = Input { Value = 0, },
                             Source = Input {
-                                SourceOp = "Switch_ReviewRaster",
+                                SourceOp = "PipeRouter_WIPSource",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 200 } },
+                        ViewInfo = OperatorInfo { Pos = { 110, 313.5 } },
                     },
                     Switch_WIP = Switch {
                         CtrlWShown = false,
@@ -455,7 +444,62 @@ local function definition(name, values)
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 320 } },
+                        ViewInfo = OperatorInfo { Pos = { -55, 313.5 } },
+                    },
+                    PipeRouter_Output = PipeRouter {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Input = Input {
+                                SourceOp = "Switch_WIP",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = PipeRouterInfo { Pos = { -55, 412.5 } },
+                    },
+                    PipeRouter_WIPSource = PipeRouter {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Input = Input {
+                                SourceOp = "Switch_ReviewRaster",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = PipeRouterInfo { Pos = { 110, 247.5 } },
+                    },
+                    PipeRouter_GroupOutput = PipeRouter {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Input = Input {
+                                SourceOp = "PipeRouter_OutputReturn",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = PipeRouterInfo { Pos = { 220, 49.5 } },
+                    },
+                    PipeRouter_SourceBypass = PipeRouter {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Input = Input {
+                                SourceOp = "PipeRouter_Input",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = PipeRouterInfo { Pos = { -275, 247.5 } },
+                    },
+                    PipeRouter_OutputReturn = PipeRouter {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            Input = Input {
+                                SourceOp = "PipeRouter_Output",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = PipeRouterInfo { Pos = { 220, 412.5 } },
                     },
                 },
                 UserControls = ordered() {
