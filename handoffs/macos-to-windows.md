@@ -1,12 +1,44 @@
 # macOS to Windows free-anchor validation handoff
 
+## CI artifact handoff
+
+The repository is public. GitHub Actions now builds and tests the exact
+Windows and macOS OFX bundles on every push to this branch and to
+`codex/v1-hardening`.
+
+The first complete cross-platform validation is green:
+
+- run: https://github.com/jtorrens/WIP_REVIEW/actions/runs/32393291653;
+- Windows artifact: `WIPReviewProbe-windows-x64`;
+- macOS artifact: `WIPReviewProbe-macos`.
+
+Use the Windows artifact from a green run for the first Resolve/Fusion host
+validation. Its contents are the tested `.ofx.bundle`; do not install it until
+all prerequisites for that host-validation cycle are ready. The artifact is
+retained for 14 days.
+
+GitHub Actions validates the MSVC build, CTest, and bundle load smoke test. It
+cannot validate Resolve or Fusion host behaviour. Those are the remaining
+Windows checks and must be recorded in the return handoff.
+
 ## Source contract
 
-The current text-layout contract is on `codex/v1-hardening` at commit
-`cad2d7a`.
+The current Windows validation branch is
+`codex/windows-opencl-validation` at commit `263da4a`. It already contains
+the current source contract and the CI portability fixes.
 
-Before changing or validating Windows code, update this branch onto
-`origin/codex/v1-hardening` and confirm that `cad2d7a` is an ancestor.
+Before changing or validating Windows code, update the existing local branch:
+
+```powershell
+git fetch origin --prune
+git switch codex/windows-opencl-validation
+git pull --ff-only origin codex/windows-opencl-validation
+git rev-parse HEAD
+```
+
+Do not create a new branch from `codex/v1-hardening`: use the published
+Windows validation branch so its results and Windows-only commits stay
+isolated.
 
 The current contract has:
 
