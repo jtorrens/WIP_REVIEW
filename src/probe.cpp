@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -393,6 +394,42 @@ void logHostCapabilities() {
       " native_configs=" + joinStrings(host, kOfxImageEffectPropColourManagementAvailableConfigs));
 }
 
+struct TextCacheKey {
+  std::string text;
+  std::string fontFamily;
+  wipreview::text::FontStyle fontStyle = wipreview::text::FontStyle::Regular;
+  wipreview::text::OverflowMode overflowMode =
+      wipreview::text::OverflowMode::ShrinkToFit;
+  double requestedPixelSize = 0.0;
+  double minimumFontScale = 0.0;
+  int availableWidth = 0;
+  int outlineRadiusPixels = 0;
+  bool shadowEnabled = false;
+  int shadowOffsetXPixels = 0;
+  int shadowOffsetDownPixels = 0;
+  double shadowSoftnessPixels = 0.0;
+
+  [[nodiscard]] bool operator==(const TextCacheKey& other) const noexcept {
+    return text == other.text && fontFamily == other.fontFamily &&
+        fontStyle == other.fontStyle && overflowMode == other.overflowMode &&
+        requestedPixelSize == other.requestedPixelSize &&
+        minimumFontScale == other.minimumFontScale &&
+        availableWidth == other.availableWidth &&
+        outlineRadiusPixels == other.outlineRadiusPixels &&
+        shadowEnabled == other.shadowEnabled &&
+        shadowOffsetXPixels == other.shadowOffsetXPixels &&
+        shadowOffsetDownPixels == other.shadowOffsetDownPixels &&
+        shadowSoftnessPixels == other.shadowSoftnessPixels;
+  }
+};
+
+struct CachedZoneText {
+  TextCacheKey key;
+  wipreview::text::TextLayoutResult layout;
+  bool outlineGenerationFailed = false;
+  bool shadowGenerationFailed = false;
+};
+
 struct InstanceData {
   struct ZoneHandles {
     OfxParamHandle enabled = nullptr;
@@ -456,9 +493,56 @@ struct InstanceData {
   OfxParamHandle paddingTop = nullptr;
   OfxParamHandle paddingBottom = nullptr;
   std::array<ZoneHandles, 6> zones{};
+  std::mutex textCacheMutex;
+  std::array<std::shared_ptr<const CachedZoneText>, 6> textCache{};
   std::string context;
   std::uint64_t id = 0;
 };
+
+std::shared_ptr<const CachedZoneText> cachedZoneText(
+    InstanceData* instance, std::size_t index,
+    const wipreview::text::TextLayoutRequest& request,
+    int shadowOffsetDownPixels, bool& cacheHit) {
+  cacheHit = false;
+  TextCacheKey key{
+      request.text, request.fontFamily, request.fontStyle,
+      request.overflowMode, request.requestedPixelSize,
+      request.minimumFontScale, request.availableWidth,
+      request.outlineRadiusPixels, request.shadowEnabled,
+      request.shadowOffsetXPixels, shadowOffsetDownPixels,
+      request.shadowSoftnessPixels};
+  {
+    std::lock_guard<std::mutex> lock(instance->textCacheMutex);
+    const auto& cached = instance->textCache[index];
+    if (cached && cached->key == key) {
+      cacheHit = true;
+      return cached;
+    }
+  }
+
+  auto built = std::make_shared<CachedZoneText>();
+  built->key = std::move(key);
+  built->layout = wipreview::text::layoutUTF8(request);
+  auto& glyph = built->layout.glyph;
+  if (!glyph.fillPixels.empty() && request.outlineRadiusPixels > 0) {
+    built->outlineGenerationFailed = !wipreview::text::addOutline(
+        glyph, request.outlineRadiusPixels);
+  }
+  if (!glyph.fillPixels.empty() && request.shadowEnabled) {
+    built->shadowGenerationFailed = !wipreview::text::addShadow(
+        glyph, request.shadowOffsetXPixels, shadowOffsetDownPixels,
+        request.shadowSoftnessPixels);
+  }
+
+  std::lock_guard<std::mutex> lock(instance->textCacheMutex);
+  const auto& cached = instance->textCache[index];
+  if (cached && cached->key == built->key) {
+    cacheHit = true;
+    return cached;
+  }
+  instance->textCache[index] = built;
+  return built;
+}
 
 std::atomic<std::uint64_t> gNextInstanceId{1};
 
@@ -2291,11 +2375,13 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         0, outputView.bounds.x2 - outputView.bounds.x1);
     const int outputHeight = std::max(
         0, outputView.bounds.y2 - outputView.bounds.y1);
-    std::vector<float> displayLinearPixels(
+    const std::size_t displayLinearPixelCount =
         static_cast<std::size_t>(outputWidth) *
-        static_cast<std::size_t>(outputHeight) * 4U);
+        static_cast<std::size_t>(outputHeight) * 4U;
+    std::unique_ptr<float[]> displayLinearPixels(
+        new float[displayLinearPixelCount]);
     const wipreview::probe::ImageView displayLinearView{
-        reinterpret_cast<std::byte*>(displayLinearPixels.data()),
+        reinterpret_cast<std::byte*>(displayLinearPixels.get()),
         outputView.bounds,
         static_cast<std::ptrdiff_t>(outputWidth * 4 * sizeof(float)),
         sizeof(float) * 4,
@@ -2305,7 +2391,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
     wipreview::probe::ManagedRenderStats managedRenderStats;
     unsigned int managedRenderThreads = 1;
-    std::vector<std::uint8_t> localizedDirtyPixels;
+    std::unique_ptr<wipreview::probe::ManagedDirtyRegion> localizedDirtyRegion;
     const bool identityPlacement = sourceImage &&
         wipreview::probe::isEffectivelyIdentityPlacement(
             sourceView.bounds, outputView.bounds, options);
@@ -2314,9 +2400,9 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             sourceView, outputView, requestedWindow,
             options.sourcePremultiplied, options.outputPremultiplied);
     if (localizedIdentity) {
-      localizedDirtyPixels.resize(
-          static_cast<std::size_t>(outputWidth) *
-          static_cast<std::size_t>(outputHeight), 0);
+      localizedDirtyRegion =
+          std::make_unique<wipreview::probe::ManagedDirtyRegion>(
+              outputView.bounds);
     } else if (!runManagedRenderBands(
                    sourceView, displayLinearView, requestedWindow, options,
                    managedColor.config, managedRenderStats,
@@ -2329,13 +2415,14 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     auto blanking = readBlankingOptions(instance, time, outputImage);
     blanking.outputPremultiplied = true;
     if (localizedIdentity) {
-      wipreview::probe::prepareManagedBlankingPixels(
-          outputView, displayLinearView, localizedDirtyPixels.data(),
-          outputWidth, requestedWindow, blanking, managedColor.config,
+      wipreview::probe::compositeManagedIdentityBlanking(
+          outputView, displayLinearView, *localizedDirtyRegion,
+          requestedWindow, blanking, managedColor.config,
           options.outputPremultiplied);
+    } else {
+      wipreview::probe::applyBlanking(
+          displayLinearView, requestedWindow, blanking);
     }
-    wipreview::probe::applyBlanking(
-        displayLinearView, requestedWindow, blanking);
     const auto aperture = wipreview::probe::computeBlankingAperture(
         displayLinearView.bounds, blanking);
     auto globalText = readGlobalTextSettings(
@@ -2344,13 +2431,13 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const auto dynamicText = readDynamicTextSettings(instance);
     std::array<ZoneTextSettings, 6> zoneSettings{};
     std::array<wipreview::tokens::Resolution, 6> zoneTokens{};
-    std::array<wipreview::text::TextLayoutResult, 6> zoneLayouts{};
-    std::array<wipreview::text::GlyphRaster, 6> zoneGlyphs{};
+    std::array<std::shared_ptr<const CachedZoneText>, 6> zoneTextEntries{};
     std::array<wipreview::probe::PointI, 6> zoneOrigins{};
     bool zoneRasterizationFailed = false;
     bool outlineGenerationFailed = false;
     bool shadowGenerationFailed = false;
     bool timecodeResolutionFallback = false;
+    std::size_t textCacheHits = 0;
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       zoneSettings[index] = readZoneTextSettings(
           instance, index, time, globalText, displayLinearView);
@@ -2374,21 +2461,20 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         layoutRequest.shadowEnabled = layer.shadowEnabled;
         layoutRequest.shadowOffsetXPixels = layer.shadowOffsetXPixels;
         layoutRequest.shadowSoftnessPixels = layer.shadowSoftnessPixels;
-        zoneLayouts[index] = wipreview::text::layoutUTF8(layoutRequest);
-        zoneGlyphs[index] = std::move(zoneLayouts[index].glyph);
-        if (!zoneGlyphs[index].fillPixels.empty() &&
-            layer.outlineRadiusPixels > 0) {
-          outlineGenerationFailed = !wipreview::text::addOutline(
-              zoneGlyphs[index], layer.outlineRadiusPixels) || outlineGenerationFailed;
-        }
-        if (!zoneGlyphs[index].fillPixels.empty() && layer.shadowEnabled) {
-          shadowGenerationFailed = !wipreview::text::addShadow(
-              zoneGlyphs[index], layer.shadowOffsetXPixels,
-              layer.shadowOffsetDownPixels, layer.shadowSoftnessPixels) ||
-              shadowGenerationFailed;
-        }
+        bool wasCached = false;
+        const auto cached = cachedZoneText(
+            instance, index, layoutRequest, layer.shadowOffsetDownPixels,
+            wasCached);
+        textCacheHits += wasCached ? 1U : 0U;
+        zoneTextEntries[index] = cached;
+        outlineGenerationFailed = outlineGenerationFailed ||
+            cached->outlineGenerationFailed;
+        shadowGenerationFailed = shadowGenerationFailed ||
+            cached->shadowGenerationFailed;
       }
-      if (!zoneGlyphs[index].shadowPixels.empty()) {
+      const auto* zoneGlyph = zoneTextEntries[index]
+          ? &zoneTextEntries[index]->layout.glyph : nullptr;
+      if (zoneGlyph && !zoneGlyph->shadowPixels.empty()) {
         auto shadowOverlay = layer.overlay;
         shadowOverlay.opacity = layer.shadowOpacity;
         for (int channel = 0; channel < 4; ++channel) {
@@ -2396,16 +2482,16 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         }
         if (localizedIdentity) {
           wipreview::probe::prepareManagedTextPixels(
-              outputView, displayLinearView, localizedDirtyPixels.data(),
-              outputWidth, requestedWindow, zoneGlyphs[index].shadowView(),
+              outputView, displayLinearView, *localizedDirtyRegion,
+              requestedWindow, zoneGlyph->shadowView(),
               shadowOverlay, managedColor.config,
               options.outputPremultiplied);
         }
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
-            zoneGlyphs[index].shadowView(), shadowOverlay);
+            zoneGlyph->shadowView(), shadowOverlay);
       }
-      if (!zoneGlyphs[index].outlinePixels.empty()) {
+      if (zoneGlyph && !zoneGlyph->outlinePixels.empty()) {
         auto outlineOverlay = layer.overlay;
         outlineOverlay.opacity = layer.outlineOpacity;
         for (int channel = 0; channel < 4; ++channel) {
@@ -2413,36 +2499,40 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         }
         if (localizedIdentity) {
           wipreview::probe::prepareManagedTextPixels(
-              outputView, displayLinearView, localizedDirtyPixels.data(),
-              outputWidth, requestedWindow, zoneGlyphs[index].outlineView(),
+              outputView, displayLinearView, *localizedDirtyRegion,
+              requestedWindow, zoneGlyph->outlineView(),
               outlineOverlay, managedColor.config,
               options.outputPremultiplied);
         }
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
-            zoneGlyphs[index].outlineView(), outlineOverlay);
+            zoneGlyph->outlineView(), outlineOverlay);
       }
-      if (localizedIdentity) {
+      if (localizedIdentity && zoneGlyph) {
         wipreview::probe::prepareManagedTextPixels(
-            outputView, displayLinearView, localizedDirtyPixels.data(),
-            outputWidth, requestedWindow, zoneGlyphs[index].fillView(),
+            outputView, displayLinearView, *localizedDirtyRegion,
+            requestedWindow, zoneGlyph->fillView(),
             layer.overlay, managedColor.config,
             options.outputPremultiplied);
       }
-      wipreview::probe::compositeTextMask(
-          displayLinearView, requestedWindow,
-          zoneGlyphs[index].fillView(), layer.overlay);
+      if (zoneGlyph) {
+        wipreview::probe::compositeTextMask(
+            displayLinearView, requestedWindow,
+            zoneGlyph->fillView(), layer.overlay);
+      }
       zoneOrigins[index] = wipreview::probe::computeTextOrigin(
-          displayLinearView.bounds, zoneGlyphs[index].width, zoneGlyphs[index].height,
+          displayLinearView.bounds, zoneGlyph ? zoneGlyph->width : 0,
+          zoneGlyph ? zoneGlyph->height : 0,
           layer.overlay);
       zoneRasterizationFailed = zoneRasterizationFailed ||
-          (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].fillPixels.empty());
+          (layer.overlay.enabled && !layer.text.empty() &&
+           (!zoneGlyph || zoneGlyph->fillPixels.empty()));
     }
     unsigned int managedEncodeThreads = 1;
     if (localizedIdentity) {
       wipreview::probe::encodeManagedDirtyPixels(
-          displayLinearView, outputView, localizedDirtyPixels.data(),
-          outputWidth, requestedWindow, managedColor.config,
+          displayLinearView, outputView, *localizedDirtyRegion,
+          requestedWindow, managedColor.config,
           options.outputPremultiplied);
     } else if (!runManagedEncodeBands(
                    displayLinearView, outputView, requestedWindow,
@@ -2480,6 +2570,10 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " encode_threads=" + std::to_string(managedEncodeThreads) +
         " encode_count=1 localized_identity=" +
             (localizedIdentity ? "true" : "false") +
+        " localized_dirty_pixels=" +
+            std::to_string(localizedDirtyRegion
+                ? localizedDirtyRegion->count() : 0U) +
+        " text_cache_hits=" + std::to_string(textCacheHits) +
         " render_ms=" + std::to_string(
             std::chrono::duration<double, std::milli>(
                 std::chrono::steady_clock::now() - renderStarted).count()) +
@@ -2564,8 +2658,10 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
       const auto& zone = zoneSettings[index];
       const auto& layer = zone.layer;
-      const auto& zoneMask = zoneGlyphs[index];
-      const auto& layout = zoneLayouts[index];
+      const wipreview::text::TextLayoutResult emptyLayout;
+      const auto& layout = zoneTextEntries[index]
+          ? zoneTextEntries[index]->layout : emptyLayout;
+      const auto& zoneMask = layout.glyph;
       const auto& token = zoneTokens[index];
       const auto& origin = zoneOrigins[index];
       Logger::instance().write("TEXT_ZONE",

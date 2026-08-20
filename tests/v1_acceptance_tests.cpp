@@ -168,7 +168,6 @@ void testLocalizedIdentityMatchesFullManagedPipeline() {
   std::vector<float> fullOutput(source.size());
   std::vector<float> localizedWorking(source.size());
   std::vector<float> localizedOutput(source.size());
-  std::vector<std::uint8_t> dirty(width * height, 0);
   fillSource(source, width, height);
   for (std::size_t pixel = 0; pixel < source.size() / 4; ++pixel) {
     const float alpha = 0.25F + 0.75F *
@@ -189,6 +188,9 @@ void testLocalizedIdentityMatchesFullManagedPipeline() {
   blanking.enabled = true;
   blanking.editorialAspect = 2.0;
   blanking.opacity = 0.5F;
+  blanking.colour[0] = 0.12F;
+  blanking.colour[1] = 0.04F;
+  blanking.colour[2] = 0.20F;
   const std::array<std::uint8_t, 12> mask{
       0, 128, 255, 0, 255, 255, 128, 0, 0, 128, 255, 0};
   const wipreview::probe::GlyphMaskView maskView{
@@ -205,46 +207,46 @@ void testLocalizedIdentityMatchesFullManagedPipeline() {
       wipreview::color::DisplayEncoding::Rec2100PQ,
       wipreview::color::DisplayEncoding::Rec2100HLG};
   for (const auto encoding : encodings) {
-    std::fill(fullWorking.begin(), fullWorking.end(), 0.0F);
-    std::fill(fullOutput.begin(), fullOutput.end(), 0.0F);
-    std::fill(localizedWorking.begin(), localizedWorking.end(), 0.0F);
-    std::fill(localizedOutput.begin(), localizedOutput.end(), 0.0F);
-    std::fill(dirty.begin(), dirty.end(), 0);
-    wipreview::color::DisplayConfig color;
-    color.encoding = encoding;
-    assert(wipreview::probe::renderManagedDisplayFrame(
-        sourceView, fullWorkingView, fullWorkingView.bounds, options, color));
-    wipreview::probe::applyBlanking(
-        fullWorkingView, fullWorkingView.bounds, blanking);
-    wipreview::probe::compositeTextMask(
-        fullWorkingView, fullWorkingView.bounds, maskView, text);
-    wipreview::probe::encodeManagedDisplayFrame(
-        fullWorkingView, fullOutputView, fullOutputView.bounds, color, true);
+    for (const float blankingOpacity : {0.5F, 1.0F}) {
+      blanking.opacity = blankingOpacity;
+      std::fill(fullWorking.begin(), fullWorking.end(), 0.0F);
+      std::fill(fullOutput.begin(), fullOutput.end(), 0.0F);
+      std::fill(localizedWorking.begin(), localizedWorking.end(), 0.0F);
+      std::fill(localizedOutput.begin(), localizedOutput.end(), 0.0F);
+      wipreview::probe::ManagedDirtyRegion dirty(localizedOutputView.bounds);
+      wipreview::color::DisplayConfig color;
+      color.encoding = encoding;
+      assert(wipreview::probe::renderManagedDisplayFrame(
+          sourceView, fullWorkingView, fullWorkingView.bounds, options, color));
+      wipreview::probe::applyBlanking(
+          fullWorkingView, fullWorkingView.bounds, blanking);
+      wipreview::probe::compositeTextMask(
+          fullWorkingView, fullWorkingView.bounds, maskView, text);
+      wipreview::probe::encodeManagedDisplayFrame(
+          fullWorkingView, fullOutputView, fullOutputView.bounds, color, true);
 
-    assert(wipreview::probe::copyIdentityFrame(
-        sourceView, localizedOutputView, localizedOutputView.bounds, true,
-        true));
-    wipreview::probe::prepareManagedBlankingPixels(
-        localizedOutputView, localizedWorkingView, dirty.data(), width,
-        localizedWorkingView.bounds, blanking, color, true);
-    wipreview::probe::applyBlanking(
-        localizedWorkingView, localizedWorkingView.bounds, blanking);
-    wipreview::probe::prepareManagedTextPixels(
-        localizedOutputView, localizedWorkingView, dirty.data(), width,
-        localizedWorkingView.bounds, maskView, text, color, true);
-    wipreview::probe::compositeTextMask(
-        localizedWorkingView, localizedWorkingView.bounds, maskView, text);
-    wipreview::probe::encodeManagedDirtyPixels(
-        localizedWorkingView, localizedOutputView, dirty.data(), width,
-        localizedOutputView.bounds, color, true);
+      assert(wipreview::probe::copyIdentityFrame(
+          sourceView, localizedOutputView, localizedOutputView.bounds, true,
+          true));
+      wipreview::probe::compositeManagedIdentityBlanking(
+          localizedOutputView, localizedWorkingView, dirty,
+          localizedWorkingView.bounds, blanking, color, true);
+      wipreview::probe::prepareManagedTextPixels(
+          localizedOutputView, localizedWorkingView, dirty,
+          localizedWorkingView.bounds, maskView, text, color, true);
+      wipreview::probe::compositeTextMask(
+          localizedWorkingView, localizedWorkingView.bounds, maskView, text);
+      wipreview::probe::encodeManagedDirtyPixels(
+          localizedWorkingView, localizedOutputView, dirty,
+          localizedOutputView.bounds, color, true);
 
-    for (std::size_t index = 0; index < fullOutput.size(); ++index) {
-      assert(std::abs(fullOutput[index] - localizedOutput[index]) < 3.0e-5F);
+      for (std::size_t index = 0; index < fullOutput.size(); ++index) {
+        assert(std::abs(fullOutput[index] - localizedOutput[index]) < 3.0e-5F);
+      }
+      assert(dirty.count() > 0 && dirty.count() <
+          static_cast<std::size_t>(width * height));
     }
   }
-  const auto dirtyCount = static_cast<std::size_t>(
-      std::count(dirty.begin(), dirty.end(), std::uint8_t{1}));
-  assert(dirtyCount > 0 && dirtyCount < dirty.size());
 }
 
 void testC06ManagedIdentity() {

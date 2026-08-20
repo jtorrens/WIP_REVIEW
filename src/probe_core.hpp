@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 namespace wipreview::probe {
 
@@ -135,6 +136,28 @@ struct ManagedRenderStats {
   std::size_t peakCacheBytes = 0;
 };
 
+// Tracks localized working pixels and the tight dirty span of every row. The
+// bitmap prevents repeated transfer decoding where overlays overlap; row spans
+// let the final encode skip untouched portions of the raster entirely.
+class ManagedDirtyRegion {
+ public:
+  explicit ManagedDirtyRegion(RectI bounds);
+
+  [[nodiscard]] bool mark(int x, int y) noexcept;
+  [[nodiscard]] bool contains(int x, int y) const noexcept;
+  [[nodiscard]] int rowBegin(int y) const noexcept;
+  [[nodiscard]] int rowEnd(int y) const noexcept;
+  [[nodiscard]] std::size_t count() const noexcept { return count_; }
+
+ private:
+  RectI bounds_{};
+  int width_ = 0;
+  std::vector<std::uint8_t> pixels_;
+  std::vector<int> rowBegin_;
+  std::vector<int> rowEnd_;
+  std::size_t count_ = 0;
+};
+
 [[nodiscard]] RectI intersect(RectI a, RectI b) noexcept;
 [[nodiscard]] bool empty(RectI rect) noexcept;
 
@@ -202,14 +225,13 @@ void encodeManagedDisplayFrame(
     const wipreview::color::DisplayConfig& colorConfig,
     bool outputPremultiplied) noexcept;
 
-// Localized display-light workspace used by an identity render. Source pixels
-// are decoded lazily only where an overlay changes them, then only those dirty
-// pixels are encoded back to Output.
-void prepareManagedBlankingPixels(
-    const ImageView& encodedBase,
+// Localized display-light workspace used by an identity render. Opaque
+// blanking is encoded once and written directly; partially covered pixels are
+// decoded lazily and only those dirty pixels are encoded back to Output.
+void compositeManagedIdentityBlanking(
+    const ImageView& encodedOutput,
     const ImageView& displayLinearWorkspace,
-    std::uint8_t* dirtyPixels,
-    std::ptrdiff_t dirtyRowBytes,
+    ManagedDirtyRegion& dirtyRegion,
     RectI renderWindow,
     const BlankingOptions& options,
     const wipreview::color::DisplayConfig& colorConfig,
@@ -218,8 +240,7 @@ void prepareManagedBlankingPixels(
 void prepareManagedTextPixels(
     const ImageView& encodedBase,
     const ImageView& displayLinearWorkspace,
-    std::uint8_t* dirtyPixels,
-    std::ptrdiff_t dirtyRowBytes,
+    ManagedDirtyRegion& dirtyRegion,
     RectI renderWindow,
     const GlyphMaskView& mask,
     const TextOverlayOptions& options,
@@ -229,8 +250,7 @@ void prepareManagedTextPixels(
 void encodeManagedDirtyPixels(
     const ImageView& displayLinearWorkspace,
     const ImageView& destination,
-    const std::uint8_t* dirtyPixels,
-    std::ptrdiff_t dirtyRowBytes,
+    const ManagedDirtyRegion& dirtyRegion,
     RectI renderWindow,
     const wipreview::color::DisplayConfig& colorConfig,
     bool outputPremultiplied) noexcept;

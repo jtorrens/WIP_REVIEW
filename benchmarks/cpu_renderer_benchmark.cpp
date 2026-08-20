@@ -260,13 +260,15 @@ void runCase(const RasterCase& raster, DisplayEncoding encoding,
 }
 
 void runLocalizedIdentityCase(const RasterCase& raster,
-                              DisplayEncoding encoding) {
+                              DisplayEncoding encoding,
+                              float blankingOpacity) {
   const std::size_t pixelCount =
       static_cast<std::size_t>(raster.outputWidth) * raster.outputHeight;
   std::vector<float> source(pixelCount * 4);
   std::vector<float> working(pixelCount * 4);
   std::vector<float> output(pixelCount * 4);
-  std::vector<std::uint8_t> dirty(pixelCount, 0);
+  wipreview::probe::ManagedDirtyRegion dirty(
+      {0, 0, raster.outputWidth, raster.outputHeight});
   fillSource(source, raster.sourceWidth, raster.sourceHeight);
   auto sourceView = floatView(source, raster.sourceWidth, raster.sourceHeight);
   auto workingView = floatView(
@@ -277,7 +279,7 @@ void runLocalizedIdentityCase(const RasterCase& raster,
   BlankingOptions blanking;
   blanking.enabled = true;
   blanking.editorialAspect = 2.0;
-  blanking.opacity = 0.5F;
+  blanking.opacity = blankingOpacity;
   const int maskWidth = std::max(32, raster.outputWidth / 8);
   const int maskHeight = std::max(12, raster.outputHeight / 24);
   const auto maskPixels = makeMask(maskWidth, maskHeight);
@@ -294,10 +296,9 @@ void runLocalizedIdentityCase(const RasterCase& raster,
           sourceView, outputView, window, true, true)) {
     throw std::runtime_error("localized identity copy failed");
   }
-  wipreview::probe::prepareManagedBlankingPixels(
-      outputView, workingView, dirty.data(), raster.outputWidth, window,
+  wipreview::probe::compositeManagedIdentityBlanking(
+      outputView, workingView, dirty, window,
       blanking, color, true);
-  wipreview::probe::applyBlanking(workingView, window, blanking);
   for (TextAnchor anchor : anchors) {
     TextOverlayOptions text;
     text.enabled = true;
@@ -306,19 +307,19 @@ void runLocalizedIdentityCase(const RasterCase& raster,
     text.colour[1] = 0.72F;
     text.colour[2] = 0.18F;
     wipreview::probe::prepareManagedTextPixels(
-        outputView, workingView, dirty.data(), raster.outputWidth, window,
+        outputView, workingView, dirty, window,
         mask, text, color, true);
     wipreview::probe::compositeTextMask(workingView, window, mask, text);
   }
   wipreview::probe::encodeManagedDirtyPixels(
-      workingView, outputView, dirty.data(), raster.outputWidth, window,
+      workingView, outputView, dirty, window,
       color, true);
   const auto end = Clock::now();
-  const auto dirtyCount = std::count(
-      dirty.begin(), dirty.end(), std::uint8_t{1});
+  const auto dirtyCount = dirty.count();
   std::cout << std::fixed << std::setprecision(3)
             << "case=" << raster.name
             << " path=localized_identity"
+            << " blanking_opacity=" << blankingOpacity
             << " encoding=" << encodingName(encoding)
             << " source=" << raster.sourceWidth << 'x' << raster.sourceHeight
             << " output=" << raster.outputWidth << 'x' << raster.outputHeight
@@ -375,7 +376,8 @@ int main(int argc, char** argv) {
       runCase(raster, encoding, threadCount);
       if (raster.sourceWidth == raster.outputWidth &&
           raster.sourceHeight == raster.outputHeight) {
-        runLocalizedIdentityCase(raster, encoding);
+        runLocalizedIdentityCase(raster, encoding, 0.5F);
+        runLocalizedIdentityCase(raster, encoding, 1.0F);
       }
     }
   } catch (const std::exception& error) {
