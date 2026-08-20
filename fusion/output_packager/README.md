@@ -69,3 +69,28 @@ La prueba deja abierta su comp y termina con:
 ```text
 OUTPUTPACKAGER_REVIEW_RASTER_HOST_TEST_OK
 ```
+
+## Checkpoint 4 — activación nativa de Savers
+
+Fusion 21 omite durante el render un Saver con:
+
+```lua
+saver:SetAttrs({ TOOLB_PassThrough = true })
+```
+
+OutputPackager usará ese atributo nativo. Un Saver habilitado tendrá
+`TOOLB_PassThrough=false`; nunca se utilizará `Blend=0` para fingir que está
+desactivado.
+
+La prueba renderiza dos Savers conectados a la misma imagen y comprueba en
+disco que sólo el habilitado crea su secuencia:
+
+```sh
+fusion/output_packager/tests/run_saver_enable_test.sh
+```
+
+Resultado:
+
+```text
+OUTPUTPACKAGER_SAVER_ENABLE_HOST_TEST_OK
+```

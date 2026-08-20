@@ -160,9 +160,9 @@ del OutputPackager declarado en la misma fila. Apply valida:
 - la conexión procede del OutputPackager asociado;
 - el Saver está registrado también en ShotConfig si necesita path gestionado.
 
-`Enabled` controla el estado operativo nativo del Saver. El atributo exacto se
-fijará mediante prueba de host antes de implementarlo; no se usará `Blend` como
-sustituto.
+`Enabled` controla el estado operativo nativo del Saver mediante
+`TOOLB_PassThrough`: `false` renderiza y `true` desactiva el Saver. No se usa
+`Blend` como sustituto.
 
 ## Apply / Update
 
