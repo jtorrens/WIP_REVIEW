@@ -31,6 +31,10 @@ fi
 
 script_output=$("$FUSCRIPT" -l lua "$SCRIPT_DIR/fusion_smoke.lua" 2>&1)
 printf '%s\n' "$script_output"
+if printf '%s\n' "$script_output" | grep -E '\.lua:[0-9]+:|stack traceback|attempt to (index|call)' >/dev/null; then
+    echo "FusionScript reported a Lua error" >&2
+    exit 1
+fi
 if ! printf '%s\n' "$script_output" | grep -F 'WIPREVIEW_AUTOMATION_OK' >/dev/null; then
     echo "FusionScript did not report a successful automated render" >&2
     exit 1

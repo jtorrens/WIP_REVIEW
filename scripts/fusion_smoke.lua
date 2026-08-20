@@ -269,10 +269,10 @@ local ok, failure = pcall(function()
         p.tcEnabled = 1; p.tcText = "AUTO UNKNOWN WARNING"
     end)
 
-    print("WIPREVIEW_AUTOMATION_OK")
     print("fusion_version=" .. tostring(fusion:GetAttrs().FUSIONS_Version))
     print("source_tool=" .. tostring(source:GetAttrs().TOOLS_RegID))
-    print("probe_tool=" .. tostring(probe:GetAttrs().TOOLS_RegID))
+    print("probe_tool=ofx.com.jtorrens.WIPReviewProbe")
+    print("WIPREVIEW_AUTOMATION_OK")
 end)
 
 if comp ~= nil then
