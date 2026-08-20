@@ -6,6 +6,11 @@ controles a otros nodos mediante expresiones. Su única operación en v0.1 es
 resolver templates y escribir rutas explícitamente en los `Clip` de los
 Loaders y Savers registrados.
 
+La separación con `wip_review` es permanente a nivel de código, ramas y
+build. Si un módulo futuro genera WIPs, utilizará el OFX ya instalado como un
+nodo de Fusion en runtime. No importará su código fuente ni creará una
+dependencia entre ambos proyectos.
+
 La implementación está validada con Fusion Standalone 21.0.4.
 
 ## Archivos
@@ -295,6 +300,6 @@ SHOTCONFIG_EXAMPLE_COMP_READY
 
 Esta versión no implementa InputPrep, OutputPackager, selección de vista,
 activación de Savers, crop o resize automático, transformaciones de color,
-base de datos ni integración con el OFX `wip_review`. El JSON incluido se
-limita a etiquetas de presentación para enums descubiertos en el CST; no es
+base de datos ni uso del OFX `wip_review` como nodo instalado. El JSON incluido
+se limita a etiquetas de presentación para enums descubiertos en el CST; no es
 una configuración externa de planos.
