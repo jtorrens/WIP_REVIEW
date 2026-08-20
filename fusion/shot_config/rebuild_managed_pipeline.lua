@@ -32,9 +32,29 @@ local function add_tool(comp, reg_id, name, x, y, role)
     mark(tool, role)
     return tool
 end
-local function has_name(list, name)
-    for _, item in ipairs(list) do if item.nodeName == name then return true end end
-    return false
+local function managed_positions(comp)
+    local saved = {}
+    local flow = comp.CurrentFrame and comp.CurrentFrame.FlowView
+    if flow == nil then return saved end
+    for _, tool in pairs(comp:GetToolList(false) or {}) do
+        if tagged(tool) then
+            local attrs = tool:GetAttrs() or {}
+            local ok, x, y = pcall(function() return flow:GetPos(tool) end)
+            if ok and x ~= nil and y ~= nil then saved[attrs.TOOLS_Name] = { x, y } end
+        end
+    end
+    return saved
+end
+local function place(comp, tool, positions, had_managed, fallback_x, fallback_y)
+    local flow = comp.CurrentFrame and comp.CurrentFrame.FlowView
+    if flow == nil then return end
+    local name = (tool:GetAttrs() or {}).TOOLS_Name
+    local position = positions[name]
+    if position ~= nil then
+        pcall(function() flow:SetPos(tool, position[1], position[2]) end)
+    elseif had_managed then
+        pcall(function() flow:SetPos(tool, fallback_x, fallback_y) end)
+    end
 end
 local function validate(values)
     if #values.loaderTargets == 0 then return "configure at least one Loader target" end
@@ -67,6 +87,8 @@ function M.run(comp_override)
     comp:StartUndo("Rebuild FOQN managed pipeline")
     comp:Lock()
     local ok, failure = pcall(function()
+        local positions = managed_positions(comp)
+        local had_managed = next(positions) ~= nil
         for _, tool in pairs(comp:GetToolList(false) or {}) do
             if tagged(tool) then
                 local deleted = tool:Delete()
@@ -77,11 +99,13 @@ function M.run(comp_override)
         local loaders = {}
         for index, target in ipairs(values.loaderTargets) do
             loaders[index] = add_tool(comp, "Loader", target.nodeName, -6, index * 2, "Loader")
+            place(comp, loaders[index], positions, had_managed, -10, 8 + index * 2)
         end
         local input_builder = dofile(input_builder_path)
         local input_prep = input_builder.last_group
         input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_1" })
         mark(input_prep, "InputPrep")
+        place(comp, input_prep, positions, had_managed, -7, 8)
         input_prep.MainInput1 = loaders[1].Output
 
         local output_builder = dofile(output_builder_path)
@@ -90,8 +114,10 @@ function M.run(comp_override)
             local packager = index == 1 and first_packager or output_builder.run(comp)
             packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_" .. tostring(index) })
             mark(packager, "OutputPackager")
+            place(comp, packager, positions, had_managed, 0, 8 + index * 2)
             packager.MainInput1 = first_output(input_prep)
             local saver = add_tool(comp, "Saver", target.nodeName, 3, index * 2, "Saver")
+            place(comp, saver, positions, had_managed, 5, 8 + index * 2)
             saver.Input:ConnectTo(first_output(packager))
             if target.template:upper():find("WIP", 1, true) then packager.OP_EnableWIP[time] = 1 end
         end
