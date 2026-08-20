@@ -23,6 +23,7 @@ if ! pgrep -f "$FUSION_APP/Contents/MacOS/Fusion" >/dev/null; then
         sleep 1
     done
 fi
+fusion_pid=$(pgrep -f "$FUSION_APP/Contents/MacOS/Fusion" | head -n 1)
 
 before=0
 if [ -f "$PROBE_LOG" ]; then
@@ -65,6 +66,18 @@ require_record() {
     fi
 }
 
+require_session_record() {
+    pattern=$1
+    description=$2
+    if ! grep -E "pid=$fusion_pid \\| $pattern" "$PROBE_LOG" >/dev/null; then
+        echo "Missing $description for active Fusion PID $fusion_pid" >&2
+        echo "Expected pattern: $pattern" >&2
+        exit 1
+    fi
+}
+
+require_session_record 'SUITES \\| .*multithread_v1=true' 'OFX host multithread suite'
+require_session_record 'HOST_RASTER_CAPABILITY \\| requested_review_raster=true' 'Fusion requested-raster capability'
 require_record 'INSTANCE_CREATE .*context="OfxImageEffectContextGeneral"' 'General context'
 require_record 'IMAGE .*clip=Source bounds=\[0,0,4608,3164\]' '4608x3164 Source image'
 require_record 'IMAGE .*clip=Output bounds=\[0,0,1920,1080\]' '1920x1080 Output image'
@@ -115,7 +128,6 @@ require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:
 require_record 'TOKEN_ZONE .*zone="TC" source="DF \{timecode\}" resolved="DF 00:01:00;02" effect_frame=1800 .*drop_compatible=true drop_applied=true .*used_timecode_fallback=false' 'P3 29.97 DF minute boundary'
 require_record 'TOKEN_ZONE .*zone="BR" source="INVALID TC \{timecode\}" resolved="INVALID TC 00:00:00:01" effect_frame=0 frame_rel=1 .*fps_valid=true drop_compatible=false drop_applied=false timecode_start_valid=false used_timecode_fallback=true' 'P3 invalid timecode controlled fallback'
 require_record 'RENDER_WARNING .*timecode_resolution_fallback=true' 'P3 invalid timecode warning'
-require_record 'SUITES .*multithread_v1=true' 'OFX host multithread suite'
 require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.709 Gamma 2\.4" graphics_white_mode=0 graphics_white_nits=100\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'Rec.709 optimized render'
 require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 PQ" graphics_white_mode=0 graphics_white_nits=203\.000000 .*working_space=display-light-linear working_premult=true decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'PQ optimized Graphics White'
 require_record 'MANAGED_COLOR .*mode=1 .*display_encoding="Rec\.2100 HLG" graphics_white_mode=0 graphics_white_nits=203\.000000 hlg_peak_nits=1000\.000000 .*decode_count=1 decoded_rows=[0-9]+ decoded_row_cache_peak_rows=[0-9]+ decoded_row_cache_peak_bytes=[0-9]+ sampler_weights=precomputed multithread_suite=true render_threads=[1-9][0-9]* encode_threads=[1-9][0-9]* encode_count=1' 'HLG optimized Graphics White'
