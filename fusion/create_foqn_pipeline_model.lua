@@ -80,7 +80,7 @@ local input_builder = dofile(SCRIPT_DIR .. "input_prep/build_input_prep.lua")
 _G.INPUTPREP_OVERRIDES = nil
 local input_prep = input_builder.last_group
 if input_prep == nil then error("InputPrep was not created") end
-input_prep:SetAttrs({ TOOLS_Name = "Group_InputPrep_FOQN_E06_0010" })
+input_prep:SetAttrs({ TOOLS_Name = "G_InputPrep_FOQN_E06_0010" })
 input_prep.MainInput1 = plate.Output
 
 -- Output processing: one WIP delivery and one clean delivery from the same prepared image.
@@ -88,18 +88,23 @@ local output_builder = dofile(SCRIPT_DIR .. "output_packager/build_output_packag
 local wip_packager = output_builder.last_group
 local clean_packager = output_builder.run(model)
 if wip_packager == nil or clean_packager == nil then error("OutputPackager was not created") end
-wip_packager:SetAttrs({ TOOLS_Name = "Group_OutputPackager_FOQN_E06_0010_WIP" })
-clean_packager:SetAttrs({ TOOLS_Name = "Group_OutputPackager_FOQN_E06_0010_Clean" })
+wip_packager:SetAttrs({ TOOLS_Name = "G_OutputPackager_FOQN_E06_0010_WIP" })
+clean_packager:SetAttrs({ TOOLS_Name = "G_OutputPackager_FOQN_E06_0010_Clean" })
 wip_packager.MainInput1 = first_output(input_prep)
 clean_packager.MainInput1 = first_output(input_prep)
 wip_saver.Input:ConnectTo(first_output(wip_packager))
 clean_saver.Input:ConnectTo(first_output(clean_packager))
+set(wip_packager, "OP_EnableReviewRaster", 1)
+set(wip_packager, "OP_EnableWIP", 1)
+set(clean_packager, "OP_EnableReviewRaster", 1)
+set(clean_packager, "OP_EnableWIP", 0)
 
 -- Shared shot metadata resolves the real FOQN source and output paths.
 dofile(SCRIPT_DIR .. "shot_config/build_shot_config.lua")
 local shot_apply = dofile(SCRIPT_DIR .. "shot_config/apply_shot_config.lua")
 local shot_config, shot_error = shot_apply.find_config(model)
 if shot_config == nil then error(shot_error or "ShotConfig was not created") end
+shot_config:SetAttrs({ TOOLS_Name = "G_ShotConfig" })
 set(shot_config, shot_apply.CONTROL.show, "FOQN")
 set(shot_config, shot_apply.CONTROL.episode, "E06")
 set(shot_config, shot_apply.CONTROL.shot, "0010")
@@ -124,31 +129,6 @@ set_shot_target("Saver", 2, "Saver_FOQN_E06_0010_Clean",
 local shot_ok, shot_apply_error = shot_apply.run(model)
 if not shot_ok then error(shot_apply_error or "ShotConfig could not apply the FOQN model") end
 
--- One registry for the input group and one for the two output/Saver pairs.
-dofile(SCRIPT_DIR .. "input_prep/build_input_prep_config.lua")
-local input_apply = dofile(SCRIPT_DIR .. "input_prep/apply_input_prep.lua")
-local input_config, input_error = input_apply.find_config(model)
-if input_config == nil then error(input_error or "InputPrepConfig was not created") end
-set(input_config, input_apply.target_control(1), "Group_InputPrep_FOQN_E06_0010")
-local input_ok, input_apply_error = input_apply.run(model)
-if not input_ok then error(input_apply_error or "InputPrepConfig could not apply the FOQN model") end
-
-dofile(SCRIPT_DIR .. "output_packager/build_output_packager_config.lua")
-local output_apply = dofile(SCRIPT_DIR .. "output_packager/apply_output_packager.lua")
-local output_config, output_error = output_apply.find_config(model)
-if output_config == nil then error(output_error or "OutputPackagerConfig was not created") end
-local function set_output_target(index, packager, saver, wip)
-    set(output_config, output_apply.target_control(index, "packager"), packager)
-    set(output_config, output_apply.target_control(index, "saver"), saver)
-    set(output_config, output_apply.target_control(index, "enabled"), 1)
-    set(output_config, output_apply.target_control(index, "review"), 1)
-    set(output_config, output_apply.target_control(index, "wip"), wip and 1 or 0)
-end
-set_output_target(1, "Group_OutputPackager_FOQN_E06_0010_WIP", "Saver_FOQN_E06_0010_WIP", true)
-set_output_target(2, "Group_OutputPackager_FOQN_E06_0010_Clean", "Saver_FOQN_E06_0010_Clean", false)
-local output_ok, output_apply_error = output_apply.run(model)
-if not output_ok then error(output_apply_error or "OutputPackagerConfig could not apply the FOQN model") end
-
 local flow = model.CurrentFrame and model.CurrentFrame.FlowView
 if flow ~= nil then
     pcall(function() flow:SetPos(plate, -6, 0) end)
@@ -158,8 +138,6 @@ if flow ~= nil then
     pcall(function() flow:SetPos(wip_saver, 3, -2) end)
     pcall(function() flow:SetPos(clean_saver, 3, 2) end)
     pcall(function() flow:SetPos(shot_config, -6, 5) end)
-    pcall(function() flow:SetPos(input_config, -3, 5) end)
-    pcall(function() flow:SetPos(output_config, 0, 5) end)
 end
 
 model:SetActiveTool(shot_config)
