@@ -3,6 +3,10 @@ name: build
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -12,8 +16,10 @@ jobs:
         include:
           - os: macos-14
             build_dir: build-ci-macos
+            artifact_name: WIPReviewProbe-macos
           - os: windows-2022
             build_dir: build-ci-windows
+            artifact_name: WIPReviewProbe-windows-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -27,3 +33,10 @@ jobs:
         run: cmake --build ${{ matrix.build_dir }} --config Release --parallel
       - name: Test
         run: ctest --test-dir ${{ matrix.build_dir }} -C Release --output-on-failure
+      - name: Upload OFX bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle
+          if-no-files-found: error
+          retention-days: 14
