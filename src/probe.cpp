@@ -194,7 +194,14 @@ class Logger {
         stream_ << " | " << fields;
       }
       stream_ << '\n';
-      stream_.flush();
+      ++recordsSinceFlush_;
+      const bool checkpoint = event == "DESCRIBE_IN_CONTEXT" ||
+          event == "INSTANCE_DESTROY" || event == "SESSION_END";
+      const bool urgent = event == "RENDER_ERROR" || event == "EXCEPTION";
+      if (checkpoint || urgent || recordsSinceFlush_ >= 128) {
+        stream_.flush();
+        recordsSinceFlush_ = 0;
+      }
     } catch (...) {
       // Diagnostics must never destabilise the host.
     }
@@ -261,6 +268,7 @@ class Logger {
   std::ofstream stream_;
   std::string path_;
   bool attempted_ = false;
+  std::size_t recordsSinceFlush_ = 0;
   long processId_ = 0;
 };
 
@@ -2232,6 +2240,7 @@ bool runManagedEncodeBands(
 }
 
 OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
+  const auto renderStarted = std::chrono::steady_clock::now();
   InstanceData* instance = getInstance(effect);
   if (!instance) return kOfxStatErrBadHandle;
   double time = 0.0;
@@ -2296,9 +2305,22 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         renderWindow[0], renderWindow[1], renderWindow[2], renderWindow[3]};
     wipreview::probe::ManagedRenderStats managedRenderStats;
     unsigned int managedRenderThreads = 1;
-    if (!runManagedRenderBands(
-            sourceView, displayLinearView, requestedWindow, options,
-            managedColor.config, managedRenderStats, managedRenderThreads)) {
+    std::vector<std::uint8_t> localizedDirtyPixels;
+    const bool identityPlacement = sourceImage &&
+        wipreview::probe::isEffectivelyIdentityPlacement(
+            sourceView.bounds, outputView.bounds, options);
+    bool localizedIdentity = identityPlacement &&
+        wipreview::probe::copyIdentityFrame(
+            sourceView, outputView, requestedWindow,
+            options.sourcePremultiplied, options.outputPremultiplied);
+    if (localizedIdentity) {
+      localizedDirtyPixels.resize(
+          static_cast<std::size_t>(outputWidth) *
+          static_cast<std::size_t>(outputHeight), 0);
+    } else if (!runManagedRenderBands(
+                   sourceView, displayLinearView, requestedWindow, options,
+                   managedColor.config, managedRenderStats,
+                   managedRenderThreads)) {
       Logger::instance().write(
           "RENDER_ERROR", instancePrefix(instance) +
           " managed_render_bands_failed=true");
@@ -2306,6 +2328,12 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     }
     auto blanking = readBlankingOptions(instance, time, outputImage);
     blanking.outputPremultiplied = true;
+    if (localizedIdentity) {
+      wipreview::probe::prepareManagedBlankingPixels(
+          outputView, displayLinearView, localizedDirtyPixels.data(),
+          outputWidth, requestedWindow, blanking, managedColor.config,
+          options.outputPremultiplied);
+    }
     wipreview::probe::applyBlanking(
         displayLinearView, requestedWindow, blanking);
     const auto aperture = wipreview::probe::computeBlankingAperture(
@@ -2366,6 +2394,13 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         for (int channel = 0; channel < 4; ++channel) {
           shadowOverlay.colour[channel] = layer.shadowColour[channel];
         }
+        if (localizedIdentity) {
+          wipreview::probe::prepareManagedTextPixels(
+              outputView, displayLinearView, localizedDirtyPixels.data(),
+              outputWidth, requestedWindow, zoneGlyphs[index].shadowView(),
+              shadowOverlay, managedColor.config,
+              options.outputPremultiplied);
+        }
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
             zoneGlyphs[index].shadowView(), shadowOverlay);
@@ -2376,9 +2411,23 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         for (int channel = 0; channel < 4; ++channel) {
           outlineOverlay.colour[channel] = layer.outlineColour[channel];
         }
+        if (localizedIdentity) {
+          wipreview::probe::prepareManagedTextPixels(
+              outputView, displayLinearView, localizedDirtyPixels.data(),
+              outputWidth, requestedWindow, zoneGlyphs[index].outlineView(),
+              outlineOverlay, managedColor.config,
+              options.outputPremultiplied);
+        }
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
             zoneGlyphs[index].outlineView(), outlineOverlay);
+      }
+      if (localizedIdentity) {
+        wipreview::probe::prepareManagedTextPixels(
+            outputView, displayLinearView, localizedDirtyPixels.data(),
+            outputWidth, requestedWindow, zoneGlyphs[index].fillView(),
+            layer.overlay, managedColor.config,
+            options.outputPremultiplied);
       }
       wipreview::probe::compositeTextMask(
           displayLinearView, requestedWindow,
@@ -2390,9 +2439,15 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
           (layer.overlay.enabled && !layer.text.empty() && zoneGlyphs[index].fillPixels.empty());
     }
     unsigned int managedEncodeThreads = 1;
-    if (!runManagedEncodeBands(
-            displayLinearView, outputView, requestedWindow, managedColor.config,
-            options.outputPremultiplied, managedEncodeThreads)) {
+    if (localizedIdentity) {
+      wipreview::probe::encodeManagedDirtyPixels(
+          displayLinearView, outputView, localizedDirtyPixels.data(),
+          outputWidth, requestedWindow, managedColor.config,
+          options.outputPremultiplied);
+    } else if (!runManagedEncodeBands(
+                   displayLinearView, outputView, requestedWindow,
+                   managedColor.config, options.outputPremultiplied,
+                   managedEncodeThreads)) {
       Logger::instance().write(
           "RENDER_ERROR", instancePrefix(instance) +
           " managed_encode_bands_failed=true");
@@ -2423,7 +2478,12 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " multithread_suite=" + (gMultiThreadSuite ? "true" : "false") +
         " render_threads=" + std::to_string(managedRenderThreads) +
         " encode_threads=" + std::to_string(managedEncodeThreads) +
-        " encode_count=1 output_premult=" +
+        " encode_count=1 localized_identity=" +
+            (localizedIdentity ? "true" : "false") +
+        " render_ms=" + std::to_string(
+            std::chrono::duration<double, std::milli>(
+                std::chrono::steady_clock::now() - renderStarted).count()) +
+        " output_premult=" +
             (options.outputPremultiplied ? "true" : "false"));
     if (managedColor.colorSpaceMode == 0 && !managedColor.hostRecognized) {
       Logger::instance().write("RENDER_WARNING",

@@ -410,6 +410,43 @@ PlacementTransform computePlacement(RectI sourceBounds, RectI outputBounds,
   return transform;
 }
 
+bool isEffectivelyIdentityPlacement(
+    RectI sourceBounds, RectI outputBounds,
+    const RenderOptions& options) noexcept {
+  if (sourceBounds.x1 != outputBounds.x1 ||
+      sourceBounds.y1 != outputBounds.y1 ||
+      sourceBounds.x2 != outputBounds.x2 ||
+      sourceBounds.y2 != outputBounds.y2) return false;
+  const PlacementTransform transform = computePlacement(
+      sourceBounds, outputBounds, options);
+  constexpr double tolerance = 1.0e-12;
+  return std::abs(transform.scaleX - 1.0) <= tolerance &&
+      std::abs(transform.scaleY - 1.0) <= tolerance &&
+      std::abs(transform.sourceCenterX - transform.outputCenterX) <= tolerance &&
+      std::abs(transform.sourceCenterY - transform.outputCenterY) <= tolerance;
+}
+
+bool copyIdentityFrame(
+    const ImageView& source, const ImageView& destination,
+    RectI renderWindow, bool sourcePremultiplied,
+    bool outputPremultiplied) noexcept {
+  if (!source.data || !destination.data ||
+      source.channels != destination.channels ||
+      source.channelType != destination.channelType ||
+      source.pixelBytes != destination.pixelBytes ||
+      sourcePremultiplied != outputPremultiplied) return false;
+  const RectI writable = intersect(
+      intersect(renderWindow, source.bounds), destination.bounds);
+  if (empty(writable)) return true;
+  const std::size_t rowSize = static_cast<std::size_t>(
+      writable.x2 - writable.x1) * source.pixelBytes;
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    std::memmove(pixelAddress(destination, writable.x1, y),
+                 pixelAddress(source, writable.x1, y), rowSize);
+  }
+  return true;
+}
+
 void renderStaticFrame(const ImageView& source, const ImageView& destination,
                        RectI renderWindow, const RenderOptions& options) {
   if (!destination.data || destination.pixelBytes == 0 || destination.channels <= 0) return;
@@ -427,9 +464,11 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   }
 
   const PlacementTransform transform = computePlacement(source.bounds, destination.bounds, options);
+  const bool exactIdentity = isEffectivelyIdentityPlacement(
+      source.bounds, destination.bounds, options);
   AxisPlan xPlan;
   AxisPlan yPlan;
-  if (options.placement != PlacementMode::Identity) {
+  if (!exactIdentity) {
     xPlan = buildAxisPlan(
         writable.x1, writable.x2, source.bounds.x1, source.bounds.x2,
         transform.sourceCenterX, transform.outputCenterX,
@@ -441,7 +480,6 @@ void renderStaticFrame(const ImageView& source, const ImageView& destination,
   }
   for (int y = writable.y1; y < writable.y2; ++y) {
     for (int x = writable.x1; x < writable.x2; ++x) {
-      const bool exactIdentity = options.placement == PlacementMode::Identity;
       if (exactIdentity) {
         if (x < source.bounds.x1 || x >= source.bounds.x2 ||
             y < source.bounds.y1 || y >= source.bounds.y2) {
@@ -501,7 +539,8 @@ bool renderManagedDisplayFrame(
       source.channels > 0 && !empty(source.bounds);
   const RectI identitySourceArea = intersect(writable, source.bounds);
   const bool directIdentityDecode = sourceAvailable &&
-      options.placement == PlacementMode::Identity &&
+      isEffectivelyIdentityPlacement(source.bounds, destination.bounds,
+                                     options) &&
       identitySourceArea.x1 == writable.x1 &&
       identitySourceArea.y1 == writable.y1 &&
       identitySourceArea.x2 == writable.x2 &&
@@ -595,6 +634,131 @@ void encodeManagedDisplayFrame(
         }
       }
       const auto encoded = wipreview::color::encodeDisplay(straight, colorConfig);
+      for (std::size_t channel = 0; channel < 3; ++channel) {
+        rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
+                                           : encoded[channel];
+      }
+      writePixel(destination, x, y, rgba);
+    }
+  }
+}
+
+namespace {
+
+std::uint8_t* dirtyAddress(
+    std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    RectI bounds, int x, int y) noexcept {
+  return dirtyPixels + static_cast<std::ptrdiff_t>(y - bounds.y1) * dirtyRowBytes
+      + static_cast<std::ptrdiff_t>(x - bounds.x1);
+}
+
+const std::uint8_t* dirtyAddress(
+    const std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    RectI bounds, int x, int y) noexcept {
+  return dirtyPixels + static_cast<std::ptrdiff_t>(y - bounds.y1) * dirtyRowBytes
+      + static_cast<std::ptrdiff_t>(x - bounds.x1);
+}
+
+void prepareManagedPixel(
+    const ImageView& encodedBase, const ImageView& workspace,
+    std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    int x, int y, const wipreview::color::DisplayConfig& colorConfig,
+    bool basePremultiplied) noexcept {
+  std::uint8_t* dirty = dirtyAddress(
+      dirtyPixels, dirtyRowBytes, workspace.bounds, x, y);
+  if (*dirty != 0) return;
+  writePixel(workspace, x, y, readManagedRGBA(
+      encodedBase, x, y, basePremultiplied, colorConfig));
+  *dirty = 1;
+}
+
+}  // namespace
+
+void prepareManagedBlankingPixels(
+    const ImageView& encodedBase, const ImageView& workspace,
+    std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    RectI renderWindow, const BlankingOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool basePremultiplied) noexcept {
+  if (!options.enabled || !encodedBase.data || !workspace.data ||
+      !dirtyPixels || options.editorialAspect <= 0.0) return;
+  const RectI writable = intersect(
+      intersect(renderWindow, encodedBase.bounds), workspace.bounds);
+  if (empty(writable)) return;
+  const RectD aperture = computeBlankingAperture(workspace.bounds, options);
+  const float colourAlpha = std::clamp(options.colour[3], 0.0F, 1.0F);
+  const float opacity = std::clamp(options.opacity, 0.0F, 1.0F);
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    const double overlapY = std::max(
+        0.0, std::min(static_cast<double>(y + 1), aperture.y2) -
+                 std::max(static_cast<double>(y), aperture.y1));
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      const double overlapX = std::max(
+          0.0, std::min(static_cast<double>(x + 1), aperture.x2) -
+                   std::max(static_cast<double>(x), aperture.x1));
+      const float coverage = static_cast<float>(1.0 - overlapX * overlapY);
+      if (coverage * opacity * colourAlpha <= 0.0F) continue;
+      prepareManagedPixel(encodedBase, workspace, dirtyPixels, dirtyRowBytes,
+                          x, y, colorConfig, basePremultiplied);
+    }
+  }
+}
+
+void prepareManagedTextPixels(
+    const ImageView& encodedBase, const ImageView& workspace,
+    std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    RectI renderWindow, const GlyphMaskView& mask,
+    const TextOverlayOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool basePremultiplied) noexcept {
+  if (!options.enabled || !encodedBase.data || !workspace.data ||
+      !dirtyPixels || !mask.data || mask.width <= 0 || mask.height <= 0 ||
+      mask.rowBytes == 0) return;
+  RectI writable = intersect(
+      intersect(renderWindow, encodedBase.bounds), workspace.bounds);
+  if (options.constrainToCell) writable = intersect(writable, options.cellBounds);
+  const PointI origin = computeTextOrigin(
+      workspace.bounds, mask.width, mask.height, options);
+  const RectI area = intersect(
+      writable, {origin.x, origin.y, origin.x + mask.width,
+                 origin.y + mask.height});
+  if (empty(area)) return;
+  const float colourAlpha = std::clamp(options.colour[3], 0.0F, 1.0F);
+  const float opacity = std::clamp(options.opacity, 0.0F, 1.0F);
+  for (int y = area.y1; y < area.y2; ++y) {
+    const auto* row = mask.data +
+        static_cast<std::ptrdiff_t>(y - origin.y) * mask.rowBytes;
+    for (int x = area.x1; x < area.x2; ++x) {
+      const float coverage = static_cast<float>(row[x - origin.x]) / 255.0F;
+      if (coverage * colourAlpha * opacity <= 0.0F) continue;
+      prepareManagedPixel(encodedBase, workspace, dirtyPixels, dirtyRowBytes,
+                          x, y, colorConfig, basePremultiplied);
+    }
+  }
+}
+
+void encodeManagedDirtyPixels(
+    const ImageView& workspace, const ImageView& destination,
+    const std::uint8_t* dirtyPixels, std::ptrdiff_t dirtyRowBytes,
+    RectI renderWindow, const wipreview::color::DisplayConfig& colorConfig,
+    bool outputPremultiplied) noexcept {
+  if (!workspace.data || !destination.data || !dirtyPixels) return;
+  const RectI writable = intersect(
+      intersect(renderWindow, workspace.bounds), destination.bounds);
+  for (int y = writable.y1; y < writable.y2; ++y) {
+    for (int x = writable.x1; x < writable.x2; ++x) {
+      if (*dirtyAddress(dirtyPixels, dirtyRowBytes, workspace.bounds, x, y) ==
+          0) continue;
+      auto rgba = readRGBA(workspace, x, y, true, true);
+      const float alpha = rgba[3];
+      wipreview::color::RGB straight{};
+      if (alpha > 1.0e-8F) {
+        for (std::size_t channel = 0; channel < 3; ++channel) {
+          straight[channel] = rgba[channel] / alpha;
+        }
+      }
+      const auto encoded = wipreview::color::encodeDisplay(
+          straight, colorConfig);
       for (std::size_t channel = 0; channel < 3; ++channel) {
         rgba[channel] = outputPremultiplied ? encoded[channel] * alpha
                                            : encoded[channel];

@@ -141,6 +141,112 @@ void testG03AnamorphicParPlacement() {
   assert(std::abs(transform.scaleY - 1.0) < 1.0e-12);
 }
 
+void testEffectiveIdentityPlacement() {
+  const RectI raster{0, 0, 3840, 2160};
+  for (const auto placement : {PlacementMode::Identity, PlacementMode::Fit,
+                               PlacementMode::Fill, PlacementMode::Stretch,
+                               PlacementMode::OneToOne}) {
+    RenderOptions options;
+    options.placement = placement;
+    assert(wipreview::probe::isEffectivelyIdentityPlacement(
+        raster, raster, options));
+  }
+  RenderOptions anamorphic;
+  anamorphic.placement = PlacementMode::Fit;
+  anamorphic.sourcePixelAspect = 2.0;
+  assert(!wipreview::probe::isEffectivelyIdentityPlacement(
+      raster, raster, anamorphic));
+  assert(!wipreview::probe::isEffectivelyIdentityPlacement(
+      {0, 0, 4608, 3164}, raster, {}));
+}
+
+void testLocalizedIdentityMatchesFullManagedPipeline() {
+  constexpr int width = 16;
+  constexpr int height = 10;
+  std::vector<float> source(width * height * 4);
+  std::vector<float> fullWorking(source.size());
+  std::vector<float> fullOutput(source.size());
+  std::vector<float> localizedWorking(source.size());
+  std::vector<float> localizedOutput(source.size());
+  std::vector<std::uint8_t> dirty(width * height, 0);
+  fillSource(source, width, height);
+  for (std::size_t pixel = 0; pixel < source.size() / 4; ++pixel) {
+    const float alpha = 0.25F + 0.75F *
+        static_cast<float>(pixel % 7) / 6.0F;
+    source[pixel * 4 + 0] *= alpha;
+    source[pixel * 4 + 1] *= alpha;
+    source[pixel * 4 + 2] *= alpha;
+    source[pixel * 4 + 3] = alpha;
+  }
+  auto sourceView = floatView(source, width, height);
+  auto fullWorkingView = floatView(fullWorking, width, height);
+  auto fullOutputView = floatView(fullOutput, width, height);
+  auto localizedWorkingView = floatView(localizedWorking, width, height);
+  auto localizedOutputView = floatView(localizedOutput, width, height);
+  RenderOptions options;
+  options.placement = PlacementMode::Fit;
+  wipreview::probe::BlankingOptions blanking;
+  blanking.enabled = true;
+  blanking.editorialAspect = 2.0;
+  blanking.opacity = 0.5F;
+  const std::array<std::uint8_t, 12> mask{
+      0, 128, 255, 0, 255, 255, 128, 0, 0, 128, 255, 0};
+  const wipreview::probe::GlyphMaskView maskView{
+      mask.data(), 4, 3, 4};
+  TextOverlayOptions text;
+  text.enabled = true;
+  text.anchor = TextAnchor::TopLeft;
+  text.colour[0] = 0.2F;
+  text.colour[1] = 0.8F;
+  text.colour[2] = 0.4F;
+  text.opacity = 0.75F;
+  const std::array<wipreview::color::DisplayEncoding, 3> encodings{
+      wipreview::color::DisplayEncoding::Rec709Gamma24,
+      wipreview::color::DisplayEncoding::Rec2100PQ,
+      wipreview::color::DisplayEncoding::Rec2100HLG};
+  for (const auto encoding : encodings) {
+    std::fill(fullWorking.begin(), fullWorking.end(), 0.0F);
+    std::fill(fullOutput.begin(), fullOutput.end(), 0.0F);
+    std::fill(localizedWorking.begin(), localizedWorking.end(), 0.0F);
+    std::fill(localizedOutput.begin(), localizedOutput.end(), 0.0F);
+    std::fill(dirty.begin(), dirty.end(), 0);
+    wipreview::color::DisplayConfig color;
+    color.encoding = encoding;
+    assert(wipreview::probe::renderManagedDisplayFrame(
+        sourceView, fullWorkingView, fullWorkingView.bounds, options, color));
+    wipreview::probe::applyBlanking(
+        fullWorkingView, fullWorkingView.bounds, blanking);
+    wipreview::probe::compositeTextMask(
+        fullWorkingView, fullWorkingView.bounds, maskView, text);
+    wipreview::probe::encodeManagedDisplayFrame(
+        fullWorkingView, fullOutputView, fullOutputView.bounds, color, true);
+
+    assert(wipreview::probe::copyIdentityFrame(
+        sourceView, localizedOutputView, localizedOutputView.bounds, true,
+        true));
+    wipreview::probe::prepareManagedBlankingPixels(
+        localizedOutputView, localizedWorkingView, dirty.data(), width,
+        localizedWorkingView.bounds, blanking, color, true);
+    wipreview::probe::applyBlanking(
+        localizedWorkingView, localizedWorkingView.bounds, blanking);
+    wipreview::probe::prepareManagedTextPixels(
+        localizedOutputView, localizedWorkingView, dirty.data(), width,
+        localizedWorkingView.bounds, maskView, text, color, true);
+    wipreview::probe::compositeTextMask(
+        localizedWorkingView, localizedWorkingView.bounds, maskView, text);
+    wipreview::probe::encodeManagedDirtyPixels(
+        localizedWorkingView, localizedOutputView, dirty.data(), width,
+        localizedOutputView.bounds, color, true);
+
+    for (std::size_t index = 0; index < fullOutput.size(); ++index) {
+      assert(std::abs(fullOutput[index] - localizedOutput[index]) < 3.0e-5F);
+    }
+  }
+  const auto dirtyCount = static_cast<std::size_t>(
+      std::count(dirty.begin(), dirty.end(), std::uint8_t{1}));
+  assert(dirtyCount > 0 && dirtyCount < dirty.size());
+}
+
 void testC06ManagedIdentity() {
   constexpr int width = 3;
   constexpr int height = 2;
@@ -212,6 +318,8 @@ int main() {
   testReviewRasterPresets();
   testG02DciUsesHeightForTypeAndWidthForPadding();
   testG03AnamorphicParPlacement();
+  testEffectiveIdentityPlacement();
+  testLocalizedIdentityMatchesFullManagedPipeline();
   testC06ManagedIdentity();
   testPixelDepthRoundTrips();
   return 0;

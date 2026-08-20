@@ -146,6 +146,23 @@ struct ManagedRenderStats {
     RectI outputBounds,
     const RenderOptions& options) noexcept;
 
+// True when the selected placement maps every output pixel to the same Source
+// coordinate. This includes Fit/Fill/Stretch/1:1 when their resolved transform
+// is exactly 1:1, not only the explicit Identity mode.
+[[nodiscard]] bool isEffectivelyIdentityPlacement(
+    RectI sourceBounds,
+    RectI outputBounds,
+    const RenderOptions& options) noexcept;
+
+// Copies a coordinate-aligned render window without colour conversion. The
+// fast path requires matching representations and alpha conventions.
+[[nodiscard]] bool copyIdentityFrame(
+    const ImageView& source,
+    const ImageView& destination,
+    RectI renderWindow,
+    bool sourcePremultiplied,
+    bool outputPremultiplied) noexcept;
+
 // Renders a static formatter pass into renderWindow. Pixels outside the placed
 // source are filled with canvas. Identity is coordinate-aligned and never
 // introduces a resize; all other modes are centred in the output bounds.
@@ -181,6 +198,39 @@ void decodeManagedDisplayFrame(
 void encodeManagedDisplayFrame(
     const ImageView& displayLinearSource,
     const ImageView& destination,
+    RectI renderWindow,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool outputPremultiplied) noexcept;
+
+// Localized display-light workspace used by an identity render. Source pixels
+// are decoded lazily only where an overlay changes them, then only those dirty
+// pixels are encoded back to Output.
+void prepareManagedBlankingPixels(
+    const ImageView& encodedBase,
+    const ImageView& displayLinearWorkspace,
+    std::uint8_t* dirtyPixels,
+    std::ptrdiff_t dirtyRowBytes,
+    RectI renderWindow,
+    const BlankingOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool basePremultiplied) noexcept;
+
+void prepareManagedTextPixels(
+    const ImageView& encodedBase,
+    const ImageView& displayLinearWorkspace,
+    std::uint8_t* dirtyPixels,
+    std::ptrdiff_t dirtyRowBytes,
+    RectI renderWindow,
+    const GlyphMaskView& mask,
+    const TextOverlayOptions& options,
+    const wipreview::color::DisplayConfig& colorConfig,
+    bool basePremultiplied) noexcept;
+
+void encodeManagedDirtyPixels(
+    const ImageView& displayLinearWorkspace,
+    const ImageView& destination,
+    const std::uint8_t* dirtyPixels,
+    std::ptrdiff_t dirtyRowBytes,
     RectI renderWindow,
     const wipreview::color::DisplayConfig& colorConfig,
     bool outputPremultiplied) noexcept;
