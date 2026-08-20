@@ -11,6 +11,7 @@ end
 
 local SCRIPT_DIR = script_directory()
 local APPLY_PATH = SCRIPT_DIR .. "apply_shot_config.lua"
+local REBUILD_PATH = SCRIPT_DIR .. "rebuild_managed_pipeline.lua"
 local apply = dofile(APPLY_PATH)
 local color_catalog = dofile(SCRIPT_DIR .. "color_enum_catalog.lua")
 local CONTROL = apply.CONTROL
@@ -219,6 +220,8 @@ local function serialized_controls(catalog, selections)
     add(label_control("SC_PathMapHelp",
         "Portable Path Map, for example _FOQN:", "Targets"))
     add(button_control("SC_Apply", "Apply / Update", execute, "Targets"))
+    add(button_control("SC_RebuildPipeline", "Rebuild Managed Pipeline",
+        string.format("local m = dofile(%q); m.run(comp)", REBUILD_PATH), "Targets"))
     add(text_control(CONTROL.status, "Status", DEFAULTS[CONTROL.status],
         1, true, "Targets"))
     add(label_control("SC_TargetHelp",
@@ -246,10 +249,10 @@ end
 
 local function create_group(comp, catalog, selections)
     local suffix = os.time()
-    local name = "Group_ShotConfigBuild_" .. tostring(suffix)
+    local name = "G_ShotConfigBuild_" .. tostring(suffix)
     while comp:FindTool(name) ~= nil do
         suffix = suffix + 1
-        name = "Group_ShotConfigBuild_" .. tostring(suffix)
+        name = "G_ShotConfigBuild_" .. tostring(suffix)
     end
     local source = string.format([[
     {
@@ -519,7 +522,7 @@ function M.run(comp_override)
             previous and "Ready (rebuilt; values preserved)" or "Ready", time)
 
         if previous ~= nil then delete_tool(active_comp, previous) end
-        new_config:SetAttrs({ TOOLS_Name = "Group_ShotConfig" })
+        new_config:SetAttrs({ TOOLS_Name = "G_ShotConfig" })
         new_config:SetData("ShotConfig.Role", apply.ROLE)
         new_config:SetData("ShotConfig.SchemaVersion", apply.SCHEMA_VERSION)
         new_config:SetData("ShotConfig." .. apply.DATA.color_space_ids,
