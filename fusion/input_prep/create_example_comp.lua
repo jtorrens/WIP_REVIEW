@@ -15,7 +15,27 @@ local SHOT_BUILD_PATH = SCRIPT_DIR .. "../shot_config/build_shot_config.lua"
 
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
-local example = fusion:NewComp()
+
+local function is_empty_unsaved(comp)
+    if comp == nil then return false end
+    local attrs = comp:GetAttrs() or {}
+    if tostring(attrs.COMPS_FileName or "") ~= "" then return false end
+    for _ in pairs(comp:GetToolList(false) or {}) do return false end
+    return true
+end
+
+local example = fusion.CurrentComp
+local example_attrs = example and example:GetAttrs() or {}
+local example_path = tostring(example_attrs.COMPS_FileName or "")
+if example_path == OUTPUT_PATH then
+    example:Lock()
+    for _, tool in pairs(example:GetToolList(false) or {}) do tool:Delete() end
+    example:Unlock()
+elseif example ~= nil and not is_empty_unsaved(example) then
+    error("Close the active composition before creating the InputPrep example")
+elseif example == nil then
+    example = fusion:NewComp()
+end
 if example == nil then error("Fusion could not create the InputPrep example comp") end
 _G.comp = example
 
@@ -56,7 +76,7 @@ local function configure_corner_source(tool, width, height)
 end
 
 example:Lock()
-local source = add_tool("Background", "ExampleSource_2160x2160", -2, 0)
+local source = add_tool("Background", "Background_ExampleSource_2160x2160", -2, 0)
 configure_corner_source(source, 2160, 2160)
 example:Unlock()
 
@@ -86,7 +106,7 @@ local flow = example.CurrentFrame and example.CurrentFrame.FlowView
 if flow ~= nil then
     pcall(function() flow:SetPos(source, -2, 0) end)
     pcall(function() flow:SetPos(input_prep, 0, 0) end)
-    local shot_config = example:FindTool("ShotConfig")
+    local shot_config = example:FindTool("Group_ShotConfig")
     if shot_config ~= nil then pcall(function() flow:SetPos(shot_config, -2, 2) end) end
     pcall(function() flow:SetPos(input_prep_config, 0, 2) end)
 end

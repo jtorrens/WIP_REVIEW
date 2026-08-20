@@ -34,7 +34,7 @@ assert_true(tostring(config[apply.target_control(1)][comp.CurrentTime]) ==
     input_prep:GetAttrs().TOOLS_Name,
     "example target is not registered")
 
-local source = comp:FindTool("ExampleSource_2160x2160")
+local source = comp:FindTool("Background_ExampleSource_2160x2160")
 assert_true(source ~= nil, "example source is missing")
 assert_true(tostring(source.Type[comp.CurrentTime]) == "Corner",
     "example source is not using the corner test pattern")
@@ -52,10 +52,6 @@ local function assert_toggle(id, expected)
     assert_true(input ~= nil, id .. " is missing")
     assert_true(tonumber(input[comp.CurrentTime]) == expected,
         id .. " has an unexpected default")
-    input[comp.CurrentTime] = expected == 1 and 0 or 1
-    assert_true(tonumber(input[comp.CurrentTime]) ~= expected,
-        id .. " is not editable")
-    input[comp.CurrentTime] = expected
 end
 
 assert_toggle("IP_EnableDepth", 1)

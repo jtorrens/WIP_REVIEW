@@ -13,6 +13,9 @@ dependencia entre ambos proyectos.
 
 La implementación está validada con Fusion Standalone 21.0.4.
 
+Los nombres de los grupos y de los nodos de ejemplo siguen la convención común
+de [`fusion/README.md`](../README.md): `Tipo_Función`.
+
 ## Archivos
 
 - `build_shot_config.lua`: crea o reconstruye el `GroupOperator`.
@@ -24,8 +27,8 @@ La implementación está validada con Fusion Standalone 21.0.4.
 - `create_example_comp.sh`: genera y abre una composición de ejemplo persistente.
 - `examples/ShotConfig_Example.comp`: composición base editable.
 - `tests/fusion_host_tests.lua`: casos de aceptación en una comp temporal.
-- `tests/run_fusion_tests.sh`: arranca o reutiliza Fusion 21 y ejecuta los
-  casos de aceptación; al terminar deja abierta una comp para pruebas manuales.
+- `tests/run_fusion_tests.sh`: arranca o reutiliza Fusion 21, ejecuta los casos
+  de aceptación en una comp temporal y la cierra al terminar.
 
 No es necesario instalar un Macro. El código se ejecuta directamente desde el
 repositorio durante el desarrollo.

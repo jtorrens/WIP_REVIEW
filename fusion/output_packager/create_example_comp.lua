@@ -33,7 +33,9 @@ if example_path == OUTPUT_PATH then
     example:Lock()
     for _, tool in pairs(example:GetToolList(false) or {}) do tool:Delete() end
     example:Unlock()
-elseif not is_empty_unsaved(example) then
+elseif example ~= nil and not is_empty_unsaved(example) then
+    error("Close the active composition before creating the OutputPackager example")
+elseif example == nil then
     example = fusion:NewComp()
 end
 if example == nil then error("Fusion could not create the OutputPackager example comp") end
@@ -59,7 +61,7 @@ local function first_output(tool)
 end
 
 example:Lock()
-local source = add_tool("Background", "ExampleFinalImage_2_00", -4, 0)
+local source = add_tool("Background", "Background_ExampleFinalImage_2_00", -4, 0)
 source.Width[0] = 3840
 source.Height[0] = 1920
 source.Type[0] = "Corner"
@@ -80,8 +82,8 @@ example:Unlock()
 local builder = dofile(BUILD_PATH)
 local wip_package = builder.last_group
 local clean_package = builder.run(example)
-wip_package:SetAttrs({ TOOLS_Name = "ClientReviewPackager" })
-clean_package:SetAttrs({ TOOLS_Name = "CleanReviewPackager" })
+wip_package:SetAttrs({ TOOLS_Name = "Group_OutputPackager_ClientReview" })
+clean_package:SetAttrs({ TOOLS_Name = "Group_OutputPackager_CleanReview" })
 wip_package.MainInput1 = source.Output
 clean_package.MainInput1 = source.Output
 
@@ -94,8 +96,8 @@ wip_package.OP_FPSMode[0] = 1
 wip_package.OP_FPSOverride[0] = 24
 
 example:Lock()
-local wip_saver = add_tool("Saver", "ClientReviewSaver", 3, -1)
-local clean_saver = add_tool("Saver", "CleanReviewSaver", 3, 1)
+local wip_saver = add_tool("Saver", "Saver_ClientReview", 3, -1)
+local clean_saver = add_tool("Saver", "Saver_CleanReview", 3, 1)
 wip_saver.Input:ConnectTo(first_output(wip_package))
 clean_saver.Input:ConnectTo(first_output(clean_package))
 example:Unlock()
@@ -113,11 +115,11 @@ set(shot_config, shot_apply.CONTROL.root, "_OUTPUTPACKAGER_TEST:")
 set(shot_config, shot_apply.CONTROL.review_resolution, { 1920, 1080 })
 set(shot_config, shot_apply.CONTROL.crop_ratio, 2.0)
 local saver_node, saver_template = shot_apply.target_controls("Saver", 1)
-set(shot_config, saver_node, "ClientReviewSaver")
+set(shot_config, saver_node, "Saver_ClientReview")
 set(shot_config, saver_template,
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov")
 saver_node, saver_template = shot_apply.target_controls("Saver", 2)
-set(shot_config, saver_node, "CleanReviewSaver")
+set(shot_config, saver_node, "Saver_CleanReview")
 set(shot_config, saver_template,
     "{root}/{show}_{episode}/REVIEW/{show}_{episode}_{shot}_CLEAN_{version}.mov")
 local shot_ok, shot_apply_error = shot_apply.run(example)
@@ -135,8 +137,10 @@ local function configure_row(index, packager_name, saver_name, enabled, review, 
     set(config, apply.target_control(index, "review"), review and 1 or 0)
     set(config, apply.target_control(index, "wip"), wip and 1 or 0)
 end
-configure_row(1, "ClientReviewPackager", "ClientReviewSaver", true, true, true)
-configure_row(2, "CleanReviewPackager", "CleanReviewSaver", true, true, false)
+configure_row(1, "Group_OutputPackager_ClientReview", "Saver_ClientReview",
+    true, true, true)
+configure_row(2, "Group_OutputPackager_CleanReview", "Saver_CleanReview",
+    true, true, false)
 local applied, apply_error = apply.run(example)
 if not applied then error(apply_error or "OutputPackager example apply failed") end
 

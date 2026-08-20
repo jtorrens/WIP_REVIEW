@@ -38,10 +38,10 @@ end
 
 local function next_name(comp)
     local index = 1
-    while comp:FindTool("OutputPackager" .. tostring(index)) ~= nil do
+    while comp:FindTool("Group_OutputPackager" .. tostring(index)) ~= nil do
         index = index + 1
     end
-    return "OutputPackager" .. tostring(index)
+    return "Group_OutputPackager" .. tostring(index)
 end
 
 local function definition(name, values)
@@ -55,268 +55,268 @@ local function definition(name, values)
             %s = GroupOperator {
                 Inputs = ordered() {
                     MainInput1 = InstanceInput {
-                        SourceOp = "OP_InputRouter",
+                        SourceOp = "PipeRouter_Input",
                         Source = "Input",
                         Name = "Input",
                     },
                     OP_EnableReviewRaster = InstanceInput {
-                        SourceOp = "OP_ReviewRasterSwitch",
+                        SourceOp = "Switch_ReviewRaster",
                         Source = "Source",
                         Name = "Review Raster",
                         Page = "Output",
                         Default = %d,
                     },
                     OP_EnableWIP = InstanceInput {
-                        SourceOp = "OP_WIPSwitch",
+                        SourceOp = "Switch_WIP",
                         Source = "Source",
                         Name = "WIP Review",
                         Page = "Output",
                         Default = %d,
                     },
                     OP_BlankingEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "blankingEnabled",
                         Name = "Blanking",
                         Page = "WIP",
                     },
                     OP_BlankingOpacity = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "blankingOpacity",
                         Name = "Blanking Opacity",
                         Page = "WIP",
                     },
                     OP_FontFamily = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "fontFamily",
                         Name = "Font Family",
                         Page = "WIP",
                     },
                     OP_FontSize = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "fontSize",
                         Name = "Font Size",
                         Page = "WIP",
                     },
                     OP_TextOpacity = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "textOpacity",
                         Name = "Text Opacity",
                         Page = "WIP",
                     },
                     OP_OutlineEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "outlineEnabled",
                         Name = "Outline",
                         Page = "WIP",
                     },
                     OP_OutlineWidth = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "outlineWidth",
                         Name = "Outline Width",
                         Page = "WIP",
                     },
                     OP_ShadowEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "shadowEnabled",
                         Name = "Shadow",
                         Page = "WIP",
                     },
                     OP_ShadowOffsetX = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "shadowOffsetX",
                         Name = "Shadow Offset X",
                         Page = "WIP",
                     },
                     OP_ShadowOffsetY = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "shadowOffsetY",
                         Name = "Shadow Offset Y",
                         Page = "WIP",
                     },
                     OP_ShadowSoftness = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "shadowSoftness",
                         Name = "Shadow Softness",
                         Page = "WIP",
                     },
                     OP_ShadowOpacity = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "shadowOpacity",
                         Name = "Shadow Opacity",
                         Page = "WIP",
                     },
                     OP_TLEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tlEnabled",
                         Name = "Top Left",
                         Page = "WIP",
                     },
                     OP_TLText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tlPrefix",
                         Name = "Top Left Text",
                         Page = "WIP",
                     },
                     OP_TLField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tlCalculatedField",
                         Name = "Top Left Field",
                         Page = "WIP",
                     },
                     OP_TCEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tcEnabled",
                         Name = "Top Center",
                         Page = "WIP",
                     },
                     OP_TCText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tcPrefix",
                         Name = "Top Center Text",
                         Page = "WIP",
                     },
                     OP_TCField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "tcCalculatedField",
                         Name = "Top Center Field",
                         Page = "WIP",
                     },
                     OP_TREnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "trEnabled",
                         Name = "Top Right",
                         Page = "WIP",
                     },
                     OP_TRText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "trPrefix",
                         Name = "Top Right Text",
                         Page = "WIP",
                     },
                     OP_TRField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "trCalculatedField",
                         Name = "Top Right Field",
                         Page = "WIP",
                     },
                     OP_BLEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "blEnabled",
                         Name = "Bottom Left",
                         Page = "WIP",
                     },
                     OP_BLText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "blPrefix",
                         Name = "Bottom Left Text",
                         Page = "WIP",
                     },
                     OP_BLField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "blCalculatedField",
                         Name = "Bottom Left Field",
                         Page = "WIP",
                     },
                     OP_BCEnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "bcEnabled",
                         Name = "Bottom Center",
                         Page = "WIP",
                     },
                     OP_BCText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "bcPrefix",
                         Name = "Bottom Center Text",
                         Page = "WIP",
                     },
                     OP_BCField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "bcCalculatedField",
                         Name = "Bottom Center Field",
                         Page = "WIP",
                     },
                     OP_BREnabled = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "brEnabled",
                         Name = "Bottom Right",
                         Page = "WIP",
                     },
                     OP_BRText = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "brPrefix",
                         Name = "Bottom Right Text",
                         Page = "WIP",
                     },
                     OP_BRField = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "brCalculatedField",
                         Name = "Bottom Right Field",
                         Page = "WIP",
                     },
                     OP_FrameRelativeBase = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "frameRelativeBase",
                         Name = "Frame Relative Base",
                         Page = "WIP",
                     },
                     OP_FrameStart = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "frameStart",
                         Name = "Frame Start",
                         Page = "WIP",
                     },
                     OP_FPSMode = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "fpsMode",
                         Name = "FPS Mode",
                         Page = "WIP",
                     },
                     OP_FPSOverride = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "fpsOverride",
                         Name = "FPS Override",
                         Page = "WIP",
                     },
                     OP_TimecodeStart = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "timecodeStart",
                         Name = "Timecode Start",
                         Page = "WIP",
                     },
                     OP_DropFrameMode = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "dropFrameMode",
                         Name = "Drop Frame Mode",
                         Page = "WIP",
                     },
                     OP_ColorSpaceMode = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "colorSpaceMode",
                         Name = "Color Space Mode",
                         Page = "WIP",
                     },
                     OP_ManualColorSpace = InstanceInput {
-                        SourceOp = "OP_WIPReview",
+                        SourceOp = "WIPReviewProbe_WIP",
                         Source = "manualColorSpace",
                         Name = "Manual Color Space",
                         Page = "WIP",
                     },
                     OP_ReviewWidth = InstanceInput {
-                        SourceOp = "OP_ReviewCanvas",
+                        SourceOp = "Background_ReviewCanvas",
                         Source = "Width",
                         Name = "Review Width",
                         Page = "Applied",
                         Default = %d,
                     },
                     OP_ReviewHeight = InstanceInput {
-                        SourceOp = "OP_ReviewCanvas",
+                        SourceOp = "Background_ReviewCanvas",
                         Source = "Height",
                         Name = "Review Height",
                         Page = "Applied",
                         Default = %d,
                     },
                     OP_CropRatio = InstanceInput {
-                        SourceOp = "OP_AppliedData",
+                        SourceOp = "Custom_AppliedData",
                         Source = "NumberIn1",
                         Name = "Crop Ratio",
                         Page = "Applied",
@@ -326,34 +326,34 @@ local function definition(name, values)
                 },
                 Outputs = {
                     MainOutput1 = InstanceOutput {
-                        SourceOp = "OP_WIPSwitch",
+                        SourceOp = "Switch_WIP",
                         Source = "Output",
                         Name = "Output",
                     },
                 },
                 ViewInfo = GroupInfo { Pos = { 0, 0 } },
                 Tools = ordered() {
-                    OP_InputRouter = PipeRouter {
+                    PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = OperatorInfo { Pos = { -440, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { -500, 0 } },
                     },
-                    OP_ReviewResize = BetterResize {
+                    BetterResize_ReviewRaster = BetterResize {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
-                            Width = Input { Expression = "OP_ReviewCanvas.Width", },
-                            Height = Input { Expression = "OP_ReviewCanvas.Height", },
+                            Width = Input { Expression = "Background_ReviewCanvas.Width", },
+                            Height = Input { Expression = "Background_ReviewCanvas.Height", },
                             KeepAspect = Input { Value = 1, },
                             FilterMethod = Input { Value = 3, },
                             Input = Input {
-                                SourceOp = "OP_InputRouter",
+                                SourceOp = "PipeRouter_Input",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -330, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -375, -1.5 } },
                     },
-                    OP_ReviewCanvas = Background {
+                    Background_ReviewCanvas = Background {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -364,25 +364,25 @@ local function definition(name, values)
                             TopLeftBlue = Input { Value = 0, },
                             TopLeftAlpha = Input { Value = 1, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -330, 1 } },
+                        ViewInfo = OperatorInfo { Pos = { -375, 1.5 } },
                     },
-                    OP_ReviewMerge = Merge {
+                    Merge_ReviewRaster = Merge {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             PerformDepthMerge = Input { Value = 0, },
                             Background = Input {
-                                SourceOp = "OP_ReviewCanvas",
+                                SourceOp = "Background_ReviewCanvas",
                                 Source = "Output",
                             },
                             Foreground = Input {
-                                SourceOp = "OP_ReviewResize",
+                                SourceOp = "BetterResize_ReviewRaster",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -220, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, 0 } },
                     },
-                    OP_ReviewRasterSwitch = Switch {
+                    Switch_ReviewRaster = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -390,25 +390,25 @@ local function definition(name, values)
                             Name0 = Input { Value = "Source Raster", },
                             Name1 = Input { Value = "Review Raster", },
                             Input0 = Input {
-                                SourceOp = "OP_InputRouter",
+                                SourceOp = "PipeRouter_Input",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "OP_ReviewMerge",
+                                SourceOp = "Merge_ReviewRaster",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -110, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { -125, 0 } },
                     },
-                    OP_AppliedData = Custom {
+                    Custom_AppliedData = Custom {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             NumberIn1 = Input { Value = %.12g, },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, 1 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, 1.5 } },
                     },
-                    OP_WIPReview = ofx.com.jtorrens.WIPReviewProbe {
+                    WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -418,17 +418,17 @@ local function definition(name, values)
                             blankingEnabled = Input { Value = 0, },
                             blankingAspectPreset = Input { Value = 4, },
                             blankingAspectCustom = Input {
-                                Expression = "OP_AppliedData.NumberIn1",
+                                Expression = "Custom_AppliedData.NumberIn1",
                             },
                             AllowResize = Input { Value = 0, },
                             Source = Input {
-                                SourceOp = "OP_ReviewRasterSwitch",
+                                SourceOp = "Switch_ReviewRaster",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { 0, -1.5 } },
                     },
-                    OP_WIPSwitch = Switch {
+                    Switch_WIP = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -436,15 +436,15 @@ local function definition(name, values)
                             Name0 = Input { Value = "Clean", },
                             Name1 = Input { Value = "WIP Review", },
                             Input0 = Input {
-                                SourceOp = "OP_ReviewRasterSwitch",
+                                SourceOp = "Switch_ReviewRaster",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "OP_WIPReview",
+                                SourceOp = "WIPReviewProbe_WIP",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 125, 0 } },
                     },
                 },
                 UserControls = ordered() {

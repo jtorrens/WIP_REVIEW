@@ -58,10 +58,10 @@ end
 
 local function next_name(comp)
     local index = 1
-    while comp:FindTool("InputPrep" .. tostring(index)) ~= nil do
+    while comp:FindTool("Group_InputPrep" .. tostring(index)) ~= nil do
         index = index + 1
     end
-    return "InputPrep" .. tostring(index)
+    return "Group_InputPrep" .. tostring(index)
 end
 
 local function definition(name, values)
@@ -78,99 +78,99 @@ local function definition(name, values)
             %s = GroupOperator {
                 Inputs = ordered() {
                     MainInput1 = InstanceInput {
-                        SourceOp = "IP_InputRouter",
+                        SourceOp = "PipeRouter_Input",
                         Source = "Input",
                         Name = "Input",
                     },
                     IP_EnableDepth = InstanceInput {
-                        SourceOp = "IP_DepthSwitch",
+                        SourceOp = "Switch_Depth",
                         Source = "Source",
                         Name = "Change Depth",
                         Page = "InputPrep",
                         Default = %d,
                     },
                     IP_Depth = InstanceInput {
-                        SourceOp = "IP_ChangeDepth",
+                        SourceOp = "ChangeDepth_Working",
                         Source = "Depth",
                         Name = "Depth",
                         Page = "InputPrep",
                         Default = %d,
                     },
                     IP_SourceColorSpace = InstanceInput {
-                        SourceOp = "IP_ColorTransform",
+                        SourceOp = "ColorSpaceTransform_Working",
                         Source = "InputColorSpace",
                         Name = "Source Color Space",
                         Page = "Applied",
                     },
                     IP_SourceGamma = InstanceInput {
-                        SourceOp = "IP_ColorTransform",
+                        SourceOp = "ColorSpaceTransform_Working",
                         Source = "InputGamma",
                         Name = "Source Gamma",
                         Page = "Applied",
                     },
                     IP_WorkingColorSpace = InstanceInput {
-                        SourceOp = "IP_ColorTransform",
+                        SourceOp = "ColorSpaceTransform_Working",
                         Source = "OutputColorSpace",
                         Name = "Working Color Space",
                         Page = "Applied",
                     },
                     IP_WorkingGamma = InstanceInput {
-                        SourceOp = "IP_ColorTransform",
+                        SourceOp = "ColorSpaceTransform_Working",
                         Source = "OutputGamma",
                         Name = "Working Gamma",
                         Page = "Applied",
                     },
                     IP_ResizeWidth = InstanceInput {
-                        SourceOp = "IP_Resize",
+                        SourceOp = "BetterResize_Working",
                         Source = "Width",
                         Name = "Resize Width",
                         Page = "Applied",
                         Default = %d,
                     },
                     IP_ResizeHeight = InstanceInput {
-                        SourceOp = "IP_Resize",
+                        SourceOp = "BetterResize_Working",
                         Source = "Height",
                         Name = "Working Height",
                         Page = "Applied",
                         Default = %d,
                     },
                     IP_CropWidth = InstanceInput {
-                        SourceOp = "IP_Crop",
+                        SourceOp = "Crop_Working",
                         Source = "XSize",
                         Name = "Crop Width",
                         Page = "Applied",
                         Default = %d,
                     },
                     IP_CropHeight = InstanceInput {
-                        SourceOp = "IP_Crop",
+                        SourceOp = "Crop_Working",
                         Source = "YSize",
                         Name = "Crop Height",
                         Page = "Applied",
                         Default = %d,
                     },
                     IP_EnableColor = InstanceInput {
-                        SourceOp = "IP_ColorSwitch",
+                        SourceOp = "Switch_Color",
                         Source = "Source",
                         Name = "Color Transform",
                         Page = "InputPrep",
                         Default = %d,
                     },
                     IP_EnableResize = InstanceInput {
-                        SourceOp = "IP_ResizeSwitch",
+                        SourceOp = "Switch_Resize",
                         Source = "Source",
                         Name = "Resize",
                         Page = "InputPrep",
                         Default = %d,
                     },
                     IP_EnableCrop = InstanceInput {
-                        SourceOp = "IP_CropSwitch",
+                        SourceOp = "Switch_Crop",
                         Source = "Source",
                         Name = "Crop",
                         Page = "InputPrep",
                         Default = %d,
                     },
                     IP_EmbeddedAlpha = InstanceInput {
-                        SourceOp = "IP_AlphaSwitch",
+                        SourceOp = "Switch_Alpha",
                         Source = "Source",
                         Name = "Use Embedded Alpha",
                         Page = "InputPrep",
@@ -180,31 +180,31 @@ local function definition(name, values)
                 },
                 Outputs = {
                     MainOutput1 = InstanceOutput {
-                        SourceOp = "IP_AlphaSwitch",
+                        SourceOp = "Switch_Alpha",
                         Source = "Output",
                         Name = "Output",
                     },
                 },
                 ViewInfo = GroupInfo { Pos = { 0, 0 } },
                 Tools = ordered() {
-                    IP_InputRouter = PipeRouter {
+                    PipeRouter_Input = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
-                        ViewInfo = OperatorInfo { Pos = { -770, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { -900, 0 } },
                     },
-                    IP_ChangeDepth = ChangeDepth {
+                    ChangeDepth_Working = ChangeDepth {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             Depth = Input { Value = %d, },
                             Input = Input {
-                                SourceOp = "IP_InputRouter",
+                                SourceOp = "PipeRouter_Input",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -660, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -800, -1.5 } },
                     },
-                    IP_DepthSwitch = Switch {
+                    Switch_Depth = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -212,46 +212,46 @@ local function definition(name, values)
                             Name0 = Input { Value = "Bypass", },
                             Name1 = Input { Value = "Process", },
                             Input0 = Input {
-                                SourceOp = "IP_InputRouter",
+                                SourceOp = "PipeRouter_Input",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_ChangeDepth",
+                                SourceOp = "ChangeDepth_Working",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -550, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { -700, 0 } },
                     },
-                    IP_Unpremultiply = AlphaDivide {
+                    AlphaDivide_Unpremultiply = AlphaDivide {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             Input = Input {
-                                SourceOp = "IP_DepthSwitch",
+                                SourceOp = "Switch_Depth",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -440, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -600, -1.5 } },
                     },
-                    IP_PreColorAlphaSwitch = Switch {
+                    Switch_PreColorAlpha = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
-                            Source = Input { Expression = "IP_AlphaSwitch.Source", },
+                            Source = Input { Expression = "Switch_Alpha.Source", },
                             Name0 = Input { Value = "Ignore Alpha", },
                             Name1 = Input { Value = "Unpremultiply", },
                             Input0 = Input {
-                                SourceOp = "IP_DepthSwitch",
+                                SourceOp = "Switch_Depth",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_Unpremultiply",
+                                SourceOp = "AlphaDivide_Unpremultiply",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -385, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -525, -1.5 } },
                     },
-                    IP_ColorTransform = ColorSpaceTransform {
+                    ColorSpaceTransform_Working = ColorSpaceTransform {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -260,42 +260,42 @@ local function definition(name, values)
                             OutputColorSpace = Input { Value = FuID { %q }, },
                             OutputGamma = Input { Value = FuID { %q }, },
                             Input = Input {
-                                SourceOp = "IP_PreColorAlphaSwitch",
+                                SourceOp = "Switch_PreColorAlpha",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -330, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -425, -1.5 } },
                     },
-                    IP_Premultiply = AlphaMultiply {
+                    AlphaMultiply_Premultiply = AlphaMultiply {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             Input = Input {
-                                SourceOp = "IP_ColorTransform",
+                                SourceOp = "ColorSpaceTransform_Working",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -220, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -325, -1.5 } },
                     },
-                    IP_PostColorAlphaSwitch = Switch {
+                    Switch_PostColorAlpha = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
-                            Source = Input { Expression = "IP_AlphaSwitch.Source", },
+                            Source = Input { Expression = "Switch_Alpha.Source", },
                             Name0 = Input { Value = "Straight", },
                             Name1 = Input { Value = "Premultiply", },
                             Input0 = Input {
-                                SourceOp = "IP_ColorTransform",
+                                SourceOp = "ColorSpaceTransform_Working",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_Premultiply",
+                                SourceOp = "AlphaMultiply_Premultiply",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -165, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -250, -1.5 } },
                     },
-                    IP_ColorSwitch = Switch {
+                    Switch_Color = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -303,17 +303,17 @@ local function definition(name, values)
                             Name0 = Input { Value = "Bypass", },
                             Name1 = Input { Value = "Process", },
                             Input0 = Input {
-                                SourceOp = "IP_DepthSwitch",
+                                SourceOp = "Switch_Depth",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_PostColorAlphaSwitch",
+                                SourceOp = "Switch_PostColorAlpha",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { -110, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { -150, 0 } },
                     },
-                    IP_Resize = BetterResize {
+                    BetterResize_Working = BetterResize {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -322,13 +322,13 @@ local function definition(name, values)
                             KeepAspect = Input { Value = 1, },
                             FilterMethod = Input { Value = 2, },
                             Input = Input {
-                                SourceOp = "IP_ColorSwitch",
+                                SourceOp = "Switch_Color",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 0, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { -25, -1.5 } },
                     },
-                    IP_ResizeSwitch = Switch {
+                    Switch_Resize = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -336,17 +336,17 @@ local function definition(name, values)
                             Name0 = Input { Value = "Bypass", },
                             Name1 = Input { Value = "Process", },
                             Input0 = Input {
-                                SourceOp = "IP_ColorSwitch",
+                                SourceOp = "Switch_Color",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_Resize",
+                                SourceOp = "BetterResize_Working",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 110, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 100, 0 } },
                     },
-                    IP_Crop = Crop {
+                    Crop_Working = Crop {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -356,13 +356,13 @@ local function definition(name, values)
                             YOffset = Input { Value = 0, },
                             KeepCentered = Input { Value = 1, },
                             Input = Input {
-                                SourceOp = "IP_ResizeSwitch",
+                                SourceOp = "Switch_Resize",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 220, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { 225, -1.5 } },
                     },
-                    IP_CropSwitch = Switch {
+                    Switch_Crop = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -370,17 +370,17 @@ local function definition(name, values)
                             Name0 = Input { Value = "Bypass", },
                             Name1 = Input { Value = "Process", },
                             Input0 = Input {
-                                SourceOp = "IP_ResizeSwitch",
+                                SourceOp = "Switch_Resize",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_Crop",
+                                SourceOp = "Crop_Working",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 330, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 350, 0 } },
                     },
-                    IP_AlphaPolicy = ChannelBoolean {
+                    ChannelBoolean_AlphaPolicy = ChannelBoolean {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -389,13 +389,13 @@ local function definition(name, values)
                             ToBlue = Input { Value = 4, },
                             ToAlpha = Input { Value = 16, },
                             Background = Input {
-                                SourceOp = "IP_CropSwitch",
+                                SourceOp = "Switch_Crop",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 440, -1 } },
+                        ViewInfo = OperatorInfo { Pos = { 475, -1.5 } },
                     },
-                    IP_AlphaSwitch = Switch {
+                    Switch_Alpha = Switch {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
@@ -403,15 +403,15 @@ local function definition(name, values)
                             Name0 = Input { Value = "Opaque", },
                             Name1 = Input { Value = "Preserve", },
                             Input0 = Input {
-                                SourceOp = "IP_AlphaPolicy",
+                                SourceOp = "ChannelBoolean_AlphaPolicy",
                                 Source = "Output",
                             },
                             Input1 = Input {
-                                SourceOp = "IP_CropSwitch",
+                                SourceOp = "Switch_Crop",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = OperatorInfo { Pos = { 550, 0 } },
+                        ViewInfo = OperatorInfo { Pos = { 600, 0 } },
                     },
                 },
                 UserControls = ordered() {

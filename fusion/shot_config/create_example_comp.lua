@@ -20,11 +20,29 @@ for _ = 1, 60 do
 end
 if fusion == nil then error("Fusion Standalone is not reachable") end
 
-local example = nil
-for _ = 1, 30 do
-    example = fusion:NewComp()
-    if example ~= nil then break end
-    bmd.wait(1)
+local function is_empty_unsaved(comp)
+    if comp == nil then return false end
+    local attrs = comp:GetAttrs() or {}
+    if tostring(attrs.COMPS_FileName or "") ~= "" then return false end
+    for _ in pairs(comp:GetToolList(false) or {}) do return false end
+    return true
+end
+
+local example = fusion.CurrentComp
+local example_attrs = example and example:GetAttrs() or {}
+local example_path = tostring(example_attrs.COMPS_FileName or "")
+if example_path == OUTPUT_PATH then
+    example:Lock()
+    for _, tool in pairs(example:GetToolList(false) or {}) do tool:Delete() end
+    example:Unlock()
+elseif example ~= nil and not is_empty_unsaved(example) then
+    error("Close the active composition before creating the ShotConfig example")
+elseif example == nil then
+    for _ = 1, 30 do
+        example = fusion:NewComp()
+        if example ~= nil then break end
+        bmd.wait(1)
+    end
 end
 if example == nil then error("Fusion could not create the example composition") end
 
@@ -37,10 +55,10 @@ end
 
 _G.comp = example
 example:Lock()
-local main_plate = add_tool("Loader", "MainPlate", -2, 0)
-local phone_ui = add_tool("Loader", "PhoneUI", -2, 1)
-local master_out = add_tool("Saver", "MasterOut", 2, 0)
-local client_review = add_tool("Saver", "ClientReview", 2, 1)
+local main_plate = add_tool("Loader", "Loader_MainPlate", -2, 0)
+local phone_ui = add_tool("Loader", "Loader_PhoneUI", -2, 1)
+local master_out = add_tool("Saver", "Saver_MasterOut", 2, 0)
+local client_review = add_tool("Saver", "Saver_ClientReview", 2, 1)
 master_out.Input = main_plate.Output
 client_review.Input = phone_ui.Output
 example:Unlock()
@@ -63,13 +81,13 @@ local function set_target(kind, index, node_name, template)
 end
 
 write(apply.CONTROL.root, "_SHOTCONFIG_TEST:")
-set_target("Loader", 1, "MainPlate",
+set_target("Loader", 1, "Loader_MainPlate",
     "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov")
-set_target("Loader", 2, "PhoneUI",
+set_target("Loader", 2, "Loader_PhoneUI",
     "{root}/{show}_{episode}/SCREENS/{shot}.mov")
-set_target("Saver", 1, "MasterOut",
+set_target("Saver", 1, "Saver_MasterOut",
     "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov")
-set_target("Saver", 2, "ClientReview",
+set_target("Saver", 2, "Saver_ClientReview",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_REF_{version}.mov")
 
 local applied, apply_error = apply.run(example)

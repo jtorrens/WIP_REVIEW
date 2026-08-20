@@ -97,7 +97,7 @@ local function set_flow_position(comp, tool, x, y)
 end
 
 local function create_group(comp)
-    local name = "InputPrepConfigBuild_" .. tostring(os.time())
+    local name = "Group_InputPrepConfigBuild_" .. tostring(os.time())
     while comp:FindTool(name) ~= nil do name = name .. "_1" end
     local source = string.format([[
     {
@@ -150,7 +150,7 @@ function M.run(comp_override)
             local deleted = previous:Delete()
             if deleted == false then error("unable to remove previous InputPrepConfig") end
         end
-        new_config:SetAttrs({ TOOLS_Name = "InputPrepConfig" })
+        new_config:SetAttrs({ TOOLS_Name = "Group_InputPrepConfig" })
         new_config:SetData("InputPrep.Role", apply.CONFIG_ROLE)
         new_config:SetData("InputPrep.SchemaVersion", apply.SCHEMA_VERSION)
         set_flow_position(comp, new_config, x, y)

@@ -19,7 +19,7 @@ local function fail(message)
 end
 
 local source = comp:AddTool("Background", -2, 0)
-source:SetAttrs({ TOOLS_Name = "OutputPackagerBuilder_Source" })
+source:SetAttrs({ TOOLS_Name = "Background_OutputPackagerBuilderSource" })
 source.Width[0] = 400
 source.Height[0] = 200
 
@@ -34,6 +34,7 @@ end
 if tonumber(group:GetData("OutputPackager.SchemaVersion")) ~= 1 then
     fail("SchemaVersion metadata is missing")
 end
+
 local connected = group.MainInput1:ConnectTo(source.Output)
 if connected == false then fail("unable to connect source to group") end
 
@@ -44,7 +45,7 @@ for _, output in pairs(group:GetOutputList() or {}) do
 end
 if group_output == nil then fail("group has no output") end
 local observer = comp:AddTool("PipeRouter", 2, 0)
-observer:SetAttrs({ TOOLS_Name = "OutputPackagerBuilder_Observer" })
+observer:SetAttrs({ TOOLS_Name = "PipeRouter_OutputPackagerBuilderObserver" })
 connected = observer.Input:ConnectTo(group_output)
 if connected == false then fail("unable to connect group to observer") end
 
@@ -71,7 +72,7 @@ local invalid_ok = pcall(function()
     builder.run(comp, { enableReviewRaster = false, enableWIP = true })
 end)
 if invalid_ok then fail("WIP without Review Raster was accepted") end
-if comp:FindTool("OutputPackager2") ~= nil then
+if comp:FindTool("Group_OutputPackager2") ~= nil then
     fail("invalid build left a partial group")
 end
 

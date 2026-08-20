@@ -4,6 +4,9 @@ Implementación v0.1 para Fusion Standalone 21. Crea procesadores `InputPrep`,
 un registro explícito `InputPrepConfig` y aplica los valores de `ShotConfig`
 de forma transaccional. No instala macros globales.
 
+Los nombres y el layout interno siguen la convención común de
+[`fusion/README.md`](../README.md): `Tipo_Función` y flow de izquierda a derecha.
+
 ## Probar la composición
 
 Fusion 21 debe estar instalado en:
@@ -24,12 +27,13 @@ La composición queda guardada en:
 fusion/input_prep/examples/InputPrep_Example.comp
 ```
 
-Selecciona `InputPrep1` y pulsa `1` o `2` para mostrar su salida en un Viewer.
+Selecciona `Group_InputPrep1` y pulsa `1` o `2` para mostrar su salida en un Viewer.
 La fuente de prueba es un `Background` cuadrado de cuatro esquinas a
 2160 × 2160. El resultado permite ver el fill y el crop sobre una fuente cuyo
 aspect ratio no coincide con el working raster.
 
-La comp incluye `ShotConfig`, `InputPrepConfig` e `InputPrep1`. En la pestaña
+La comp incluye `Group_ShotConfig`, `Group_InputPrepConfig` y
+`Group_InputPrep1`. En la pestaña
 `Targets` del registro, cada slot acepta el nombre exacto de un procesador. F2
 copia el nombre del nodo. `Apply / Update` valida primero todos los slots y
 solo después actualiza los targets.

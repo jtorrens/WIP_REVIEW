@@ -1,5 +1,5 @@
 -- ShotConfig v0.1 acceptance tests against Fusion Standalone 21.
--- The test closes its private acceptance comp and opens the saved example.
+-- The runner closes its private acceptance comp and restores the previous comp.
 
 local function script_directory()
     local source = debug.getinfo(1, "S").source
@@ -20,16 +20,12 @@ for _ = 1, 60 do
 end
 if fusion == nil then error("Fusion Standalone is not reachable") end
 
-local previous_comp = fusion.CurrentComp
-local comp = nil
-for _ = 1, 30 do
-    comp = fusion:NewComp()
-    if comp ~= nil then break end
-    bmd.wait(1)
-end
+local temp_comp = dofile(TEST_DIR .. "../../test_support/temp_comp.lua")
+local comp = temp_comp.acquire(fusion)
 if comp == nil then error("Fusion could not create an isolated test composition") end
 local previous_global_comp = rawget(_G, "comp")
 _G.comp = comp
+print("FUSION_TEMP_COMP_CREATED")
 
 local function fail(message)
     error("ShotConfig acceptance failure: " .. message, 2)
@@ -355,22 +351,7 @@ local ok, failure = pcall(function()
     print("SHOTCONFIG_FUSION_TESTS_OK")
 end)
 
-pcall(function() comp:Lock() end)
-pcall(function() comp:Close() end)
 _G.comp = previous_global_comp
 if not ok then
     error(failure)
-end
-
-local example_comp = nil
-local example_ok, example_failure = pcall(function()
-    example_comp = dofile(SHOT_CONFIG_DIR .. "create_example_comp.lua")
-end)
-if not example_ok then
-    local failed_comp = example_comp or rawget(_G, "comp")
-    if failed_comp ~= nil and failed_comp ~= previous_global_comp then
-        pcall(function() failed_comp:Close() end)
-    end
-    _G.comp = previous_global_comp
-    error("unable to create saved ShotConfig example: " .. tostring(example_failure))
 end

@@ -9,11 +9,11 @@ local function fail(message)
     error("OutputPackager example failure: " .. message, 2)
 end
 
-local wip = comp:FindTool("ClientReviewPackager")
-local clean = comp:FindTool("CleanReviewPackager")
-local wip_saver = comp:FindTool("ClientReviewSaver")
-local clean_saver = comp:FindTool("CleanReviewSaver")
-local config = comp:FindTool("OutputPackagerConfig")
+local wip = comp:FindTool("Group_OutputPackager_ClientReview")
+local clean = comp:FindTool("Group_OutputPackager_CleanReview")
+local wip_saver = comp:FindTool("Saver_ClientReview")
+local clean_saver = comp:FindTool("Saver_CleanReview")
+local config = comp:FindTool("Group_OutputPackagerConfig")
 if wip == nil or clean == nil or wip_saver == nil or clean_saver == nil or config == nil then
     fail("required example tools are missing")
 end

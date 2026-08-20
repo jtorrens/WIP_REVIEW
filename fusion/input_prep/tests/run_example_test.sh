@@ -19,10 +19,15 @@ grep -F 'KeepCentered = Input { Value = 1, }' "$EXAMPLE" >/dev/null
 grep -F 'XSize = Input { Value = 3840, }' "$EXAMPLE" >/dev/null
 grep -F 'YSize = Input { Value = 1920, }' "$EXAMPLE" >/dev/null
 grep -F 'ToAlpha = Input { Value = 16, }' "$EXAMPLE" >/dev/null
-grep -F 'IP_ChangeDepth = ChangeDepth {' "$EXAMPLE" >/dev/null
+grep -F 'ChangeDepth_Working = ChangeDepth {' "$EXAMPLE" >/dev/null
+grep -F 'PipeRouter_Input = PipeRouter {' "$EXAMPLE" >/dev/null
+grep -F 'ColorSpaceTransform_Working = ColorSpaceTransform {' "$EXAMPLE" >/dev/null
+grep -F 'BetterResize_Working = BetterResize {' "$EXAMPLE" >/dev/null
+grep -F 'Crop_Working = Crop {' "$EXAMPLE" >/dev/null
+grep -F 'ChannelBoolean_AlphaPolicy = ChannelBoolean {' "$EXAMPLE" >/dev/null
 grep -F 'Depth = Input { Value = 3, }' "$EXAMPLE" >/dev/null
-grep -F 'SourceOp = "IP_DepthSwitch"' "$EXAMPLE" >/dev/null
-grep -F 'SourceOp = "IP_ColorSwitch"' "$EXAMPLE" >/dev/null
-grep -F 'SourceOp = "IP_ResizeSwitch"' "$EXAMPLE" >/dev/null
-grep -F 'SourceOp = "IP_CropSwitch"' "$EXAMPLE" >/dev/null
-grep -F 'SourceOp = "IP_AlphaSwitch"' "$EXAMPLE" >/dev/null
+grep -F 'SourceOp = "Switch_Depth"' "$EXAMPLE" >/dev/null
+grep -F 'SourceOp = "Switch_Color"' "$EXAMPLE" >/dev/null
+grep -F 'SourceOp = "Switch_Resize"' "$EXAMPLE" >/dev/null
+grep -F 'SourceOp = "Switch_Crop"' "$EXAMPLE" >/dev/null
+grep -F 'SourceOp = "Switch_Alpha"' "$EXAMPLE" >/dev/null

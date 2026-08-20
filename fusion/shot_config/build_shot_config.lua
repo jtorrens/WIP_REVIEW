@@ -246,10 +246,10 @@ end
 
 local function create_group(comp, catalog, selections)
     local suffix = os.time()
-    local name = "ShotConfigBuild_" .. tostring(suffix)
+    local name = "Group_ShotConfigBuild_" .. tostring(suffix)
     while comp:FindTool(name) ~= nil do
         suffix = suffix + 1
-        name = "ShotConfigBuild_" .. tostring(suffix)
+        name = "Group_ShotConfigBuild_" .. tostring(suffix)
     end
     local source = string.format([[
     {
@@ -519,7 +519,7 @@ function M.run(comp_override)
             previous and "Ready (rebuilt; values preserved)" or "Ready", time)
 
         if previous ~= nil then delete_tool(active_comp, previous) end
-        new_config:SetAttrs({ TOOLS_Name = "ShotConfig" })
+        new_config:SetAttrs({ TOOLS_Name = "Group_ShotConfig" })
         new_config:SetData("ShotConfig.Role", apply.ROLE)
         new_config:SetData("ShotConfig.SchemaVersion", apply.SCHEMA_VERSION)
         new_config:SetData("ShotConfig." .. apply.DATA.color_space_ids,

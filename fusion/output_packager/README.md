@@ -5,6 +5,9 @@ aplicará explícitamente la configuración de salida almacenada en `ShotConfig`
 La implementación se desarrolla en esta rama sin importar, enlazar ni compilar
 el código fuente del OFX WIP Review.
 
+Los nombres y el layout interno siguen la convención común de
+[`fusion/README.md`](../README.md): `Tipo_Función` y flow de izquierda a derecha.
+
 ## Checkpoint 1 — inventario del host
 
 Antes de cerrar el contrato del componente se comprueban los nodos reales de
@@ -230,9 +233,9 @@ fusion/output_packager/create_example_comp.sh
 `examples/OutputPackager_Example.comp` incluye:
 
 - fuente final 2:1 con patrón de esquinas;
-- `ClientReviewPackager` con WIP y tokens frame/timecode;
-- `CleanReviewPackager` sin overlay;
-- `ClientReviewSaver` y `CleanReviewSaver` habilitados;
+- `Group_OutputPackager_ClientReview` con WIP y tokens frame/timecode;
+- `Group_OutputPackager_CleanReview` sin overlay;
+- `Saver_ClientReview` y `Saver_CleanReview` habilitados;
 - ShotConfig con templates portables bajo `_OUTPUTPACKAGER_TEST:`;
 - OutputPackagerConfig con las dos parejas ya registradas.
 
