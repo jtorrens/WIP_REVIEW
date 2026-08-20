@@ -1,4 +1,5 @@
 #include "probe_core.hpp"
+#include "gpu_renderer.hpp"
 #include "text_rasterizer.hpp"
 #include "calculated_field_resolver.hpp"
 
@@ -109,7 +110,6 @@ constexpr char kParamZonesPage[] = "zonesPage";
 constexpr char kParamTimingPage[] = "timingPage";
 constexpr char kParamColorPage[] = "colorPage";
 constexpr char kParamProcessingGroup[] = "processingGroup";
-constexpr char kParamCpuOnly[] = "cpuOnly";
 constexpr char kParamGpuStatus[] = "gpuCapabilityStatus";
 constexpr char kParamProcessingPage[] = "processingPage";
 
@@ -487,7 +487,6 @@ struct InstanceData {
   OfxParamHandle placement = nullptr;
   OfxParamHandle resample = nullptr;
   OfxParamHandle canvasColour = nullptr;
-  OfxParamHandle cpuOnly = nullptr;
   OfxParamHandle colorSpaceMode = nullptr;
   OfxParamHandle manualColorSpace = nullptr;
   OfxParamHandle graphicsWhiteMode = nullptr;
@@ -1395,6 +1394,15 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   gPropertySuite->propSetString(properties, kOfxImageEffectPluginRenderThreadSafety, 0,
                                kOfxImageEffectRenderFullySafe);
   gPropertySuite->propSetInt(properties, kOfxImageEffectPluginPropHostFrameThreading, 0, 1);
+  gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropCPURenderSupported, 0, "true");
+#if defined(__APPLE__)
+  gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropMetalRenderSupported, 0, "true");
+#elif defined(_WIN32)
+  gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropOpenCLRenderSupported, 0, "true");
+#endif
   for (std::size_t index = 0; index < kZoneParams.size(); ++index) {
     gPropertySuite->propSetString(
         properties, kOfxImageEffectPropClipPreferencesSlaveParam,
@@ -1415,6 +1423,18 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   Logger::instance().write("DESCRIBE",
       std::string("declared_contexts=[Filter,General]") +
       " multi_resolution=true tiles=false" +
+      " cpu_render=true metal_render=" +
+#if defined(__APPLE__)
+      "true" +
+#else
+      "false" +
+#endif
+      " opencl_render=" +
+#if defined(_WIN32)
+      "true" +
+#else
+      "false" +
+#endif
       " colour_style_request=OCIO colour_style_status=" + statusName(colourStyleStatus) +
       " native_config_status=" + statusName(configStatus));
   return kOfxStatOK;
@@ -1666,17 +1686,6 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
       params, kOfxParamTypeGroup, kParamProcessingGroup, &properties);
   gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "Processing");
   gPropertySuite->propSetInt(properties, kOfxParamPropGroupOpen, 0, 0);
-
-  gParameterSuite->paramDefine(
-      params, kOfxParamTypeBoolean, kParamCpuOnly, &properties);
-  gPropertySuite->propSetString(properties, kOfxPropLabel, 0, "CPU Only");
-  gPropertySuite->propSetInt(properties, kOfxParamPropDefault, 0, 0);
-  gPropertySuite->propSetInt(properties, kOfxParamPropAnimates, 0, 0);
-  gPropertySuite->propSetString(
-      properties, kOfxParamPropHint, 0,
-      "Disable GPU rendering for diagnosis or deterministic CPU execution.");
-  gPropertySuite->propSetString(
-      properties, kOfxParamPropParent, 0, kParamProcessingGroup);
 
   std::string gpuStatus = "Metal " +
       getString(gHost ? gHost->host : nullptr,
@@ -1971,7 +1980,7 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
 
   std::vector<const char*> definedPages;
   if (definePage(params, kParamProcessingPage, "Processing",
-                 {kParamGpuStatus, kParamCpuOnly})) {
+                 {kParamGpuStatus})) {
     definedPages.push_back(kParamProcessingPage);
   }
   if (definePage(params, kParamCanvasPage, "Canvas",
@@ -2062,7 +2071,6 @@ OfxStatus createInstance(OfxImageEffectHandle effect) {
   gParameterSuite->paramGetHandle(params, kParamPlacement, &instance->placement, nullptr);
   gParameterSuite->paramGetHandle(params, kParamResample, &instance->resample, nullptr);
   gParameterSuite->paramGetHandle(params, kParamCanvasColour, &instance->canvasColour, nullptr);
-  gParameterSuite->paramGetHandle(params, kParamCpuOnly, &instance->cpuOnly, nullptr);
   gParameterSuite->paramGetHandle(
       params, kParamColorSpaceMode, &instance->colorSpaceMode, nullptr);
   gParameterSuite->paramGetHandle(
@@ -2526,20 +2534,25 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       inArgs, kOfxImageEffectPropCudaEnabled, 0, &cudaEnabled);
   gPropertySuite->propGetInt(
       inArgs, kOfxImageEffectPropOpenCLEnabled, 0, &openclEnabled);
-  const bool cpuOnly = readIntegerParam(instance->cpuOnly, 0) != 0;
   const bool gpuRender = metalEnabled != 0 || cudaEnabled != 0 ||
       openclEnabled != 0;
+#if defined(__APPLE__)
+  const bool supportedGpuRender = metalEnabled != 0;
+#elif defined(_WIN32)
+  const bool supportedGpuRender = openclEnabled != 0;
+#else
+  const bool supportedGpuRender = false;
+#endif
   Logger::instance().write(
       "RENDER_BACKEND",
       instancePrefix(instance) +
-      " cpu_only=" + (cpuOnly ? "true" : "false") +
       " metal_enabled=" + std::to_string(metalEnabled) +
       " cuda_enabled=" + std::to_string(cudaEnabled) +
       " opencl_enabled=" + std::to_string(openclEnabled));
-  if (gpuRender) {
+  if (gpuRender && !supportedGpuRender) {
     Logger::instance().write(
         "RENDER_ERROR", instancePrefix(instance) +
-        " gpu_backend_not_dispatched=true request_cpu_retry=true");
+        " gpu_backend_rejected=true request_cpu_retry=true");
     return kOfxStatGPURenderFailed;
   }
   double time = 0.0;
@@ -2593,8 +2606,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const std::size_t displayLinearPixelCount =
         static_cast<std::size_t>(outputWidth) *
         static_cast<std::size_t>(outputHeight) * 4U;
-    std::unique_ptr<float[]> displayLinearPixels(
-        new float[displayLinearPixelCount]);
+    const bool acceleratedRender = metalEnabled != 0 || openclEnabled != 0;
+    std::unique_ptr<float[]> displayLinearPixels;
+    if (!acceleratedRender) {
+      displayLinearPixels.reset(new float[displayLinearPixelCount]);
+    }
     const wipreview::probe::ImageView displayLinearView{
         reinterpret_cast<std::byte*>(displayLinearPixels.get()),
         outputView.bounds,
@@ -2611,7 +2627,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const bool identityPlacement = sourceImage &&
         wipreview::probe::isEffectivelyIdentityPlacement(
             sourceView.bounds, outputView.bounds, options);
-    bool localizedIdentity = identityPlacement &&
+    bool localizedIdentity = !acceleratedRender && identityPlacement &&
         wipreview::probe::copyIdentityFrame(
             sourceView, outputView, requestedWindow,
             options.sourcePremultiplied, options.outputPremultiplied);
@@ -2619,7 +2635,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
       localizedDirtyRegion =
           std::make_unique<wipreview::probe::ManagedDirtyRegion>(
               outputView.bounds);
-    } else if (!runManagedRenderBands(
+    } else if (!acceleratedRender && !runManagedRenderBands(
                    sourceView, displayLinearView, requestedWindow, options,
                    managedColor.config, managedRenderStats,
                    managedRenderThreads)) {
@@ -2633,7 +2649,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const bool activeBlanking = blanking.enabled &&
         blanking.editorialAspect > 0.0 && blanking.opacity > 0.0F &&
         blanking.colour[3] > 0.0F;
-    if (!localizedIdentity) {
+    if (!acceleratedRender && !localizedIdentity) {
       wipreview::probe::applyBlanking(
           displayLinearView, requestedWindow, blanking);
     }
@@ -2697,14 +2713,14 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         for (int channel = 0; channel < 4; ++channel) {
           shadowOverlay.colour[channel] = layer.shadowColour[channel];
         }
-        if (localizedIdentity) {
+        if (!acceleratedRender && localizedIdentity) {
           wipreview::probe::prepareManagedTextPixels(
               outputView, displayLinearView, *localizedDirtyRegion,
               requestedWindow, zoneGlyph->shadowView(),
               shadowOverlay, managedColor.config,
               options.outputPremultiplied);
         }
-        if (!localizedIdentity) {
+        if (!acceleratedRender && !localizedIdentity) {
           wipreview::probe::compositeTextMask(
               displayLinearView, requestedWindow,
               zoneGlyph->shadowView(), shadowOverlay);
@@ -2716,27 +2732,27 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         for (int channel = 0; channel < 4; ++channel) {
           outlineOverlay.colour[channel] = layer.outlineColour[channel];
         }
-        if (localizedIdentity) {
+        if (!acceleratedRender && localizedIdentity) {
           wipreview::probe::prepareManagedTextPixels(
               outputView, displayLinearView, *localizedDirtyRegion,
               requestedWindow, zoneGlyph->outlineView(),
               outlineOverlay, managedColor.config,
               options.outputPremultiplied);
         }
-        if (!localizedIdentity) {
+        if (!acceleratedRender && !localizedIdentity) {
           wipreview::probe::compositeTextMask(
               displayLinearView, requestedWindow,
               zoneGlyph->outlineView(), outlineOverlay);
         }
       }
-      if (localizedIdentity && zoneGlyph) {
+      if (!acceleratedRender && localizedIdentity && zoneGlyph) {
         wipreview::probe::prepareManagedTextPixels(
             outputView, displayLinearView, *localizedDirtyRegion,
             requestedWindow, zoneGlyph->fillView(),
             layer.overlay, managedColor.config,
             options.outputPremultiplied);
       }
-      if (zoneGlyph && !localizedIdentity) {
+      if (zoneGlyph && !acceleratedRender && !localizedIdentity) {
         wipreview::probe::compositeTextMask(
             displayLinearView, requestedWindow,
             zoneGlyph->fillView(), layer.overlay);
@@ -2750,7 +2766,92 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
            (!zoneGlyph || zoneGlyph->fillPixels.empty()));
     }
     unsigned int managedEncodeThreads = 1;
-    if (localizedIdentity) {
+    bool gpuRendered = false;
+    std::string gpuBackend = "cpu";
+    if (acceleratedRender) {
+#if defined(__APPLE__) || defined(_WIN32)
+      {
+        wipreview::gpu::RenderRequest request;
+        request.sourceBuffer = static_cast<void*>(sourceView.data);
+        request.outputBuffer = static_cast<void*>(outputView.data);
+#if defined(__APPLE__)
+        gPropertySuite->propGetPointer(
+            inArgs, kOfxImageEffectPropMetalCommandQueue, 0,
+            &request.commandQueue);
+#else
+        gPropertySuite->propGetPointer(
+            inArgs, kOfxImageEffectPropOpenCLCommandQueue, 0,
+            &request.commandQueue);
+#endif
+        request.sourceFormat = sourceView;
+        request.outputFormat = outputView;
+        request.renderWindow = requestedWindow;
+        request.sourcePremultiplied = options.sourcePremultiplied;
+        request.outputPremultiplied = options.outputPremultiplied;
+        request.renderOptions = options;
+        request.blanking = blanking;
+        request.color = managedColor.config;
+        auto addGpuLayer = [&](const wipreview::probe::GlyphMaskView& mask,
+                               const wipreview::probe::TextOverlayOptions& overlay) {
+          if (!mask.data || mask.width <= 0 || mask.height <= 0 ||
+              !overlay.enabled) return;
+          wipreview::gpu::MaskLayer gpuLayer;
+          gpuLayer.mask = mask;
+          gpuLayer.origin = wipreview::probe::computeTextOrigin(
+              outputView.bounds, mask.width, mask.height, overlay);
+          gpuLayer.cellBounds = overlay.cellBounds;
+          gpuLayer.constrainToCell = overlay.constrainToCell;
+          gpuLayer.opacity = overlay.opacity;
+          for (int channel = 0; channel < 4; ++channel) {
+            gpuLayer.colour[channel] = overlay.colour[channel];
+          }
+          request.layers.push_back(gpuLayer);
+        };
+        for (std::size_t index = 0; index < zoneSettings.size(); ++index) {
+          const auto& layer = zoneSettings[index].layer;
+          const auto* zoneGlyph = zoneTextEntries[index]
+              ? &zoneTextEntries[index]->layout.glyph : nullptr;
+          if (!zoneGlyph) continue;
+          if (!zoneGlyph->shadowPixels.empty()) {
+            auto overlay = layer.overlay;
+            overlay.opacity = layer.shadowOpacity;
+            for (int channel = 0; channel < 4; ++channel) {
+              overlay.colour[channel] = layer.shadowColour[channel];
+            }
+            addGpuLayer(zoneGlyph->shadowView(), overlay);
+          }
+          if (!zoneGlyph->outlinePixels.empty()) {
+            auto overlay = layer.overlay;
+            overlay.opacity = layer.outlineOpacity;
+            for (int channel = 0; channel < 4; ++channel) {
+              overlay.colour[channel] = layer.outlineColour[channel];
+            }
+            addGpuLayer(zoneGlyph->outlineView(), overlay);
+          }
+          addGpuLayer(zoneGlyph->fillView(), layer.overlay);
+        }
+        std::string gpuError;
+#if defined(__APPLE__)
+        gpuBackend = "metal";
+        const auto gpuStatus = wipreview::gpu::renderMetal(request, gpuError);
+#else
+        gpuBackend = "opencl";
+        const auto gpuStatus = wipreview::gpu::renderOpenCL(request, gpuError);
+#endif
+        gpuRendered = gpuStatus == wipreview::gpu::RenderStatus::Rendered;
+        Logger::instance().write(
+            gpuRendered ? "GPU_RENDER" : "RENDER_ERROR",
+            instancePrefix(instance) +
+            " backend=" + gpuBackend + " status=" +
+                std::to_string(static_cast<int>(gpuStatus)) +
+            " layers=" + std::to_string(request.layers.size()) +
+            " error=" + quoted(gpuError.c_str()));
+        if (!gpuRendered) result = kOfxStatGPURenderFailed;
+      }
+#else
+      result = kOfxStatGPURenderFailed;
+#endif
+    } else if (localizedIdentity) {
       if (activeBlanking && !runManagedBlankingBands(
             outputView, displayLinearView, *localizedDirtyRegion,
             requestedWindow, blanking, managedColor.config,
@@ -2824,6 +2925,7 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         " decoded_row_cache_peak_bytes=" +
             std::to_string(managedRenderStats.peakCacheBytes) +
         " sampler_weights=precomputed" +
+        " backend=" + (gpuRendered ? gpuBackend : "cpu") +
         " multithread_suite=" + (gMultiThreadSuite ? "true" : "false") +
         " render_threads=" + std::to_string(managedRenderThreads) +
         " blanking_threads=" + std::to_string(managedBlankingThreads) +

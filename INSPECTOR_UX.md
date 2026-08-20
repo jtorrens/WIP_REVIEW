@@ -8,7 +8,7 @@ paginado.
 
 | Orden | Página | Controles |
 |---:|---|---|
-| 1 | Processing | Capacidades GPU publicadas por el host y CPU Only |
+| 1 | Processing | Capacidades GPU publicadas por el host |
 | 2 | Canvas | Capacidad de host, Canvas Mode, raster preset/Custom, placement, filtro, canvas y blanking |
 | 3 | Typography | Fuente, estilo, tamaño, color, opacity, padding, gap, overflow, outline y shadow |
 | 4 | Zones | TL, TC, TR, BL, BC y BR con texto, offsets y overrides |
@@ -74,7 +74,7 @@ del contrato actual.
 
 Validado el 20 de agosto de 2026 con el bundle universal del commit `f42c34c`:
 
-- Fusion Studio 21.0.4 informó `max_pages=-1`, aceptó la definición de cinco
+- Fusion Studio 21.0.4 informó `max_pages=-1`, aceptó la definición de seis
   páginas y presentó la jerarquía de grupos. Los estados contextuales se
   reflejaron correctamente en el inspector.
 - DaVinci Resolve Studio 21.0.4 informó `max_pages=0`, cargó el descriptor sin

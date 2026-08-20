@@ -2,7 +2,8 @@
 
 `WIPReviewProbe.ofx` es un efecto OpenFX de review para DaVinci Resolve y
 Fusion. Coloca una imagen en un raster de review, aplica blanking editorial y
-compone seis zonas de texto en CPU. No incluye GPU ni una transformación
+compone seis zonas de texto mediante Metal en macOS, OpenCL en Windows o CPU
+cuando el host entrega memoria convencional. No incluye una transformación
 fotográfica interna. Los presets disponibles se limitan a
 rasters y aspectos técnicos; no codifican semántica de producción.
 
@@ -36,7 +37,7 @@ La evidencia está en [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 
 El contrato se organiza en seis páginas OFX: **Processing**, **Canvas**,
 **Typography**, **Zones**, **Timing** y **Color**. Processing muestra las
-capacidades GPU del host y ofrece **CPU Only**. Los mismos bloques existen como
+capacidades GPU negociadas con el host. Los mismos bloques existen como
 jerarquía de grupos para hosts que presentan un inspector plegable en vez de
 páginas.
 
@@ -198,6 +199,24 @@ El resultado es
 reemplazar el bundle. El único efecto aparece en `WIP Review` como
 `WIP Review`; el mismo descriptor declara Filter y General.
 
+## Build e instalación Windows x64
+
+Requisitos: Visual Studio 2022 con Desktop development with C++, CMake 3.24 o
+posterior y un driver GPU que instale `OpenCL.dll` para ejecutar la ruta GPU.
+
+```powershell
+cmake -S . -B build-win -A x64 `
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build-win --config Release --parallel
+ctest --test-dir build-win -C Release --output-on-failure
+cmake --install build-win --config Release `
+  --prefix "C:\Program Files\Common Files\OFX\Plugins"
+```
+
+El binario queda dentro del bundle en `Contents\Win64`. OpenCL se resuelve
+contra el ICD del sistema en tiempo de ejecución; el paquete no incluye una
+copia de `OpenCL.dll`.
+
 ## Validación automática en Fusion Standalone
 
 Con el bundle instalado:
@@ -208,7 +227,7 @@ scripts/run_fusion_smoke.sh
 
 El harness crea una composición privada con Source `4608×3164`, valida los
 cinco placements en Output `1920×1080`, Host Raster, blanking, seis zonas,
-outline, shadow, overflow, campos calculados, Rec.709/PQ/HLG y la ruta CPU multithread. La
+outline, shadow, overflow, campos calculados y Rec.709/PQ/HLG sobre Metal. La
 composición activa se restaura y no se modifica.
 
 También puede ejecutarse mediante:

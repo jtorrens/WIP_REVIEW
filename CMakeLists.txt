@@ -55,6 +55,7 @@ if(WIPREVIEW_BUILD_BENCHMARKS)
 endif()
 
 if(APPLE)
+  enable_language(OBJCXX)
   find_library(WIPREVIEW_CORETEXT_FRAMEWORK CoreText REQUIRED)
   find_library(WIPREVIEW_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
   find_library(WIPREVIEW_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
@@ -68,7 +69,28 @@ if(APPLE)
     "${WIPREVIEW_COREGRAPHICS_FRAMEWORK}"
     "${WIPREVIEW_COREFOUNDATION_FRAMEWORK}"
   )
+  find_library(WIPREVIEW_METAL_FRAMEWORK Metal REQUIRED)
+  find_library(WIPREVIEW_FOUNDATION_FRAMEWORK Foundation REQUIRED)
+  add_library(wipreview_gpu_renderer STATIC src/gpu_renderer_metal.mm)
+  target_link_libraries(wipreview_gpu_renderer PUBLIC
+    wipreview_probe_core
+    "${WIPREVIEW_METAL_FRAMEWORK}"
+    "${WIPREVIEW_FOUNDATION_FRAMEWORK}"
+  )
+  target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
+  target_compile_options(wipreview_gpu_renderer PRIVATE -fobjc-arc)
 elseif(WIN32)
+  FetchContent_Declare(
+    opencl_headers
+    GIT_REPOSITORY https://github.com/KhronosGroup/OpenCL-Headers.git
+    GIT_TAG 4ea6df132107e3b4b9407f903204b5522fdffcd6
+    GIT_SHALLOW FALSE
+    SOURCE_SUBDIR wipreview_headers_only
+  )
+  FetchContent_MakeAvailable(opencl_headers)
+  add_library(opencl_headers_interface INTERFACE)
+  target_include_directories(opencl_headers_interface SYSTEM INTERFACE
+    "${opencl_headers_SOURCE_DIR}")
   add_library(wipreview_text_rasterizer STATIC
     src/text_effects.cpp
     src/text_rasterizer_windows.cpp
@@ -78,6 +100,12 @@ elseif(WIN32)
     dwrite
     gdi32
   )
+  add_library(wipreview_gpu_renderer STATIC src/gpu_renderer_opencl.cpp)
+  target_link_libraries(wipreview_gpu_renderer PUBLIC
+    wipreview_probe_core
+    opencl_headers_interface
+  )
+  target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
 else()
   message(FATAL_ERROR "WIP Review currently supports macOS and Windows")
 endif()
@@ -94,6 +122,9 @@ target_link_libraries(WIPReviewProbe PRIVATE
   openfx_sdk_headers
   wipreview_text_rasterizer
 )
+if(APPLE OR WIN32)
+  target_link_libraries(WIPReviewProbe PRIVATE wipreview_gpu_renderer)
+endif()
 target_compile_definitions(WIPReviewProbe PRIVATE
   WIPREVIEW_PROBE_VERSION="${PROJECT_VERSION}"
 )
@@ -166,6 +197,16 @@ if(WIPREVIEW_BUILD_TESTS)
     wipreview_probe_core
   )
   add_test(NAME wipreview_color_pipeline COMMAND wipreview_color_pipeline_tests)
+
+  if(APPLE)
+    add_executable(wipreview_gpu_renderer_tests
+      tests/gpu_renderer_metal_tests.mm)
+    target_link_libraries(wipreview_gpu_renderer_tests PRIVATE
+      wipreview_gpu_renderer
+    )
+    target_compile_options(wipreview_gpu_renderer_tests PRIVATE -fobjc-arc)
+    add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
+  endif()
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)
   target_link_libraries(wipreview_bundle_smoke PRIVATE ${CMAKE_DL_LIBS})
