@@ -36,3 +36,36 @@ OUTPUTPACKAGER_HOST_PROBE_OK
 El RegID del OFX se trata como contrato runtime de Fusion. Ningún archivo de
 `src/`, `include/`, `tests/` o del build del plugin será dependencia de este
 módulo.
+
+## Checkpoint 2 — raster de review
+
+El camino validado en el host es:
+
+```text
+imagen preparada
+→ BetterResize (fit centrado)
+→ Merge sobre Background negro opaco a Review Resolution
+→ WIP Review en Host Raster / Identity
+```
+
+`BetterResize` con `KeepAspect=1` conserva la imagen completa, pero no genera
+por sí solo un canvas con las dimensiones solicitadas cuando cambia el aspect
+ratio. Por ejemplo, una entrada 2:1 produce `1920 × 960` al pedir
+`1920 × 1080`. El `Background + Merge` materializa el raster exacto, centra la
+imagen y evita tanto recorte como deformación.
+
+WIP Review recibe ya el raster definitivo. Por ello OutputPackager no depende
+de `Request Custom Output RoD` ni de `Use plugin RoD for output size`; usa
+`Host Raster`, `Identity` y conserva exactamente `Review Resolution`.
+
+Ejecutar la prueba reducida equivalente a `400 × 200 → 192 × 108`:
+
+```sh
+fusion/output_packager/tests/run_review_raster_test.sh
+```
+
+La prueba deja abierta su comp y termina con:
+
+```text
+OUTPUTPACKAGER_REVIEW_RASTER_HOST_TEST_OK
+```
