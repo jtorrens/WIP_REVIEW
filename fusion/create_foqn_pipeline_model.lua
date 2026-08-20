@@ -49,6 +49,12 @@ local function add_tool(reg_id, name, x, y)
     return tool
 end
 
+local function mark_managed(tool, role)
+    tool:SetData("FOQNPipeline.Managed", true)
+    tool:SetData("FOQNPipeline.Role", role)
+    tool:SetData("FOQNPipeline.SchemaVersion", 1)
+end
+
 local function first_output(tool)
     for _, output in pairs(tool:GetOutputList() or {}) do return output end
     error((tool:GetAttrs().TOOLS_Name or "tool") .. " has no output")
@@ -61,9 +67,12 @@ end
 
 model:Lock()
 local plate = add_tool("Loader", "L_FOQN_E06_0010_Plate", -6, 0)
+mark_managed(plate, "Loader")
 plate.Clip[model.CurrentTime or 0] = PLATE_PATH
 local wip_saver = add_tool("Saver", "S_FOQN_E06_0010_WIP", 3, -2)
 local clean_saver = add_tool("Saver", "S_FOQN_E06_0010_Clean", 3, 2)
+mark_managed(wip_saver, "Saver")
+mark_managed(clean_saver, "Saver")
 model:Unlock()
 
 -- Input processing: the only transform path in the model.
@@ -81,6 +90,7 @@ _G.INPUTPREP_OVERRIDES = nil
 local input_prep = input_builder.last_group
 if input_prep == nil then error("InputPrep was not created") end
 input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_FOQN_E06_0010" })
+mark_managed(input_prep, "InputPrep")
 input_prep.MainInput1 = plate.Output
 
 -- Output processing: one WIP delivery and one clean delivery from the same prepared image.
@@ -90,6 +100,8 @@ local clean_packager = output_builder.run(model)
 if wip_packager == nil or clean_packager == nil then error("OutputPackager was not created") end
 wip_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_WIP" })
 clean_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_Clean" })
+mark_managed(wip_packager, "OutputPackager")
+mark_managed(clean_packager, "OutputPackager")
 wip_packager.MainInput1 = first_output(input_prep)
 clean_packager.MainInput1 = first_output(input_prep)
 wip_saver.Input:ConnectTo(first_output(wip_packager))
