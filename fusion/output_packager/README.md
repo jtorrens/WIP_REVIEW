@@ -168,3 +168,26 @@ terminar:
 ```text
 OUTPUTPACKAGER_CONFIG_APPLY_HOST_TEST_OK
 ```
+
+## Checkpoint 7 — rebuild conectado
+
+Ejecutar el builder con un OutputPackager seleccionado reconstruye esa misma
+instancia. Conserva:
+
+- nombre y posición;
+- todos los controles públicos;
+- conexión de entrada;
+- todos los consumidores de salida, incluido el Saver;
+- metadata Role y SchemaVersion.
+
+No deja la instancia anterior ni crea un segundo processor. Prueba:
+
+```sh
+fusion/output_packager/tests/run_rebuild_test.sh
+```
+
+La comp temporal se cierra y el resultado es:
+
+```text
+OUTPUTPACKAGER_REBUILD_HOST_TEST_OK
+```

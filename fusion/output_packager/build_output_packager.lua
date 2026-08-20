@@ -254,6 +254,45 @@ local function paste_group(comp, overrides, name)
     return group, values
 end
 
+local PUBLIC_CONTROLS = {
+    "OP_EnableReviewRaster",
+    "OP_EnableWIP",
+    "OP_ReviewWidth",
+    "OP_ReviewHeight",
+    "OP_CropRatio",
+    "OP_Status",
+}
+
+local function first_output(tool)
+    for _, output in pairs(tool:GetOutputList() or {}) do return output end
+    return nil
+end
+
+local function unique_name(comp, prefix)
+    local index = 1
+    local name = prefix
+    while comp:FindTool(name) ~= nil do
+        index = index + 1
+        name = prefix .. tostring(index)
+    end
+    return name
+end
+
+local function flow_position(comp, tool)
+    if tool == nil or comp.CurrentFrame == nil then return nil, nil end
+    local flow = comp.CurrentFrame.FlowView
+    if flow == nil then return nil, nil end
+    local ok, x, y = pcall(function() return flow:GetPos(tool) end)
+    if ok then return x, y end
+    return nil, nil
+end
+
+local function set_flow_position(comp, tool, x, y)
+    if x == nil or y == nil or comp.CurrentFrame == nil then return end
+    local flow = comp.CurrentFrame.FlowView
+    if flow ~= nil then pcall(function() flow:SetPos(tool, x, y) end) end
+end
+
 function M.run(comp_override, overrides)
     local comp = comp_override or rawget(_G, "comp")
     if comp == nil then error("OutputPackager builder requires an active composition") end
@@ -275,8 +314,94 @@ function M.run(comp_override, overrides)
     return group
 end
 
+function M.rebuild(comp_override, target)
+    local comp = comp_override or rawget(_G, "comp")
+    if comp == nil then error("OutputPackager rebuild requires an active composition") end
+    if target == nil or target:GetData("OutputPackager.Role") ~= M.ROLE then
+        error("select exactly one OutputPackager to rebuild")
+    end
+    if tonumber(target:GetData("OutputPackager.SchemaVersion")) ~= M.SCHEMA_VERSION then
+        error("selected OutputPackager has an unsupported schema")
+    end
+
+    local time = comp.CurrentTime or 0
+    local original_name = target:GetAttrs().TOOLS_Name
+    local saved = {}
+    for _, id in ipairs(PUBLIC_CONTROLS) do
+        if target[id] == nil then error("selected OutputPackager is missing " .. id) end
+        saved[id] = target[id][time]
+    end
+    local upstream = target.MainInput1 and target.MainInput1:GetConnectedOutput() or nil
+    local old_output = first_output(target)
+    if old_output == nil then error("selected OutputPackager has no output") end
+    local consumers = old_output:GetConnectedInputs() or {}
+    local x, y = flow_position(comp, target)
+    local temporary_name = unique_name(comp, "OutputPackagerRebuild")
+    local backup_name = unique_name(comp, "OutputPackagerPrevious")
+
+    comp:StartUndo("Rebuild OutputPackager v0.1")
+    comp:Lock()
+    local replacement = nil
+    local new_output = nil
+    local old_renamed = false
+    local new_renamed = false
+    local old_deleted = false
+    local ok, failure = pcall(function()
+        replacement = paste_group(comp, nil, temporary_name)
+        for _, id in ipairs(PUBLIC_CONTROLS) do
+            replacement[id][time] = saved[id]
+        end
+        if upstream ~= nil then
+            local connected = replacement.MainInput1:ConnectTo(upstream)
+            if connected == false then error("unable to restore Input connection") end
+        end
+        new_output = first_output(replacement)
+        if new_output == nil then error("replacement OutputPackager has no output") end
+        for _, destination in pairs(consumers) do
+            local connected = destination:ConnectTo(new_output)
+            if connected == false then error("unable to restore an Output connection") end
+        end
+        target:SetAttrs({ TOOLS_Name = backup_name })
+        old_renamed = true
+        replacement:SetAttrs({ TOOLS_Name = original_name })
+        new_renamed = true
+        set_flow_position(comp, replacement, x, y)
+        comp:SetActiveTool(replacement)
+        local deleted = target:Delete()
+        if deleted == false then error("unable to remove previous OutputPackager") end
+        old_deleted = true
+    end)
+
+    if not ok and not old_deleted then
+        for _, destination in pairs(consumers) do
+            pcall(function() destination:ConnectTo(old_output) end)
+        end
+        if new_renamed and replacement ~= nil then
+            pcall(function() replacement:SetAttrs({ TOOLS_Name = temporary_name }) end)
+        end
+        if old_renamed then
+            pcall(function() target:SetAttrs({ TOOLS_Name = original_name }) end)
+        end
+        if replacement ~= nil then pcall(function() replacement:Delete() end) end
+        set_flow_position(comp, target, x, y)
+        pcall(function() comp:SetActiveTool(target) end)
+    end
+    comp:Unlock()
+    comp:EndUndo(ok)
+    if not ok then error("OutputPackager rebuild failed: " .. tostring(failure)) end
+    print("[OutputPackager] Rebuilt " .. original_name ..
+        "; values and connections preserved")
+    return replacement
+end
+
 if rawget(_G, "comp") ~= nil then
-    M.last_group = M.run(comp, rawget(_G, "OUTPUTPACKAGER_OVERRIDES"))
+    local selected = rawget(_G, "tool")
+    if selected == nil then pcall(function() selected = comp.ActiveTool end) end
+    if selected ~= nil and selected:GetData("OutputPackager.Role") == M.ROLE then
+        M.last_group = M.rebuild(comp, selected)
+    else
+        M.last_group = M.run(comp, rawget(_G, "OUTPUTPACKAGER_OVERRIDES"))
+    end
 end
 
 return M
