@@ -240,11 +240,11 @@ fusion/input_prep/
 └── tests/
     ├── config_apply_host_test.lua
     ├── color_alpha_host_test.lua
-    ├── prototype_host_test.lua
+    ├── example_host_test.lua
     ├── resize_host_test.lua
     ├── run_config_apply_test.sh
     ├── run_color_alpha_test.sh
-    ├── run_prototype_test.sh
+    ├── run_example_test.sh
     ├── rebuild_host_test.lua
     ├── run_rebuild_test.sh
     ├── run_resize_test.sh

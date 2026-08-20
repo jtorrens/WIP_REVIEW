@@ -1,4 +1,4 @@
--- Runtime validation for the currently open InputPrep prototype comp.
+-- Runtime validation for the currently open InputPrep example comp.
 
 local function script_directory()
     local source = debug.getinfo(1, "S").source
@@ -9,20 +9,20 @@ end
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
 local comp = fusion.CurrentComp
-if comp == nil then error("InputPrep prototype comp is not open") end
+if comp == nil then error("InputPrep example comp is not open") end
 
 local function assert_true(value, message)
-    if not value then error("InputPrep prototype failure: " .. message) end
+    if not value then error("InputPrep example failure: " .. message) end
 end
 
 local input_prep = nil
 for _, tool in pairs(comp:GetToolList(false) or {}) do
     if tool:GetData("InputPrep.Role") == "InputPrep" then
-        assert_true(input_prep == nil, "multiple InputPrep prototypes found")
+        assert_true(input_prep == nil, "multiple InputPrep processors found")
         input_prep = tool
     end
 end
-assert_true(input_prep ~= nil, "InputPrep prototype not found")
+assert_true(input_prep ~= nil, "InputPrep processor not found")
 assert_true(tonumber(input_prep:GetData("InputPrep.SchemaVersion")) == 1,
     "unexpected schema")
 
@@ -32,15 +32,15 @@ local config, config_error = apply.find_config(comp)
 assert_true(config ~= nil, config_error or "InputPrepConfig not found")
 assert_true(tostring(config[apply.target_control(1)][comp.CurrentTime]) ==
     input_prep:GetAttrs().TOOLS_Name,
-    "prototype target is not registered")
+    "example target is not registered")
 
-local source = comp:FindTool("PrototypeSource_2160x2160")
-assert_true(source ~= nil, "prototype source is missing")
+local source = comp:FindTool("ExampleSource_2160x2160")
+assert_true(source ~= nil, "example source is missing")
 assert_true(tostring(source.Type[comp.CurrentTime]) == "Corner",
-    "prototype source is not using the corner test pattern")
+    "example source is not using the corner test pattern")
 assert_true(tonumber(source.Width[comp.CurrentTime]) == 2160 and
     tonumber(source.Height[comp.CurrentTime]) == 2160,
-    "prototype source is not square")
+    "example source is not square")
 
 local main_input = input_prep.MainInput1
 assert_true(main_input ~= nil, "MainInput1 is missing")
@@ -84,5 +84,5 @@ assert_true(status:find("LINEAR_GAMMA", 1, true) ~= nil,
     "working gamma is missing from status")
 assert_true(status:find("Depth: 3", 1, true) ~= nil,
     "output depth is missing from status")
-print("INPUTPREP_PROTOTYPE_TEST_OK")
+print("INPUTPREP_EXAMPLE_TEST_OK")
 comp:SetActiveTool(input_prep)

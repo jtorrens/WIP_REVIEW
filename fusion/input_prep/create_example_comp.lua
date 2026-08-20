@@ -1,4 +1,4 @@
--- Creates the persistent visual InputPrep v0.1 prototype composition.
+-- Creates the persistent visual InputPrep v0.1 example composition.
 
 local function script_directory()
     local source = debug.getinfo(1, "S").source
@@ -7,7 +7,7 @@ local function script_directory()
 end
 
 local SCRIPT_DIR = script_directory()
-local OUTPUT_PATH = SCRIPT_DIR .. "examples/InputPrep_Prototype.comp"
+local OUTPUT_PATH = SCRIPT_DIR .. "examples/InputPrep_Example.comp"
 local BUILD_PATH = SCRIPT_DIR .. "build_input_prep.lua"
 local CONFIG_BUILD_PATH = SCRIPT_DIR .. "build_input_prep_config.lua"
 local APPLY_PATH = SCRIPT_DIR .. "apply_input_prep.lua"
@@ -16,7 +16,7 @@ local SHOT_BUILD_PATH = SCRIPT_DIR .. "../shot_config/build_shot_config.lua"
 local fusion = bmd.scriptapp("Fusion", "localhost")
 if fusion == nil then error("Fusion Standalone is not reachable") end
 local example = fusion:NewComp()
-if example == nil then error("Fusion could not create the InputPrep prototype comp") end
+if example == nil then error("Fusion could not create the InputPrep example comp") end
 _G.comp = example
 
 example:SetPrefs({
@@ -56,7 +56,7 @@ local function configure_corner_source(tool, width, height)
 end
 
 example:Lock()
-local source = add_tool("Background", "PrototypeSource_2160x2160", -2, 0)
+local source = add_tool("Background", "ExampleSource_2160x2160", -2, 0)
 configure_corner_source(source, 2160, 2160)
 example:Unlock()
 
@@ -67,7 +67,7 @@ _G.INPUTPREP_OVERRIDES = {
 local builder = dofile(BUILD_PATH)
 _G.INPUTPREP_OVERRIDES = nil
 local input_prep = builder.last_group
-if input_prep == nil then error("InputPrep prototype was not created") end
+if input_prep == nil then error("InputPrep was not created") end
 input_prep.MainInput1 = source.Output
 
 dofile(SHOT_BUILD_PATH)
@@ -80,7 +80,7 @@ end
 input_prep_config[apply.target_control(1)][example.CurrentTime] =
     input_prep:GetAttrs().TOOLS_Name
 local applied, apply_error = apply.run(example)
-if not applied then error(apply_error or "InputPrep prototype apply failed") end
+if not applied then error(apply_error or "InputPrep example apply failed") end
 
 local flow = example.CurrentFrame and example.CurrentFrame.FlowView
 if flow ~= nil then
@@ -93,6 +93,6 @@ end
 example:SetActiveTool(input_prep_config)
 
 local saved = example:Save(OUTPUT_PATH)
-if saved == false then error("Fusion could not save the InputPrep prototype comp") end
-print("INPUTPREP_PROTOTYPE_READY: " .. OUTPUT_PATH)
+if saved == false then error("Fusion could not save the InputPrep example comp") end
+print("INPUTPREP_EXAMPLE_READY: " .. OUTPUT_PATH)
 return example

@@ -14,4 +14,4 @@ if ! pgrep -f "$FUSION_APP/Contents/MacOS/Fusion" >/dev/null; then
     open -a "$FUSION_APP"
 fi
 
-"$FUSCRIPT" -l lua "$SCRIPT_DIR/create_prototype_comp.lua"
+"$FUSCRIPT" -l lua "$SCRIPT_DIR/create_example_comp.lua"

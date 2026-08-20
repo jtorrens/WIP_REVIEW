@@ -1,6 +1,6 @@
 # InputPrep v0.1
 
-Prototipo funcional para Fusion Standalone 21. Crea procesadores `InputPrep`,
+Implementación v0.1 para Fusion Standalone 21. Crea procesadores `InputPrep`,
 un registro explícito `InputPrepConfig` y aplica los valores de `ShotConfig`
 de forma transaccional. No instala macros globales.
 
@@ -15,13 +15,13 @@ Fusion 21 debe estar instalado en:
 Para regenerar y abrir la comp persistente:
 
 ```sh
-./fusion/input_prep/create_prototype_comp.sh
+./fusion/input_prep/create_example_comp.sh
 ```
 
 La composición queda guardada en:
 
 ```text
-fusion/input_prep/examples/InputPrep_Prototype.comp
+fusion/input_prep/examples/InputPrep_Example.comp
 ```
 
 Selecciona `InputPrep1` y pulsa `1` o `2` para mostrar su salida en un Viewer.
@@ -34,7 +34,7 @@ La comp incluye `ShotConfig`, `InputPrepConfig` e `InputPrep1`. En la pestaña
 copia el nombre del nodo. `Apply / Update` valida primero todos los slots y
 solo después actualiza los targets.
 
-## Grafo del prototipo
+## Grafo de InputPrep
 
 ```text
 Input
@@ -85,7 +85,7 @@ la pestaña `InputPrep`.
 Con la comp del ejemplo abierta:
 
 ```sh
-./fusion/input_prep/tests/run_prototype_test.sh
+./fusion/input_prep/tests/run_example_test.sh
 ```
 
 La geometría con fuentes de distinto aspect ratio se valida en el host con:
@@ -137,5 +137,5 @@ Ejecutar `build_input_prep.lua` con un `InputPrep` seleccionado reconstruye
 entrada, todos los consumidores de salida y los nombres almacenados en
 `InputPrepConfig`. Si no hay un procesador seleccionado, crea uno nuevo.
 
-Los nueve casos obligatorios del handoff están cubiertos. El siguiente
-checkpoint retira la etiqueta de prototipo y deja los nombres finales de v0.1.
+Los nueve casos obligatorios del handoff están cubiertos con los nombres y la
+metadata finales de v0.1.

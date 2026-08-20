@@ -1,4 +1,4 @@
--- InputPrep v0.1 host prototype builder for Fusion Standalone 21.
+-- InputPrep v0.1 builder for Fusion Standalone 21.
 -- Creates one connected GroupOperator in the active composition.
 
 local function script_directory()
@@ -480,7 +480,6 @@ local function paste_group(comp, overrides, name)
     if group == nil then error("pasted InputPrep was not found") end
     group:SetData("InputPrep.Role", M.ROLE)
     group:SetData("InputPrep.SchemaVersion", M.SCHEMA_VERSION)
-    group:SetData("InputPrep.Prototype", true)
     return group, values
 end
 
@@ -504,7 +503,7 @@ function M.run(comp_override, overrides)
     if active_comp == nil then error("InputPrep builder requires an active composition") end
     local name = next_name(active_comp)
 
-    active_comp:StartUndo("Build InputPrep v0.1 prototype")
+    active_comp:StartUndo("Build InputPrep v0.1")
     active_comp:Lock()
     local group = nil
     local values = nil
@@ -518,7 +517,7 @@ function M.run(comp_override, overrides)
         if group ~= nil then pcall(function() group:Delete() end) end
         error("InputPrep build failed: " .. tostring(failure))
     end
-    log(string.format("Created %s prototype: %dx%d -> %dx%d",
+    log(string.format("Created %s: %dx%d -> %dx%d",
         name, values.workingWidth, values.workingHeight,
         values.cropWidth, values.cropHeight))
     return group
