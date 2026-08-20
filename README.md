@@ -34,9 +34,11 @@ La evidencia está en [HOST_PROBE_RESULTS.md](HOST_PROBE_RESULTS.md).
 
 ## Inspector
 
-El contrato se organiza en cinco páginas OFX: **Canvas**, **Typography**,
-**Zones**, **Timing** y **Color**. Los mismos bloques existen como jerarquía de
-grupos para hosts que presentan un inspector plegable en vez de páginas.
+El contrato se organiza en seis páginas OFX: **Processing**, **Canvas**,
+**Typography**, **Zones**, **Timing** y **Color**. Processing muestra las
+capacidades GPU del host y ofrece **CPU Only**. Los mismos bloques existen como
+jerarquía de grupos para hosts que presentan un inspector plegable en vez de
+páginas.
 
 Los controles dependientes se deshabilitan cuando no tienen efecto: raster
 Custom, aspect Custom, blanking, outline, shadow, overrides por zona, FPS
@@ -44,6 +46,9 @@ Override y Graphics White manual. El estado de capacidad de raster se muestra
 como información no editable. Dentro de cada zona las etiquetas se acortan a
 `Enabled`, `Text`, offsets y overrides porque el grupo ya identifica la zona.
 La matriz completa está en [INSPECTOR_UX.md](INSPECTOR_UX.md).
+
+La negociación Metal/CUDA/OpenCL y la base de empaquetado Windows se documentan
+en [GPU_BACKEND_RESULTS.md](GPU_BACKEND_RESULTS.md).
 
 La ruta Host Raster 1:1 compone el blanking mediante una pasada fusionada y
 multihilo directamente sobre Output. Las intersecciones tipográficas comparten

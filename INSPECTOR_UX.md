@@ -1,29 +1,31 @@
 # Inspector UX — contrato vigente
 
 El inspector se organiza por tarea y no por fases de desarrollo. OpenFX recibe
-cinco páginas y una jerarquía equivalente para hosts que ignoren el layout
+seis páginas y una jerarquía equivalente para hosts que ignoren el layout
 paginado.
 
 ## Páginas
 
 | Orden | Página | Controles |
 |---:|---|---|
-| 1 | Canvas | Capacidad de host, Canvas Mode, raster preset/Custom, placement, filtro, canvas y blanking |
-| 2 | Typography | Fuente, estilo, tamaño, color, opacity, padding, gap, overflow, outline y shadow |
-| 3 | Zones | TL, TC, TR, BL, BC y BR con texto, offsets y overrides |
-| 4 | Timing | Frame Relative Base, Frame Start, FPS y timecode |
-| 5 | Color | Modo de interpretación, espacio fallback/manual, Graphics White y peak HLG |
+| 1 | Processing | Capacidades GPU publicadas por el host y CPU Only |
+| 2 | Canvas | Capacidad de host, Canvas Mode, raster preset/Custom, placement, filtro, canvas y blanking |
+| 3 | Typography | Fuente, estilo, tamaño, color, opacity, padding, gap, overflow, outline y shadow |
+| 4 | Zones | TL, TC, TR, BL, BC y BR con texto, offsets y overrides |
+| 5 | Timing | Frame Relative Base, Frame Start, FPS y timecode |
+| 6 | Color | Modo de interpretación, espacio fallback/manual, Graphics White y peak HLG |
 
 ## Jerarquía
 
 Los grupos raíz aparecen en este orden:
 
-1. Canvas — abierto;
-2. Editorial Blanking — abierto;
-3. Typography — abierto, con Outline y Drop Shadow cerrados;
-4. Zones — cerrado, con sus seis zonas cerradas;
-5. Timing — cerrado;
-6. Managed Color — cerrado.
+1. Processing — cerrado;
+2. Canvas — abierto;
+3. Editorial Blanking — abierto;
+4. Typography — abierto, con Outline y Drop Shadow cerrados;
+5. Zones — cerrado, con sus seis zonas cerradas;
+6. Timing — cerrado;
+7. Managed Color — cerrado.
 
 Dentro de una zona se evita repetir su abreviatura: las etiquetas son
 `Enabled`, `Text`, `Offset X/Y` y sus overrides.
