@@ -13,7 +13,10 @@ fusion/
 ```
 
 `InputPrep` depende del contrato público de `ShotConfig`; no depende del OFX de
-WIP Review ni de sus nodos.
+WIP Review ni de sus nodos. Esta separación es permanente para código, ramas y
+builds. Un módulo futuro podrá instanciar el OFX ya instalado dentro de una
+comp de Fusion para generar WIPs, pero nunca importará, enlazará ni compilará
+su código fuente.
 
 ## Objetivo
 
@@ -340,7 +343,7 @@ No implementar todavía:
 - Review Resolution;
 - OutputPackager;
 - creación o enable/disable de Savers;
-- integración con WIP Review OFX;
+- uso del WIP Review OFX como nodo instalado en runtime;
 - selección de View;
 - render queue;
 - publicación o instalación global de macros;
