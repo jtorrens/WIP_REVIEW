@@ -15,17 +15,16 @@ jobs:
       matrix:
         include:
           - os: macos-14
+            runner: '["macos-14"]'
             build_dir: build-ci-macos
             artifact_name: WIPReviewProbe-macos
-          - os: windows-2022
+          - os: windows-cuda
+            runner: '["self-hosted", "Windows", "X64", "cuda"]'
             build_dir: build-ci-windows
             artifact_name: WIPReviewProbe-windows-x64
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ fromJSON(matrix.runner) }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install CUDA Toolkit
-        if: matrix.os == 'windows-2022'
-        run: choco install cuda --version=13.2.0 --yes --no-progress
       - name: Configure
         run: >-
           cmake -S . -B ${{ matrix.build_dir }}
