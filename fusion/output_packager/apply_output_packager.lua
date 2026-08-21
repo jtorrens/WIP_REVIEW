@@ -202,8 +202,9 @@ local function validate_target(comp, descriptor, shot)
     local review_width = math.floor(tonumber(shot.reviewWidth) + 0.5)
     local review_height = math.floor(tonumber(shot.reviewHeight) + 0.5)
     local crop_ratio = tonumber(shot.cropRatio)
-    local status = string.format("Review: %d x %d | Crop: %.4g | WIP: %s",
-        review_width, review_height, crop_ratio, descriptor.wip and "on" or "off")
+    local status = string.format("Review: %d x %d | Crop: %g:%g | WIP: %s",
+        review_width, review_height, shot.cropX, shot.cropY,
+        descriptor.wip and "on" or "off")
     return {
         name = descriptor.packager,
         tool = packager,

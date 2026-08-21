@@ -21,7 +21,8 @@ local CONTROL = {
     version = "SC_Version",
     root = "SC_RootPathMap",
     working_resolution = "SC_WorkingResolution",
-    crop_ratio = "SC_CropRatio",
+    crop_numerator = "SC_CropNumerator",
+    crop_denominator = "SC_CropDenominator",
     review_resolution = "SC_ReviewResolution",
     source_color_space_choice = "SC_SourceColorSpaceChoice",
     source_gamma_choice = "SC_SourceGammaChoice",
@@ -36,7 +37,8 @@ M.CONTROL = CONTROL
 function M.settings_control_names()
     local result = {
         CONTROL.show, CONTROL.episode, CONTROL.shot, CONTROL.version,
-        CONTROL.root, CONTROL.working_resolution, CONTROL.crop_ratio,
+        CONTROL.root, CONTROL.working_resolution, CONTROL.crop_numerator,
+        CONTROL.crop_denominator,
         CONTROL.review_resolution, CONTROL.source_color_space_choice,
         CONTROL.source_gamma_choice, CONTROL.working_color_space_choice,
         CONTROL.working_gamma_choice, CONTROL.embedded_alpha,
@@ -265,7 +267,8 @@ function M.read_config(config, time)
         { "shot", CONTROL.shot },
         { "version", CONTROL.version },
         { "root", CONTROL.root },
-        { "cropRatio", CONTROL.crop_ratio },
+        { "cropNumerator", CONTROL.crop_numerator },
+        { "cropDenominator", CONTROL.crop_denominator },
         { "embeddedAlpha", CONTROL.embedded_alpha },
     }
     for _, field in ipairs(scalar_fields) do
@@ -289,8 +292,15 @@ function M.read_config(config, time)
         point_components(review, "Review Resolution")
     if err ~= nil then return nil, err end
 
-    values.cropX = tonumber(values.cropRatio)
-    values.cropY = 1
+    values.cropX = tonumber(values.cropNumerator)
+    values.cropY = tonumber(values.cropDenominator)
+    if values.cropX == nil or values.cropX <= 0 then
+        return nil, "Crop Numerator must be positive"
+    end
+    if values.cropY == nil or values.cropY <= 0 then
+        return nil, "Crop Denominator must be positive"
+    end
+    values.cropRatio = values.cropX / values.cropY
     values.embeddedAlpha = tonumber(values.embeddedAlpha) == 1 and "true" or "false"
 
     values.sourceColorSpace, err = read_enum(config,

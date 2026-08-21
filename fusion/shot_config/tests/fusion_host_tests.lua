@@ -160,16 +160,24 @@ local ok, failure = pcall(function()
         "Loader targets rollout default")
     assert_equal(tonumber(get(config, "SC_SaverGroup")), 0,
         "Saver targets rollout default")
+    assert_true(config.SC_CropRatio == nil,
+        "legacy Crop Ratio control must not be visible")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_numerator)), 2,
+        "default crop numerator")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_denominator)), 1,
+        "default crop denominator")
 
     local _, optional_template, optional_resolved =
         apply.target_controls("Loader", 3)
+    set(config, apply.CONTROL.crop_numerator, 16)
+    set(config, apply.CONTROL.crop_denominator, 9)
     set(config, optional_template,
         "{workingWidth}x{workingHeight}|{cropX}|{cropY}|" ..
         "{reviewWidth}x{reviewHeight}|{sourceColorSpace}|{sourceGamma}|" ..
         "{workingColorSpace}|{workingGamma}|{embeddedAlpha}")
     assert_true(refresh.run(config), "refreshes after a template change")
     assert_equal(get(config, optional_resolved),
-        "3840x2160|2|1|1920x1080|REC709_COLORSPACE|TWOPOINTFOUR_GAMMA|" ..
+        "3840x2160|16|9|1920x1080|REC709_COLORSPACE|TWOPOINTFOUR_GAMMA|" ..
         "REC709_COLORSPACE|LINEAR_GAMMA|false",
         "live preview resolves the full token contract")
 

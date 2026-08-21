@@ -113,7 +113,8 @@ local function set(tool, id, value)
 end
 set(shot_config, shot_apply.CONTROL.root, "_OUTPUTPACKAGER_TEST:")
 set(shot_config, shot_apply.CONTROL.review_resolution, { 1920, 1080 })
-set(shot_config, shot_apply.CONTROL.crop_ratio, 2.0)
+set(shot_config, shot_apply.CONTROL.crop_numerator, 2)
+set(shot_config, shot_apply.CONTROL.crop_denominator, 1)
 local saver_node, saver_template = shot_apply.target_controls("Saver", 1)
 set(shot_config, saver_node, "Saver_ClientReview")
 set(shot_config, saver_template,
