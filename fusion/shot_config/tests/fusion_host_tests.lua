@@ -145,6 +145,12 @@ local ok, failure = pcall(function()
     assert_equal(get(config, default_saver_resolved),
         "_FOQN:/FOQN_E01/RENDERS/FOQN_E01_0010_v001.mov",
         "live default Saver preview")
+    local saver_seed_names = { "Comp", "WIP", "GFX", "Final" }
+    for index, expected_name in ipairs(saver_seed_names) do
+        local node_control = apply.target_controls("Saver", index)
+        assert_equal(get(config, node_control), expected_name,
+            "default Saver seed " .. expected_name)
+    end
 
     assert_true(config.SC_ColorSpaceIds == nil,
         "internal color-space control must not be visible")

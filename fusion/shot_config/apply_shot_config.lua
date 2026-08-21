@@ -40,7 +40,13 @@ function M.target_controls(kind, index)
         error("target slot index is outside configured range")
     end
     local prefix = "SC_" .. kind .. "Target" .. tostring(index)
-    return prefix .. "Node", prefix .. "Template", prefix .. "Resolved"
+    if kind == "Loader" then
+        return prefix .. "Node", prefix .. "Template", prefix .. "Resolved",
+            prefix .. "SourceColorSpace", prefix .. "SourceGamma"
+    end
+    return prefix .. "Node", prefix .. "Template", prefix .. "Resolved",
+        prefix .. "OutputColorSpace", prefix .. "OutputGamma",
+        prefix .. "OutputFormat", prefix .. "Compression"
 end
 
 local function trim(value)
@@ -192,7 +198,8 @@ end
 local function read_target_slots(config, kind, time)
     local targets = {}
     for index = 1, M.TARGET_SLOT_COUNT do
-        local node_control, template_control = M.target_controls(kind, index)
+        local node_control, template_control, _, color_control, gamma_control,
+            format_control, compression_control = M.target_controls(kind, index)
         local node_name, err = read_input(config, node_control, time)
         if err ~= nil then return nil, err end
         local template
@@ -212,6 +219,19 @@ local function read_target_slots(config, kind, time)
                 template = template,
                 slot = index,
             }
+            local target = targets[#targets]
+            target.colorSpace, err = read_enum(config, color_control,
+                M.DATA.color_space_ids, kind .. " target color space", time)
+            if err ~= nil then return nil, err end
+            target.gamma, err = read_enum(config, gamma_control,
+                M.DATA.gamma_ids, kind .. " target gamma", time)
+            if err ~= nil then return nil, err end
+            if kind == "Saver" then
+                target.outputFormat, err = read_input(config, format_control, time)
+                if err ~= nil then return nil, err end
+                target.compression, err = read_input(config, compression_control, time)
+                if err ~= nil then return nil, err end
+            end
         end
     end
     return targets

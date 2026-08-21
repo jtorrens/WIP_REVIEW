@@ -80,6 +80,12 @@ local function set_target(kind, index, node_name, template)
     write(template_control, template)
 end
 
+local function clear_targets(kind, first_index)
+    for index = first_index, apply.TARGET_SLOT_COUNT do
+        set_target(kind, index, "", "")
+    end
+end
+
 write(apply.CONTROL.root, "_SHOTCONFIG_TEST:")
 set_target("Loader", 1, "Loader_MainPlate",
     "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov")
@@ -89,6 +95,8 @@ set_target("Saver", 1, "Saver_MasterOut",
     "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov")
 set_target("Saver", 2, "Saver_ClientReview",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_REF_{version}.mov")
+clear_targets("Loader", 3)
+clear_targets("Saver", 3)
 
 local refresh_previews = dofile(SCRIPT_DIR .. "refresh_resolved_paths.lua")
 local previews_ok, preview_error = refresh_previews.run(config)

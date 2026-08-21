@@ -127,6 +127,11 @@ function M.run(comp_override)
             mark(packager, "OutputPackager")
             place(comp, packager, positions, had_managed, 0, 8 + index * 2)
             packager.MainInput1 = first_output(input_prep)
+            packager.OP_OutputColorSpace[time] = target.colorSpace
+            packager.OP_OutputGamma[time] = target.gamma
+            packager.OP_OutputFormat[time] = tonumber(target.outputFormat) == 1
+                and "Image Sequence" or "Movie"
+            packager.OP_Compression[time] = target.compression
             local saver = add_tool(comp, "Saver", target.nodeName, 3, index * 2, "Saver")
             place(comp, saver, positions, had_managed, 5, 8 + index * 2)
             saver.Input:ConnectTo(first_output(packager))

@@ -122,6 +122,11 @@ saver_node, saver_template = shot_apply.target_controls("Saver", 2)
 set(shot_config, saver_node, "Saver_CleanReview")
 set(shot_config, saver_template,
     "{root}/{show}_{episode}/REVIEW/{show}_{episode}_{shot}_CLEAN_{version}.mov")
+for index = 3, shot_apply.TARGET_SLOT_COUNT do
+    local node_control, template_control = shot_apply.target_controls("Saver", index)
+    set(shot_config, node_control, "")
+    set(shot_config, template_control, "")
+end
 local refresh_previews = dofile(SCRIPT_DIR .. "../shot_config/refresh_resolved_paths.lua")
 local previews_ok, preview_error = refresh_previews.run(shot_config)
 if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end

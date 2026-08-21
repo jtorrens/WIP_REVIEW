@@ -42,6 +42,13 @@ local TARGET_TEMPLATE_DEFAULTS = {
     Saver = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 }
 
+local SAVER_SEED = {
+    { name = "Comp", template = "{root}/{show}_{episode}/COMP/{show}_{episode}_{shot}_COMP_{version}.mov" },
+    { name = "WIP", template = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov" },
+    { name = "GFX", template = "{root}/{show}_{episode}/GFX/{show}_{episode}_{shot}_GFX_{version}.mov" },
+    { name = "Final", template = "{root}/{show}_{episode}/FINAL/{show}_{episode}_{shot}_FINAL_{version}.mov" },
+}
+
 local PRESERVED_CONTROLS = {
     CONTROL.show,
     CONTROL.episode,
@@ -55,13 +62,29 @@ local PRESERVED_CONTROLS = {
 }
 for _, kind in ipairs({ "Loader", "Saver" }) do
     for index = 1, apply.TARGET_SLOT_COUNT do
-        local node_control, template_control, resolved_control =
+        local node_control, template_control, resolved_control, color_control,
+            gamma_control, format_control, compression_control =
             apply.target_controls(kind, index)
         PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = node_control
         PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = template_control
+        PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = color_control
+        PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = gamma_control
         DEFAULTS[node_control] = ""
         DEFAULTS[template_control] = TARGET_TEMPLATE_DEFAULTS[kind]
         DEFAULTS[resolved_control] = ""
+        DEFAULTS[color_control] = kind == "Loader" and 0 or 0
+        DEFAULTS[gamma_control] = kind == "Loader" and 0 or 0
+        if kind == "Saver" then
+            PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = format_control
+            PRESERVED_CONTROLS[#PRESERVED_CONTROLS + 1] = compression_control
+            DEFAULTS[format_control] = 0
+            DEFAULTS[compression_control] = "ProRes 422 HQ"
+            local seed = SAVER_SEED[index]
+            if seed ~= nil then
+                DEFAULTS[node_control] = seed.name
+                DEFAULTS[template_control] = seed.template
+            end
+        end
     end
 end
 
@@ -241,11 +264,15 @@ local function serialized_controls(catalog, selections)
         "F2 copies the node name. Empty slots are ignored.",
         "Targets"))
     for _, kind in ipairs({ "Loader", "Saver" }) do
+        local child_count = kind == "Loader" and 5 or 7
         add(collapsible_control("SC_" .. kind .. "Group", kind .. "s",
-            apply.TARGET_SLOT_COUNT * 3, "Targets"))
+            apply.TARGET_SLOT_COUNT * (child_count + 1), "Targets"))
         for index = 1, apply.TARGET_SLOT_COUNT do
-            local node_control, template_control, resolved_control =
+            local node_control, template_control, resolved_control, color_control,
+                gamma_control, format_control, compression_control =
                 apply.target_controls(kind, index)
+            add(collapsible_control("SC_" .. kind .. "Target" .. index .. "Group",
+                string.format("%d · %s", index, kind), child_count, "Targets"))
             add(text_control(node_control,
                 string.format("%d · Node Name", index),
                 DEFAULTS[node_control], 1, false, "Targets"))
@@ -255,6 +282,22 @@ local function serialized_controls(catalog, selections)
             add(text_control(resolved_control,
                 string.format("%d · Resolved Path", index),
                 DEFAULTS[resolved_control], 1, true, "Targets"))
+            if kind == "Loader" then
+                add(combo_control(color_control, "Source Color Space",
+                    catalog.colorSpaces, selections.sourceColorSpace, "Targets"))
+                add(combo_control(gamma_control, "Source Gamma",
+                    catalog.gammas, selections.sourceGamma, "Targets"))
+            else
+                add(combo_control(color_control, "Output Color Space",
+                    catalog.colorSpaces, selections.workingColorSpace, "Targets"))
+                add(combo_control(gamma_control, "Output Gamma",
+                    catalog.gammas, selections.workingGamma, "Targets"))
+                add(combo_control(format_control, "Output Format", {
+                    { label = "Movie" }, { label = "Image Sequence" },
+                }, DEFAULTS[format_control], "Targets"))
+                add(text_control(compression_control, "Compression",
+                    DEFAULTS[compression_control], 1, false, "Targets"))
+            end
         end
     end
     return table.concat(result, "\n")

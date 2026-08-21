@@ -59,6 +59,30 @@ local function definition(name, values)
                         Source = "Input",
                         Name = "Input",
                     },
+                    OP_OutputColorSpace = InstanceInput {
+                        SourceOp = "Custom_OutputMetadata",
+                        Source = "OutputColorSpace",
+                        Name = "Output Color Space",
+                        Page = "Output Metadata",
+                    },
+                    OP_OutputGamma = InstanceInput {
+                        SourceOp = "Custom_OutputMetadata",
+                        Source = "OutputGamma",
+                        Name = "Output Gamma",
+                        Page = "Output Metadata",
+                    },
+                    OP_OutputFormat = InstanceInput {
+                        SourceOp = "Custom_OutputMetadata",
+                        Source = "OutputFormat",
+                        Name = "Output Format",
+                        Page = "Output Metadata",
+                    },
+                    OP_Compression = InstanceInput {
+                        SourceOp = "Custom_OutputMetadata",
+                        Source = "Compression",
+                        Name = "Compression",
+                        Page = "Output Metadata",
+                    },
                     OP_EnableReviewRaster = InstanceInput {
                         SourceOp = "Switch_ReviewRaster",
                         Source = "Source",
@@ -408,6 +432,47 @@ local function definition(name, values)
                         },
                         ViewInfo = OperatorInfo { Pos = { -165, 0 } },
                     },
+                    Custom_OutputMetadata = Custom {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            OutputColorSpace = Input { Value = "REC709_COLORSPACE", },
+                            OutputGamma = Input { Value = "LINEAR_GAMMA", },
+                            OutputFormat = Input { Value = "Movie", },
+                            Compression = Input { Value = "ProRes 422 HQ", },
+                        },
+                        UserControls = ordered() {
+                            OutputColorSpace = {
+                                LINKS_Name = "Output Color Space",
+                                LINKID_DataType = "Text",
+                                INPID_InputControl = "TextEditControl",
+                                TEC_ReadOnly = true,
+                                ICS_ControlPage = "Output Metadata",
+                            },
+                            OutputGamma = {
+                                LINKS_Name = "Output Gamma",
+                                LINKID_DataType = "Text",
+                                INPID_InputControl = "TextEditControl",
+                                TEC_ReadOnly = true,
+                                ICS_ControlPage = "Output Metadata",
+                            },
+                            OutputFormat = {
+                                LINKS_Name = "Output Format",
+                                LINKID_DataType = "Text",
+                                INPID_InputControl = "TextEditControl",
+                                TEC_ReadOnly = true,
+                                ICS_ControlPage = "Output Metadata",
+                            },
+                            Compression = {
+                                LINKS_Name = "Compression",
+                                LINKID_DataType = "Text",
+                                INPID_InputControl = "TextEditControl",
+                                TEC_ReadOnly = true,
+                                ICS_ControlPage = "Output Metadata",
+                            },
+                        },
+                        ViewInfo = OperatorInfo { Pos = { -165, -72 } },
+                    },
                     WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
                         CtrlWShown = false,
                         NameSet = true,
@@ -446,16 +511,31 @@ local function definition(name, values)
                         },
                         ViewInfo = OperatorInfo { Pos = { -55, 288 } },
                     },
+                    Custom_LegalClamp = Custom {
+                        CtrlWShown = false,
+                        NameSet = true,
+                        Inputs = {
+                            RedExpression = Input { Value = "max(r1, 0)", },
+                            GreenExpression = Input { Value = "max(g1, 0)", },
+                            BlueExpression = Input { Value = "max(b1, 0)", },
+                            AlphaExpression = Input { Value = "min(max(a1, 0), 1)", },
+                            Image1 = Input {
+                                SourceOp = "Switch_WIP",
+                                Source = "Output",
+                            },
+                        },
+                        ViewInfo = OperatorInfo { Pos = { -55, 360 } },
+                    },
                     PipeRouter_Output = PipeRouter {
                         CtrlWShown = false,
                         NameSet = true,
                         Inputs = {
                             Input = Input {
-                                SourceOp = "Switch_WIP",
+                                SourceOp = "Custom_LegalClamp",
                                 Source = "Output",
                             },
                         },
-                        ViewInfo = PipeRouterInfo { Pos = { -55, 360 } },
+                        ViewInfo = PipeRouterInfo { Pos = { -55, 432 } },
                     },
                     PipeRouter_WIPSource = PipeRouter {
                         CtrlWShown = false,

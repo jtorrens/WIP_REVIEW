@@ -132,12 +132,20 @@ local function set_shot_target(kind, index, node_name, template)
     set(shot_config, template_control, template)
 end
 
+local function clear_shot_targets(kind, first_index)
+    for index = first_index, shot_apply.TARGET_SLOT_COUNT do
+        set_shot_target(kind, index, "", "")
+    end
+end
+
 set_shot_target("Loader", 1, "L_FOQN_E06_0010_Plate",
     "{root}/{show}_{episode}/BRUTOS/H264/{show}_{episode}_{shot}.mov")
 set_shot_target("Saver", 1, "S_FOQN_E06_0010_WIP",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov")
 set_shot_target("Saver", 2, "S_FOQN_E06_0010_Clean",
     "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov")
+clear_shot_targets("Loader", 2)
+clear_shot_targets("Saver", 3)
 local refresh_previews = dofile(SCRIPT_DIR .. "shot_config/refresh_resolved_paths.lua")
 local previews_ok, preview_error = refresh_previews.run(shot_config)
 if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end

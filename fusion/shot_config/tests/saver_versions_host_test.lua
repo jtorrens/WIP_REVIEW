@@ -21,6 +21,11 @@ config[apply.CONTROL.version][t] = "v002"
 local node, template = apply.target_controls("Saver", 1)
 config[node][t] = "Saver_Versioned"
 config[template][t] = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov"
+for index = 2, apply.TARGET_SLOT_COUNT do
+    local unused_node, unused_template = apply.target_controls("Saver", index)
+    config[unused_node][t] = ""
+    config[unused_template][t] = ""
+end
 assert(apply.run_savers(comp))
 assert(tostring(saver.Clip[t]):find("FOQN_E06_0010_WIP_v002.mov", 1, true) ~= nil)
 print("SHOTCONFIG_SAVER_VERSIONS_HOST_TEST_OK")
