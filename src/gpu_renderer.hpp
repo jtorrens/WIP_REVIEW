@@ -42,4 +42,7 @@ struct RenderRequest {
 [[nodiscard]] RenderStatus renderOpenCL(const RenderRequest &request,
                                         std::string &error) noexcept;
 
+[[nodiscard]] RenderStatus renderCUDA(const RenderRequest &request,
+                                      std::string &error) noexcept;
+
 } // namespace wipreview::gpu
