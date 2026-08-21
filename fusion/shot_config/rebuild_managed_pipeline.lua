@@ -25,6 +25,17 @@ local function first_output(tool)
     for _, output in pairs(tool:GetOutputList() or {}) do return output end
     error((tool:GetAttrs().TOOLS_Name or "tool") .. " has no output")
 end
+local function suffix_from(name, prefix)
+    local value = tostring(name or "")
+    if value:sub(1, #prefix) == prefix then return value:sub(#prefix + 1) end
+    return value
+end
+local function input_prep_name(loader_name)
+    return "L_InputPrep_" .. suffix_from(loader_name, "L_")
+end
+local function output_packager_name(saver_name)
+    return "S_OutputPackager_" .. suffix_from(saver_name, "S_")
+end
 local function add_tool(comp, reg_id, name, x, y, role)
     local tool = comp:AddTool(reg_id, x, y)
     if tool == nil then error("could not create " .. reg_id) end
@@ -103,7 +114,7 @@ function M.run(comp_override)
         end
         local input_builder = dofile(input_builder_path)
         local input_prep = input_builder.last_group
-        input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_1" })
+        input_prep:SetAttrs({ TOOLS_Name = input_prep_name(values.loaderTargets[1].nodeName) })
         mark(input_prep, "InputPrep")
         place(comp, input_prep, positions, had_managed, -7, 8)
         input_prep.MainInput1 = loaders[1].Output
@@ -112,7 +123,7 @@ function M.run(comp_override)
         local first_packager = output_builder.last_group
         for index, target in ipairs(values.saverTargets) do
             local packager = index == 1 and first_packager or output_builder.run(comp)
-            packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_" .. tostring(index) })
+            packager:SetAttrs({ TOOLS_Name = output_packager_name(target.nodeName) })
             mark(packager, "OutputPackager")
             place(comp, packager, positions, had_managed, 0, 8 + index * 2)
             packager.MainInput1 = first_output(input_prep)
