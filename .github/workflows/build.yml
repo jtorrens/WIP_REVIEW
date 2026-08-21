@@ -16,7 +16,7 @@ jobs:
         include:
           - os: macos-14
             build_dir: build-ci-macos
-            artifact_name: WIPReviewProbe-macos
+            artifact_name: WIPReviewProbe-macos-universal
           - os: windows-2022
             build_dir: build-ci-windows
             artifact_name: WIPReviewProbe-windows-x64
@@ -31,6 +31,9 @@ jobs:
           -DWIPREVIEW_BUILD_BENCHMARKS=OFF
       - name: Build
         run: cmake --build ${{ matrix.build_dir }} --config Release --parallel
+      - name: Verify macOS universal binary
+        if: matrix.os == 'macos-14'
+        run: lipo -verify_arch arm64 x86_64 ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle/Contents/MacOS/WIPReviewProbe.ofx
       - name: Test
         run: ctest --test-dir ${{ matrix.build_dir }} -C Release --output-on-failure
       - name: Upload OFX bundle
