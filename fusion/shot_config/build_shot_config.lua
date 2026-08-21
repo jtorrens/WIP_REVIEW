@@ -270,9 +270,9 @@ local function serialized_controls(catalog, selections)
     add(text_control(CONTROL.settings_name, "Definition Name",
         DEFAULTS[CONTROL.settings_name], 1, false, "Targets"))
     add(button_control("SC_SaveShowSettings", "Save Settings",
-        string.format("local m = dofile(%q); m.save(tool)", SHOW_SETTINGS_PATH), "Targets"))
+        string.format("local m = dofile(%q); m.save(tool, comp)", SHOW_SETTINGS_PATH), "Targets"))
     add(button_control("SC_LoadShowSettings", "Load Settings",
-        string.format("local m = dofile(%q); m.load(tool)", SHOW_SETTINGS_PATH), "Targets"))
+        string.format("local m = dofile(%q); m.load(tool, comp)", SHOW_SETTINGS_PATH), "Targets"))
     add(text_control(CONTROL.status, "Status", DEFAULTS[CONTROL.status],
         1, true, "Targets"))
     add(label_control("SC_TargetHelp",

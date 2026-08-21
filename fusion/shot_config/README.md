@@ -88,6 +88,11 @@ Valores iniciales:
 Format y Color solo se almacenan en v0.1. Apply no los escribe en nodos de
 imagen.
 
+En `Targets / Show Settings`, `Save Settings` guarda la definición con el
+nombre indicado en `Definition Name`. `Load Settings` abre un selector de
+archivos para elegir cualquier definición JSON y actualiza ese nombre al
+cargarla.
+
 ## Catálogo de color
 
 Antes de crear o reconstruir ShotConfig, el builder abre una composición

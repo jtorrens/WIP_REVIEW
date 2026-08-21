@@ -5319,14 +5319,14 @@ Composition {
 				},
 				SC_SaveShowSettings = {
 					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/show_settings.lua\"); m.save(tool)",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/show_settings.lua\"); m.save(tool, comp)",
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
 					LINKS_Name = "Save Settings",
 				},
 				SC_LoadShowSettings = {
 					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/show_settings.lua\"); m.load(tool)",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/show_settings.lua\"); m.load(tool, comp)",
 					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
 					LINKS_Name = "Load Settings",

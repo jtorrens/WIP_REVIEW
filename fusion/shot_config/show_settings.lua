@@ -26,8 +26,11 @@ local function write(tool, id, value, time)
     return true
 end
 
-local function active_comp(tool)
-    return tool.Comp()
+local function active_comp(tool, supplied_comp)
+    if supplied_comp ~= nil then return supplied_comp end
+    local ok, owner = pcall(function() return tool.Comp end)
+    if ok then return owner end
+    return nil
 end
 
 local function directory()
@@ -35,6 +38,7 @@ local function directory()
     if fusion == nil then error("Fusion application is unavailable") end
     local path = fusion:MapPath("Profile:/ShowManager/Shows")
     if type(path) ~= "string" or path == "" then error("Fusion Profile path is unavailable") end
+    path = path:gsub("/+$", "")
     local ok = os.execute("mkdir -p " .. string.format("%q", path))
     if ok ~= true and ok ~= 0 then error("unable to create Show Settings directory") end
     return path
@@ -54,8 +58,9 @@ local function status(tool, message, time)
     pcall(function() write(tool, apply.CONTROL.status, message, time) end)
 end
 
-function M.save(tool)
-    local comp = active_comp(tool)
+function M.save(tool, supplied_comp)
+    local comp = active_comp(tool, supplied_comp)
+    if comp == nil then error("active composition is unavailable") end
     local time = comp.CurrentTime or 0
     local path, name = definition_path(tool, time)
     local controls = {}
@@ -76,10 +81,28 @@ function M.save(tool)
     return true, path
 end
 
-function M.load(tool)
-    local comp = active_comp(tool)
+local function choose_settings_path(comp)
+    local response = comp:AskUser("Load Show Settings", {
+        {
+            "SettingsFile",
+            "FileBrowse",
+            Default = directory() .. "/",
+            FBC_Filter = "Show Settings (*.json)|*.json",
+        },
+    })
+    if response == nil then return nil end
+    local path = response.SettingsFile
+    if type(path) ~= "string" or path == "" then return nil end
+    return path
+end
+
+function M.load(tool, supplied_comp, selected_path)
+    local comp = active_comp(tool, supplied_comp)
+    if comp == nil then error("active composition is unavailable") end
     local time = comp.CurrentTime or 0
-    local path, name = definition_path(tool, time)
+    local path = selected_path or choose_settings_path(comp)
+    if path == nil then return false, "load cancelled" end
+    local name = path:match("([^/\\]+)%.json$") or "settings"
     local file = io.open(path, "rb")
     if file == nil then error("show settings '" .. name .. "' do not exist") end
     local content = file:read("*a")
@@ -98,6 +121,8 @@ function M.load(tool)
     end
     local refreshed, refresh_error = refresh.run(tool, time)
     if not refreshed then error(refresh_error) end
+    local name_written, name_error = write(tool, apply.CONTROL.settings_name, name, time)
+    if not name_written then error(name_error) end
     status(tool, "OK: loaded show settings '" .. name .. "'", time)
     return true, path
 end

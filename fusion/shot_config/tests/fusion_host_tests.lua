@@ -12,6 +12,7 @@ local SHOT_CONFIG_DIR = TEST_DIR .. "../"
 local BUILD_PATH = SHOT_CONFIG_DIR .. "build_shot_config.lua"
 local APPLY_PATH = SHOT_CONFIG_DIR .. "apply_shot_config.lua"
 local REFRESH_PATH = SHOT_CONFIG_DIR .. "refresh_resolved_paths.lua"
+local SHOW_SETTINGS_PATH = SHOT_CONFIG_DIR .. "show_settings.lua"
 
 local fusion = nil
 for _ = 1, 60 do
@@ -108,6 +109,7 @@ local ok, failure = pcall(function()
     dofile(BUILD_PATH)
     local apply = dofile(APPLY_PATH)
     local refresh = dofile(REFRESH_PATH)
+    local show_settings = dofile(SHOW_SETTINGS_PATH)
     local config, find_error = apply.find_config(comp)
     assert_true(config ~= nil, find_error or "builder did not create ShotConfig")
     assert_equal(config:GetData("ShotConfig.Role"), "ShotConfig", "stable role")
@@ -118,6 +120,29 @@ local ok, failure = pcall(function()
     assert_true(initial_values ~= nil, color_error or "color config unreadable")
     assert_equal(initial_values.sourceColorSpace, "REC709_COLORSPACE",
         "default source color space ID")
+
+    set(config, apply.CONTROL.settings_name, "codex_shotconfig_acceptance")
+    set(config, apply.CONTROL.show, "SAVED_SHOW")
+    set(config, apply.CONTROL.crop_numerator, 2.39)
+    set(config, apply.CONTROL.crop_denominator, 1)
+    local saved, settings_path = show_settings.save(config, comp)
+    assert_true(saved, "saves named show settings")
+    set(config, apply.CONTROL.show, "CHANGED_SHOW")
+    set(config, apply.CONTROL.crop_numerator, 16)
+    set(config, apply.CONTROL.crop_denominator, 9)
+    local loaded, load_path = show_settings.load(config, comp, settings_path)
+    assert_true(loaded, "loads named show settings")
+    assert_equal(load_path, settings_path, "loads the saved definition")
+    assert_equal(get(config, apply.CONTROL.show), "SAVED_SHOW", "restored show setting")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_numerator)), 2.39,
+        "restored crop numerator")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_denominator)), 1,
+        "restored crop denominator")
+    os.remove(settings_path)
+    set(config, apply.CONTROL.show, "SHOW")
+    set(config, apply.CONTROL.crop_numerator, 2)
+    set(config, apply.CONTROL.crop_denominator, 1)
+    assert_true(refresh.run(config, comp.CurrentTime), "restores default previews")
     assert_equal(initial_values.sourceGamma, "TWOPOINTFOUR_GAMMA",
         "default source gamma ID")
     assert_equal(initial_values.workingColorSpace, "REC709_COLORSPACE",
