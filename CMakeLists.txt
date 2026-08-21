@@ -212,6 +212,13 @@ if(WIPREVIEW_BUILD_TESTS)
     )
     target_compile_options(wipreview_gpu_renderer_tests PRIVATE -fobjc-arc)
     add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
+  elseif(WIN32)
+    add_executable(wipreview_gpu_renderer_tests
+      tests/gpu_renderer_opencl_tests.cpp)
+    target_link_libraries(wipreview_gpu_renderer_tests PRIVATE
+      wipreview_gpu_renderer
+    )
+    add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
   endif()
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)
