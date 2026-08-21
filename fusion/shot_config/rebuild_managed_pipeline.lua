@@ -25,16 +25,16 @@ local function first_output(tool)
     for _, output in pairs(tool:GetOutputList() or {}) do return output end
     error((tool:GetAttrs().TOOLS_Name or "tool") .. " has no output")
 end
-local function suffix_from(name, prefix)
+local function display_name(name)
     local value = tostring(name or "")
-    if value:sub(1, #prefix) == prefix then return value:sub(#prefix + 1) end
+    if value == value:upper() then return value:sub(1, 1) .. value:sub(2):lower() end
     return value
 end
 local function input_prep_name(loader_name)
-    return "L_InputPrep_" .. suffix_from(loader_name, "L_")
+    return "L_" .. display_name(loader_name)
 end
 local function output_packager_name(saver_name)
-    return "S_OutputPackager_" .. suffix_from(saver_name, "S_")
+    return "S_" .. display_name(saver_name)
 end
 local function add_tool(comp, reg_id, name, x, y, role)
     local tool = comp:AddTool(reg_id, x, y)
