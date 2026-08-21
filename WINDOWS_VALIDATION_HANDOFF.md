@@ -4,14 +4,14 @@ Este documento es la única instrucción operativa para Windows. El alcance es e
 
 ## Flujo de trabajo
 
-El repositorio es público y GitHub Actions compila, prueba y empaqueta el OFX en Windows y macOS en cada push de las ramas OFX. Por tanto, la primera prueba en Windows no debe compilar localmente: debe descargar el bundle Windows de una ejecución verde y concentrarse en los dos hosts que CI no puede ejecutar.
+El repositorio es público y GitHub Actions compila, prueba y empaqueta el OFX en macOS en cada push de las ramas OFX. La matriz Windows CUDA requiere un runner `self-hosted` con las etiquetas `Windows`, `X64` y `cuda`; el runner temporal de validación fue retirado tras la ejecución `32467058255`. Antes de una nueva validación Windows, macOS debe disponer de un runner equivalente o ajustar la estrategia de CI.
 
 - workflow: https://github.com/jtorrens/WIP_REVIEW/actions/workflows/build.yml;
 - primera ejecución verde de referencia: https://github.com/jtorrens/WIP_REVIEW/actions/runs/32393291653;
 - artefacto requerido: `WIPReviewProbe-windows-x64`;
 - retención de artefactos: 14 días.
 
-La CI valida MSVC x64, CTest y que el bundle carga. No valida Resolve ni Fusion, ni la negociación GPU real de sus hosts. Esas son las únicas pruebas pendientes en el equipo Windows.
+Cuando el runner Windows CUDA está disponible, la CI valida MSVC x64, CTest y que el bundle carga. No valida Resolve ni Fusion, ni la negociación GPU real de sus hosts. Esas son las únicas pruebas pendientes en el equipo Windows.
 
 ## Prompt para Codex Windows
 
@@ -114,3 +114,10 @@ Limitaciones conocidas:
 ```
 
 Publicar la rama sin integrarla. macOS revisará los cambios cuando la evidencia Windows esté completa.
+
+## Relevo a macOS
+
+La validación Windows quedó completada y lista para revisión e integración. El
+estado, los commits, la CI y el requisito del runner están en
+`handoffs/macos-windows.md`. No crear una rama Windows adicional ni repetir la
+instalación manual salvo que macOS solicite una corrección concreta.
