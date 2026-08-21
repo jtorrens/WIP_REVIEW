@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.24)
 
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin" AND
+   NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+  set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING
+      "Architectures included in the macOS OFX bundle")
+endif()
+
 project(WIPReviewProbe VERSION 1.1.0 LANGUAGES CXX)
 
 include(FetchContent)
