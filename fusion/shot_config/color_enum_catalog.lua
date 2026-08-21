@@ -189,6 +189,38 @@ local function escape_json(value)
     return '"' .. escaped .. '"'
 end
 
+function M.decode_json(source)
+    return decode_json(source)
+end
+
+function M.encode_json(value)
+    local function encode(item)
+        local item_type = type(item)
+        if item_type == "string" then return escape_json(item) end
+        if item_type == "number" then return tostring(item) end
+        if item_type == "boolean" then return item and "true" or "false" end
+        if item_type ~= "table" then error("JSON cannot encode " .. item_type) end
+        local count, is_array = 0, true
+        for key in pairs(item) do
+            count = count + 1
+            if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then is_array = false end
+        end
+        if is_array then
+            local values = {}
+            for index = 1, count do values[#values + 1] = encode(item[index]) end
+            return "[" .. table.concat(values, ",") .. "]"
+        end
+        local keys, values = {}, {}
+        for key in pairs(item) do keys[#keys + 1] = tostring(key) end
+        table.sort(keys)
+        for _, key in ipairs(keys) do
+            values[#values + 1] = escape_json(key) .. ":" .. encode(item[key])
+        end
+        return "{" .. table.concat(values, ",") .. "}"
+    end
+    return encode(value) .. "\n"
+end
+
 local function encode_entries(entries, indent)
     local lines = { "[" }
     for index, entry in ipairs(entries) do

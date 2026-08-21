@@ -13,6 +13,7 @@ local SCRIPT_DIR = script_directory()
 local APPLY_PATH = SCRIPT_DIR .. "apply_shot_config.lua"
 local REBUILD_PATH = SCRIPT_DIR .. "rebuild_managed_pipeline.lua"
 local LIVE_PREVIEW_PATH = SCRIPT_DIR .. "refresh_resolved_paths.lua"
+local SHOW_SETTINGS_PATH = SCRIPT_DIR .. "show_settings.lua"
 local apply = dofile(APPLY_PATH)
 local color_catalog = dofile(SCRIPT_DIR .. "color_enum_catalog.lua")
 local CONTROL = apply.CONTROL
@@ -25,15 +26,16 @@ local COLOR_DEFAULTS = {
 }
 
 local DEFAULTS = {
-    [CONTROL.show] = "FOQN",
+    [CONTROL.show] = "SHOW",
     [CONTROL.episode] = "E01",
     [CONTROL.shot] = "0010",
     [CONTROL.version] = "v001",
-    [CONTROL.root] = "_FOQN:",
+    [CONTROL.root] = "_SHOW:",
     [CONTROL.working_resolution] = { 3840, 2160 },
     [CONTROL.crop_ratio] = 2.0,
     [CONTROL.review_resolution] = { 1920, 1080 },
     [CONTROL.embedded_alpha] = 0,
+    [CONTROL.settings_name] = "SHOW",
     [CONTROL.status] = "Ready",
 }
 
@@ -59,6 +61,7 @@ local PRESERVED_CONTROLS = {
     CONTROL.crop_ratio,
     CONTROL.review_resolution,
     CONTROL.embedded_alpha,
+    CONTROL.settings_name,
 }
 for _, kind in ipairs({ "Loader", "Saver" }) do
     for index = 1, apply.TARGET_SLOT_COUNT do
@@ -253,11 +256,18 @@ local function serialized_controls(catalog, selections)
     add(label_control("SC_PathMapSection", "Path Map", "Targets"))
     add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets", refresh_preview))
     add(label_control("SC_PathMapHelp",
-        "Portable Path Map, for example _FOQN:", "Targets"))
+        "Portable Path Map, for example _SHOW:", "Targets"))
     add(button_control("SC_Apply", "Apply / Update", execute, "Targets"))
     add(button_control("SC_UpdateSaverVersions", "Update Saver Versions", update_savers, "Targets"))
     add(button_control("SC_RebuildPipeline", "Rebuild Managed Pipeline",
         string.format("local m = dofile(%q); m.run(comp)", REBUILD_PATH), "Targets"))
+    add(label_control("SC_ShowSettingsSection", "Show Settings", "Targets"))
+    add(text_control(CONTROL.settings_name, "Definition Name",
+        DEFAULTS[CONTROL.settings_name], 1, false, "Targets"))
+    add(button_control("SC_SaveShowSettings", "Save Settings",
+        string.format("local m = dofile(%q); m.save(tool)", SHOW_SETTINGS_PATH), "Targets"))
+    add(button_control("SC_LoadShowSettings", "Load Settings",
+        string.format("local m = dofile(%q); m.load(tool)", SHOW_SETTINGS_PATH), "Targets"))
     add(text_control(CONTROL.status, "Status", DEFAULTS[CONTROL.status],
         1, true, "Targets"))
     add(label_control("SC_TargetHelp",

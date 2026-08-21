@@ -28,9 +28,29 @@ local CONTROL = {
     working_color_space_choice = "SC_WorkingColorSpaceChoice",
     working_gamma_choice = "SC_WorkingGammaChoice",
     embedded_alpha = "SC_EmbeddedAlpha",
+    settings_name = "SC_SettingsName",
     status = "SC_Status",
 }
 M.CONTROL = CONTROL
+
+function M.settings_control_names()
+    local result = {
+        CONTROL.show, CONTROL.episode, CONTROL.shot, CONTROL.version,
+        CONTROL.root, CONTROL.working_resolution, CONTROL.crop_ratio,
+        CONTROL.review_resolution, CONTROL.source_color_space_choice,
+        CONTROL.source_gamma_choice, CONTROL.working_color_space_choice,
+        CONTROL.working_gamma_choice, CONTROL.embedded_alpha,
+    }
+    for _, kind in ipairs({ "Loader", "Saver" }) do
+        for index = 1, M.TARGET_SLOT_COUNT do
+            local node, template, resolved, color, gamma, format, compression =
+                M.target_controls(kind, index)
+            local controls = { node, template, resolved, color, gamma, format, compression }
+            for _, control in ipairs(controls) do result[#result + 1] = control end
+        end
+    end
+    return result
+end
 
 function M.target_controls(kind, index)
     if kind ~= "Loader" and kind ~= "Saver" then

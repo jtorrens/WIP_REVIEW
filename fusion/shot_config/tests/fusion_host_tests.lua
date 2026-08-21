@@ -133,7 +133,7 @@ local ok, failure = pcall(function()
         "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
         "default Loader template")
     assert_equal(get(config, default_loader_resolved),
-        "_FOQN:/FOQN_E01/BRUTOS/FOQN_E01_0010.mov",
+        "_SHOW:/SHOW_E01/BRUTOS/SHOW_E01_0010.mov",
         "live default Loader preview")
     local default_saver_node, default_saver_template, default_saver_resolved =
         apply.target_controls("Saver", apply.TARGET_SLOT_COUNT)
@@ -143,7 +143,7 @@ local ok, failure = pcall(function()
         "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
         "default Saver template")
     assert_equal(get(config, default_saver_resolved),
-        "_FOQN:/FOQN_E01/RENDERS/FOQN_E01_0010_v001.mov",
+        "_SHOW:/SHOW_E01/RENDERS/SHOW_E01_0010_v001.mov",
         "live default Saver preview")
     local saver_seed_names = { "Comp", "WIP", "GFX", "Final" }
     for index, expected_name in ipairs(saver_seed_names) do
@@ -188,10 +188,10 @@ local ok, failure = pcall(function()
     local applied, apply_error = apply.run(comp)
     assert_true(applied, apply_error or "Path Map Apply failed")
     assert_equal(get(path_map_probe, "Clip"),
-        "_FOQN:/FOQN_E01/BRUTOS/FOQN_E01_0010.mov", "portable Path Map")
+        "_SHOW:/SHOW_E01/BRUTOS/SHOW_E01_0010.mov", "portable Path Map")
     local _, _, loader_one_resolved = apply.target_controls("Loader", 1)
     assert_equal(get(config, loader_one_resolved),
-        "_FOQN:/FOQN_E01/BRUTOS/FOQN_E01_0010.mov",
+        "_SHOW:/SHOW_E01/BRUTOS/SHOW_E01_0010.mov",
         "portable live resolved-path preview")
 
     set(config, apply.CONTROL.root, "_SHOTCONFIG_TEST:")
@@ -214,14 +214,14 @@ local ok, failure = pcall(function()
     set(config, apply.CONTROL.shot, "0020")
     assert_true(refresh.run(config), "refreshes after a shot change")
     assert_equal(get(config, loader_one_resolved),
-        "_SHOTCONFIG_TEST:/FOQN_E01/BRUTOS/FOQN_E01_0020.mov",
+        "_SHOTCONFIG_TEST:/SHOW_E01/BRUTOS/SHOW_E01_0020.mov",
         "preview updates before Apply")
     applied, apply_error = apply.run(comp)
     assert_true(applied, apply_error or "shot change Apply failed")
     assert_equal(get(main_plate, "Clip"),
-        "_SHOTCONFIG_TEST:/FOQN_E01/BRUTOS/FOQN_E01_0020.mov", "Test A MainPlate")
+        "_SHOTCONFIG_TEST:/SHOW_E01/BRUTOS/SHOW_E01_0020.mov", "Test A MainPlate")
     assert_equal(get(phone_ui, "Clip"),
-        "_SHOTCONFIG_TEST:/FOQN_E01/SCREENS/0020.mov", "Test A PhoneUI")
+        "_SHOTCONFIG_TEST:/SHOW_E01/SCREENS/0020.mov", "Test A PhoneUI")
     assert_equal(get(ignored_loader, "Clip"), "_KEEP:/ignored_loader.mov",
         "Test A unregistered Loader")
     assert_equal(get(ignored_saver, "Clip"), "_KEEP:/ignored_saver.mov",
@@ -238,9 +238,9 @@ local ok, failure = pcall(function()
     assert_equal(get(phone_ui, "Clip"), phone_before_version,
         "Test B version-free PhoneUI")
     assert_equal(get(master_out, "Clip"),
-        "_SHOTCONFIG_TEST:/FOQN_E01/RENDERS/FOQN_E01_0020_v002.mov", "Test B MasterOut")
+        "_SHOTCONFIG_TEST:/SHOW_E01/RENDERS/SHOW_E01_0020_v002.mov", "Test B MasterOut")
     assert_equal(get(client_review, "Clip"),
-        "_SHOTCONFIG_TEST:/FOQN_E01/WIP/FOQN_E01_0020_REF_v002.mov",
+        "_SHOTCONFIG_TEST:/SHOW_E01/WIP/SHOW_E01_0020_REF_v002.mov",
         "Test B ClientReview")
 
     -- Test C: one nonexistent target aborts before all writes.
