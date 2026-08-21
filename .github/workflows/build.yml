@@ -25,9 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install CUDA Toolkit
         if: matrix.os == 'windows-2022'
-        run: >-
-          winget install --id Nvidia.CUDA --exact --source winget
-          --accept-package-agreements --accept-source-agreements
+        run: choco install cuda --version=13.2.0 --yes --no-progress
       - name: Configure
         run: >-
           cmake -S . -B ${{ matrix.build_dir }}
