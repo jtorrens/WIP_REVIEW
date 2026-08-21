@@ -225,11 +225,13 @@ local function serialized_controls(catalog, selections)
     local result = {}
     local function add(value) result[#result + 1] = value end
     local refresh_preview = string.format("dofile(%q).run(tool)", LIVE_PREVIEW_PATH)
+    local update_savers = string.format("local m = dofile(%q); m.run_savers(comp)", APPLY_PATH)
     add(label_control("SC_IdentitySection", "Identity", "Shot"))
     add(text_control(CONTROL.show, "Show", DEFAULTS[CONTROL.show], 1, false, "Shot", refresh_preview))
     add(text_control(CONTROL.episode, "Episode", DEFAULTS[CONTROL.episode], 1, false, "Shot", refresh_preview))
     add(text_control(CONTROL.shot, "Shot", DEFAULTS[CONTROL.shot], 1, false, "Shot", refresh_preview))
     add(text_control(CONTROL.version, "Version", DEFAULTS[CONTROL.version], 1, false, "Shot", refresh_preview))
+    add(button_control("SC_UpdateSaverVersions", "Update Saver Versions", update_savers, "Shot"))
     add(label_control("SC_FormatSection", "Format", "Shot"))
     add(point_control(CONTROL.working_resolution, "Working Resolution",
         DEFAULTS[CONTROL.working_resolution][1], DEFAULTS[CONTROL.working_resolution][2], "Shot", refresh_preview))
@@ -252,13 +254,11 @@ local function serialized_controls(catalog, selections)
     add(label_control("SC_ColorHelp",
         "Stored only; not applied to CST nodes in v0.1.", "Color"))
     local execute = string.format("local m = dofile(%q); m.run(comp)", APPLY_PATH)
-    local update_savers = string.format("local m = dofile(%q); m.run_savers(comp)", APPLY_PATH)
     add(label_control("SC_PathMapSection", "Path Map", "Targets"))
     add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets", refresh_preview))
     add(label_control("SC_PathMapHelp",
         "Portable Path Map, for example _SHOW:", "Targets"))
     add(button_control("SC_Apply", "Apply / Update", execute, "Targets"))
-    add(button_control("SC_UpdateSaverVersions", "Update Saver Versions", update_savers, "Targets"))
     add(button_control("SC_RebuildPipeline", "Rebuild Managed Pipeline",
         string.format("local m = dofile(%q); m.run(comp)", REBUILD_PATH), "Targets"))
     add(label_control("SC_ShowSettingsSection", "Show Settings", "Targets"))
