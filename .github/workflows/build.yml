@@ -41,10 +41,14 @@ jobs:
         run: cmake --build ${{ matrix.build_dir }} --config Release --parallel
       - name: Test
         run: ctest --test-dir ${{ matrix.build_dir }} -C Release --output-on-failure
+      - name: Package
+        run: cpack --config ${{ matrix.build_dir }}/CPackConfig.cmake -C Release
       - name: Upload OFX bundle
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle
+          path: |
+            ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle
+            ${{ matrix.build_dir }}/*.zip
           if-no-files-found: error
           retention-days: 14
