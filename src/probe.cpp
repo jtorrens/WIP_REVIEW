@@ -417,6 +417,8 @@ void logHostCapabilities() {
   Logger::instance().write("HOST_GPU_CAPABILITIES",
       "metal=" + getString(host, kOfxImageEffectPropMetalRenderSupported) +
       " cuda=" + getString(host, kOfxImageEffectPropCudaRenderSupported) +
+      " cuda_streams=" +
+          getString(host, kOfxImageEffectPropCudaStreamSupported) +
       " opencl_buffers=" +
           getString(host, kOfxImageEffectPropOpenCLRenderSupported) +
       " opencl_images=" +
@@ -1362,6 +1364,8 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropCudaRenderSupported, 0, "true");
   gPropertySuite->propSetString(
+      properties, kOfxImageEffectPropCudaStreamSupported, 0, "true");
+  gPropertySuite->propSetString(
       properties, kOfxImageEffectPropOpenCLRenderSupported, 0, "true");
 #endif
   for (std::size_t index = 0; index < kZoneParams.size(); ++index) {
@@ -1654,6 +1658,9 @@ OfxStatus describeInContext(OfxImageEffectHandle effect, OfxPropertySetHandle in
       "; CUDA " +
       getString(gHost ? gHost->host : nullptr,
                 kOfxImageEffectPropCudaRenderSupported) +
+      "; CUDA streams " +
+      getString(gHost ? gHost->host : nullptr,
+                kOfxImageEffectPropCudaStreamSupported) +
       "; OpenCL " +
       getString(gHost ? gHost->host : nullptr,
                 kOfxImageEffectPropOpenCLRenderSupported);
