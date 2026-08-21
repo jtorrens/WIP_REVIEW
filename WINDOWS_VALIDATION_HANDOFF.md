@@ -78,7 +78,10 @@ Registrar versión de Windows, Resolve, Fusion, GPU y driver. Crear instancias n
 - probar contexto Filter si está disponible;
 - registrar CPU/OpenCL y comparar con CPU si Fusion expone una cola OpenCL.
 
-No implementar CUDA, un selector CPU por nodo ni una emulación de buffers. Si un host no expone buffers OpenCL, registrarlo con las capacidades exactas.
+No implementar un selector CPU por nodo ni una emulación de buffers. En Windows,
+usar CUDA u OpenCL exclusivamente cuando el host entregue el backend y la cola o
+stream correspondientes; si no entrega una ruta GPU, registrar las capacidades
+exactas y usar la ruta CPU.
 
 ## Si se requiere una corrección Windows
 

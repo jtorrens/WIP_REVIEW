@@ -80,6 +80,8 @@ if(APPLE)
   target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
   target_compile_options(wipreview_gpu_renderer PRIVATE -fobjc-arc)
 elseif(WIN32)
+  enable_language(CUDA)
+  find_package(CUDAToolkit REQUIRED)
   FetchContent_Declare(
     opencl_headers
     GIT_REPOSITORY https://github.com/KhronosGroup/OpenCL-Headers.git
@@ -100,12 +102,20 @@ elseif(WIN32)
     dwrite
     gdi32
   )
-  add_library(wipreview_gpu_renderer STATIC src/gpu_renderer_opencl.cpp)
+  add_library(wipreview_gpu_renderer STATIC
+    src/gpu_renderer_opencl.cpp
+    src/gpu_renderer_cuda.cu
+  )
   target_link_libraries(wipreview_gpu_renderer PUBLIC
     wipreview_probe_core
     opencl_headers_interface
+    CUDA::cudart
   )
   target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
+  set_target_properties(wipreview_gpu_renderer PROPERTIES
+    CUDA_STANDARD 17
+    CUDA_STANDARD_REQUIRED YES
+  )
 else()
   message(FATAL_ERROR "WIP Review currently supports macOS and Windows")
 endif()
@@ -213,6 +223,12 @@ if(WIPREVIEW_BUILD_TESTS)
       wipreview_gpu_renderer
     )
     add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
+    add_executable(wipreview_cuda_renderer_tests
+      tests/gpu_renderer_cuda_tests.cpp)
+    target_link_libraries(wipreview_cuda_renderer_tests PRIVATE
+      wipreview_gpu_renderer
+    )
+    add_test(NAME wipreview_cuda_renderer COMMAND wipreview_cuda_renderer_tests)
   endif()
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)

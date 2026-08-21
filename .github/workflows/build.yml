@@ -23,6 +23,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install CUDA Toolkit
+        if: matrix.os == 'windows-2022'
+        uses: Jimver/cuda-toolkit@v0.2.36
+        with:
+          cuda: '13.2.0'
       - name: Configure
         run: >-
           cmake -S . -B ${{ matrix.build_dir }}
