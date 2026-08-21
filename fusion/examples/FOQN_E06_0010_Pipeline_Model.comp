@@ -5369,7 +5369,7 @@ Composition {
 					INP_External = false,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "LabelControl",
-					LINKS_Name = "1 · Loader",
+					LINKS_Name = "L_FOQN_E06_0010_Plate",
 				},
 				SC_LoaderTarget1Node = {
 					TEC_ReadOnly = false,
@@ -6225,7 +6225,7 @@ Composition {
 					INP_External = false,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "LabelControl",
-					LINKS_Name = "1 · Saver",
+					LINKS_Name = "S_FOQN_E06_0010_Comp",
 				},
 				SC_SaverTarget1Node = {
 					TEC_ReadOnly = false,
@@ -6416,7 +6416,7 @@ Composition {
 					INP_External = false,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "LabelControl",
-					LINKS_Name = "2 · Saver",
+					LINKS_Name = "S_FOQN_E06_0010_WIP",
 				},
 				SC_SaverTarget2Node = {
 					TEC_ReadOnly = false,
@@ -6607,7 +6607,7 @@ Composition {
 					INP_External = false,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "LabelControl",
-					LINKS_Name = "3 · Saver",
+					LINKS_Name = "S_FOQN_E06_0010_GFX",
 				},
 				SC_SaverTarget3Node = {
 					TEC_ReadOnly = false,
@@ -6798,7 +6798,7 @@ Composition {
 					INP_External = false,
 					LINKID_DataType = "Number",
 					INPID_InputControl = "LabelControl",
-					LINKS_Name = "4 · Saver",
+					LINKS_Name = "S_FOQN_E06_0010_Final",
 				},
 				SC_SaverTarget4Node = {
 					TEC_ReadOnly = false,

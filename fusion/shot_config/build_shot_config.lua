@@ -223,7 +223,15 @@ local function combo_control(id, label, entries, default_index, page, on_change)
         on_change and string.format("%q", on_change) or "nil", page)
 end
 
-local function serialized_controls(catalog, selections)
+local function target_group_label(target_names, kind, index)
+    local node_control = apply.target_controls(kind, index)
+    local node_name = tostring(target_names[node_control] or DEFAULTS[node_control] or "")
+    node_name = node_name:match("^%s*(.-)%s*$")
+    if node_name ~= "" then return node_name end
+    return string.format("%d · %s", index, kind)
+end
+
+local function serialized_controls(catalog, selections, target_names)
     local result = {}
     local function add(value) result[#result + 1] = value end
     local refresh_preview = string.format("dofile(%q).run(tool)", LIVE_PREVIEW_PATH)
@@ -258,7 +266,9 @@ local function serialized_controls(catalog, selections)
         DEFAULTS[CONTROL.embedded_alpha], "Color", refresh_preview))
     add(label_control("SC_ColorHelp",
         "Stored only; not applied to CST nodes in v0.1.", "Color"))
-    local execute = string.format("local m = dofile(%q); m.run(comp)", APPLY_PATH)
+    local execute = string.format(
+        "dofile(%q); local m = dofile(%q); m.run(comp)",
+        SCRIPT_DIR .. "build_shot_config.lua", APPLY_PATH)
     add(label_control("SC_PathMapSection", "Path Map", "Targets"))
     add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets", refresh_preview))
     add(label_control("SC_PathMapHelp",
@@ -287,7 +297,7 @@ local function serialized_controls(catalog, selections)
                 gamma_control, format_control, compression_control =
                 apply.target_controls(kind, index)
             add(collapsible_control("SC_" .. kind .. "Target" .. index .. "Group",
-                string.format("%d · %s", index, kind), child_count, "Targets"))
+                target_group_label(target_names, kind, index), child_count, "Targets"))
             add(text_control(node_control,
                 string.format("%d · Node Name", index),
                 DEFAULTS[node_control], 1, false, "Targets"))
@@ -318,7 +328,7 @@ local function serialized_controls(catalog, selections)
     return table.concat(result, "\n")
 end
 
-local function create_group(comp, catalog, selections)
+local function create_group(comp, catalog, selections, target_names)
     local suffix = os.time()
     local name = "G_ShotConfigBuild_" .. tostring(suffix)
     while comp:FindTool(name) ~= nil do
@@ -337,7 +347,7 @@ local function create_group(comp, catalog, selections)
         },
         ActiveTool = %q,
     }
-    ]], name, serialized_controls(catalog, selections), name)
+    ]], name, serialized_controls(catalog, selections, target_names), name)
     local parsed = bmd.readstring(source)
     if parsed == nil then error("Fusion could not parse ShotConfig definition") end
     local pasted = comp:Paste(parsed)
@@ -519,7 +529,7 @@ function M.run(comp_override)
     active_comp:Lock()
     local new_config = nil
     local ok, failure = pcall(function()
-        new_config = create_group(active_comp, catalog, color_selections)
+        new_config = create_group(active_comp, catalog, color_selections, saved_values)
 
         for _, name in ipairs(PRESERVED_CONTROLS) do
             local value = saved_values[name]

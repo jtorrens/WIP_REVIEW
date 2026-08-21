@@ -155,6 +155,13 @@ set_shot_target("Saver", 4, "S_FOQN_E06_0010_Final",
     "{root}/{show}_{episode}/FINAL/{show}_{episode}_{shot}_FINAL_{version}.mov")
 clear_shot_targets("Loader", 2)
 clear_shot_targets("Saver", 5)
+
+-- Rebuild the inspector once the node names are known, so each target
+-- rollout is titled with its configured Loader or Saver node name.
+dofile(SCRIPT_DIR .. "shot_config/build_shot_config.lua")
+shot_config, shot_error = shot_apply.find_config(model)
+if shot_config == nil then error(shot_error or "ShotConfig could not rebuild") end
+
 local refresh_previews = dofile(SCRIPT_DIR .. "shot_config/refresh_resolved_paths.lua")
 local previews_ok, preview_error = refresh_previews.run(shot_config)
 if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end
