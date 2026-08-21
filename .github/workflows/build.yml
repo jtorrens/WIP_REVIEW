@@ -33,7 +33,7 @@ jobs:
         run: cmake --build ${{ matrix.build_dir }} --config Release --parallel
       - name: Verify macOS universal binary
         if: matrix.os == 'macos-14'
-        run: lipo -verify_arch arm64 x86_64 ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle/Contents/MacOS/WIPReviewProbe.ofx
+        run: lipo ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle/Contents/MacOS/WIPReviewProbe.ofx -verify_arch arm64 x86_64
       - name: Test
         run: ctest --test-dir ${{ matrix.build_dir }} -C Release --output-on-failure
       - name: Upload OFX bundle
