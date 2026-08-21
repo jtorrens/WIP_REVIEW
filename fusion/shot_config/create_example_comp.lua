@@ -90,6 +90,9 @@ set_target("Saver", 1, "Saver_MasterOut",
 set_target("Saver", 2, "Saver_ClientReview",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_REF_{version}.mov")
 
+local refresh_previews = dofile(SCRIPT_DIR .. "refresh_resolved_paths.lua")
+local previews_ok, preview_error = refresh_previews.run(config)
+if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end
 local applied, apply_error = apply.run(example)
 if not applied then error(apply_error or "unable to apply the example targets") end
 

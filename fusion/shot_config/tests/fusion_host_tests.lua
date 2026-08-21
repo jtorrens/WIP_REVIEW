@@ -11,6 +11,7 @@ local TEST_DIR = script_directory()
 local SHOT_CONFIG_DIR = TEST_DIR .. "../"
 local BUILD_PATH = SHOT_CONFIG_DIR .. "build_shot_config.lua"
 local APPLY_PATH = SHOT_CONFIG_DIR .. "apply_shot_config.lua"
+local REFRESH_PATH = SHOT_CONFIG_DIR .. "refresh_resolved_paths.lua"
 
 local fusion = nil
 for _ = 1, 60 do
@@ -106,6 +107,7 @@ local ok, failure = pcall(function()
 
     dofile(BUILD_PATH)
     local apply = dofile(APPLY_PATH)
+    local refresh = dofile(REFRESH_PATH)
     local config, find_error = apply.find_config(comp)
     assert_true(config ~= nil, find_error or "builder did not create ShotConfig")
     assert_equal(config:GetData("ShotConfig.Role"), "ShotConfig", "stable role")
@@ -159,6 +161,7 @@ local ok, failure = pcall(function()
         "{workingWidth}x{workingHeight}|{cropX}|{cropY}|" ..
         "{reviewWidth}x{reviewHeight}|{sourceColorSpace}|{sourceGamma}|" ..
         "{workingColorSpace}|{workingGamma}|{embeddedAlpha}")
+    assert_true(refresh.run(config), "refreshes after a template change")
     assert_equal(get(config, optional_resolved),
         "3840x2160|2|1|1920x1080|REC709_COLORSPACE|TWOPOINTFOUR_GAMMA|" ..
         "REC709_COLORSPACE|LINEAR_GAMMA|false",
@@ -203,6 +206,7 @@ local ok, failure = pcall(function()
 
     -- Test A: shot change affects only declared targets.
     set(config, apply.CONTROL.shot, "0020")
+    assert_true(refresh.run(config), "refreshes after a shot change")
     assert_equal(get(config, loader_one_resolved),
         "_SHOTCONFIG_TEST:/FOQN_E01/BRUTOS/FOQN_E01_0020.mov",
         "preview updates before Apply")

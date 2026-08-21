@@ -12,6 +12,7 @@ end
 local SCRIPT_DIR = script_directory()
 local APPLY_PATH = SCRIPT_DIR .. "apply_shot_config.lua"
 local REBUILD_PATH = SCRIPT_DIR .. "rebuild_managed_pipeline.lua"
+local LIVE_PREVIEW_PATH = SCRIPT_DIR .. "refresh_resolved_paths.lua"
 local apply = dofile(APPLY_PATH)
 local color_catalog = dofile(SCRIPT_DIR .. "color_enum_catalog.lua")
 local CONTROL = apply.CONTROL
@@ -68,7 +69,7 @@ local function log(message)
     print("[ShotConfig] " .. message)
 end
 
-local function text_control(id, label, default, lines, read_only, page)
+local function text_control(id, label, default, lines, read_only, page, on_change)
     return string.format([[
         %s = {
             LINKS_Name = %q,
@@ -78,13 +79,14 @@ local function text_control(id, label, default, lines, read_only, page)
             TEC_Lines = %d,
             TEC_Wrap = %s,
             TEC_ReadOnly = %s,
+            INPS_ExecuteOnChange = %s,
             ICS_ControlPage = %q,
         },]], id, label, default, lines or 1,
         (lines or 1) > 1 and "true" or "false",
-        read_only and "true" or "false", page)
+        read_only and "true" or "false", on_change and string.format("%q", on_change) or "nil", page)
 end
 
-local function point_control(id, label, x, y, page)
+local function point_control(id, label, x, y, page, on_change)
     return string.format([[
         %s = {
             LINKS_Name = %q,
@@ -93,11 +95,13 @@ local function point_control(id, label, x, y, page)
             INPID_PreviewControl = "",
             INP_DefaultX = %s,
             INP_DefaultY = %s,
+            INPS_ExecuteOnChange = %s,
             ICS_ControlPage = %q,
-        },]], id, label, tostring(x), tostring(y), page)
+        },]], id, label, tostring(x), tostring(y),
+        on_change and string.format("%q", on_change) or "nil", page)
 end
 
-local function number_control(id, label, default, minimum, maximum, page)
+local function number_control(id, label, default, minimum, maximum, page, on_change)
     return string.format([[
         %s = {
             LINKS_Name = %q,
@@ -108,12 +112,14 @@ local function number_control(id, label, default, minimum, maximum, page)
             INP_MaxScale = %s,
             INP_MinAllowed = %s,
             INP_MaxAllowed = %s,
+            INPS_ExecuteOnChange = %s,
             ICS_ControlPage = %q,
         },]], id, label, tostring(default), tostring(minimum), tostring(maximum),
-        tostring(minimum), tostring(maximum), page)
+        tostring(minimum), tostring(maximum),
+        on_change and string.format("%q", on_change) or "nil", page)
 end
 
-local function checkbox_control(id, label, default, page)
+local function checkbox_control(id, label, default, page, on_change)
     return string.format([[
         %s = {
             LINKS_Name = %q,
@@ -123,8 +129,10 @@ local function checkbox_control(id, label, default, page)
             INP_Integer = true,
             INP_MinAllowed = 0,
             INP_MaxAllowed = 1,
+            INPS_ExecuteOnChange = %s,
             ICS_ControlPage = %q,
-        },]], id, label, tostring(default), page)
+        },]], id, label, tostring(default),
+        on_change and string.format("%q", on_change) or "nil", page)
 end
 
 local function button_control(id, label, execute, page)
@@ -165,7 +173,7 @@ local function collapsible_control(id, label, child_count, page)
         },]], id, label, child_count, page)
 end
 
-local function combo_control(id, label, entries, default_index, page)
+local function combo_control(id, label, entries, default_index, page, on_change)
     local options = {}
     for _, entry in ipairs(entries) do
         options[#options + 1] = string.format("{ CCS_AddString = %q },", entry.label)
@@ -180,44 +188,47 @@ local function combo_control(id, label, entries, default_index, page)
             INP_Integer = true,
             INP_MinAllowed = 0,
             INP_MaxAllowed = %d,
+            INPS_ExecuteOnChange = %s,
             ICS_ControlPage = %q,
         },]], id, table.concat(options, "\n            "), label,
-        default_index, math.max(0, #entries - 1), page)
+        default_index, math.max(0, #entries - 1),
+        on_change and string.format("%q", on_change) or "nil", page)
 end
 
 local function serialized_controls(catalog, selections)
     local result = {}
     local function add(value) result[#result + 1] = value end
+    local refresh_preview = string.format("dofile(%q).run(tool)", LIVE_PREVIEW_PATH)
     add(label_control("SC_IdentitySection", "Identity", "Shot"))
-    add(text_control(CONTROL.show, "Show", DEFAULTS[CONTROL.show], 1, false, "Shot"))
-    add(text_control(CONTROL.episode, "Episode", DEFAULTS[CONTROL.episode], 1, false, "Shot"))
-    add(text_control(CONTROL.shot, "Shot", DEFAULTS[CONTROL.shot], 1, false, "Shot"))
-    add(text_control(CONTROL.version, "Version", DEFAULTS[CONTROL.version], 1, false, "Shot"))
+    add(text_control(CONTROL.show, "Show", DEFAULTS[CONTROL.show], 1, false, "Shot", refresh_preview))
+    add(text_control(CONTROL.episode, "Episode", DEFAULTS[CONTROL.episode], 1, false, "Shot", refresh_preview))
+    add(text_control(CONTROL.shot, "Shot", DEFAULTS[CONTROL.shot], 1, false, "Shot", refresh_preview))
+    add(text_control(CONTROL.version, "Version", DEFAULTS[CONTROL.version], 1, false, "Shot", refresh_preview))
     add(label_control("SC_FormatSection", "Format", "Shot"))
     add(point_control(CONTROL.working_resolution, "Working Resolution",
-        DEFAULTS[CONTROL.working_resolution][1], DEFAULTS[CONTROL.working_resolution][2], "Shot"))
+        DEFAULTS[CONTROL.working_resolution][1], DEFAULTS[CONTROL.working_resolution][2], "Shot", refresh_preview))
     add(number_control(CONTROL.crop_ratio, "Crop Ratio", DEFAULTS[CONTROL.crop_ratio],
-        0.1, 10.0, "Shot"))
+        0.1, 10.0, "Shot", refresh_preview))
     add(point_control(CONTROL.review_resolution, "Review Resolution",
-        DEFAULTS[CONTROL.review_resolution][1], DEFAULTS[CONTROL.review_resolution][2], "Shot"))
+        DEFAULTS[CONTROL.review_resolution][1], DEFAULTS[CONTROL.review_resolution][2], "Shot", refresh_preview))
     add(label_control("SC_FormatHelp",
         "Stored only; not applied to image nodes in v0.1.", "Shot"))
     add(combo_control(CONTROL.source_color_space_choice, "Source Color Space",
-        catalog.colorSpaces, selections.sourceColorSpace, "Color"))
+        catalog.colorSpaces, selections.sourceColorSpace, "Color", refresh_preview))
     add(combo_control(CONTROL.source_gamma_choice, "Source Gamma",
-        catalog.gammas, selections.sourceGamma, "Color"))
+        catalog.gammas, selections.sourceGamma, "Color", refresh_preview))
     add(combo_control(CONTROL.working_color_space_choice, "Working Color Space",
-        catalog.colorSpaces, selections.workingColorSpace, "Color"))
+        catalog.colorSpaces, selections.workingColorSpace, "Color", refresh_preview))
     add(combo_control(CONTROL.working_gamma_choice, "Working Gamma",
-        catalog.gammas, selections.workingGamma, "Color"))
+        catalog.gammas, selections.workingGamma, "Color", refresh_preview))
     add(checkbox_control(CONTROL.embedded_alpha, "Embedded Alpha",
-        DEFAULTS[CONTROL.embedded_alpha], "Color"))
+        DEFAULTS[CONTROL.embedded_alpha], "Color", refresh_preview))
     add(label_control("SC_ColorHelp",
         "Stored only; not applied to CST nodes in v0.1.", "Color"))
     local execute = string.format("local m = dofile(%q); m.run(comp)", APPLY_PATH)
     local update_savers = string.format("local m = dofile(%q); m.run_savers(comp)", APPLY_PATH)
     add(label_control("SC_PathMapSection", "Path Map", "Targets"))
-    add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets"))
+    add(text_control(CONTROL.root, "Root Path Map", DEFAULTS[CONTROL.root], 1, false, "Targets", refresh_preview))
     add(label_control("SC_PathMapHelp",
         "Portable Path Map, for example _FOQN:", "Targets"))
     add(button_control("SC_Apply", "Apply / Update", execute, "Targets"))
@@ -240,7 +251,7 @@ local function serialized_controls(catalog, selections)
                 DEFAULTS[node_control], 1, false, "Targets"))
             add(text_control(template_control,
                 string.format("%d · Path Template", index),
-                DEFAULTS[template_control], 1, false, "Targets"))
+                DEFAULTS[template_control], 1, false, "Targets", refresh_preview))
             add(text_control(resolved_control,
                 string.format("%d · Resolved Path", index),
                 DEFAULTS[resolved_control], 1, true, "Targets"))
@@ -382,61 +393,6 @@ local function joined_ids(entries)
     return table.concat(ids, "\n")
 end
 
-local function expression_id_select(entries, choice_control)
-    local ids = {}
-    for _, entry in ipairs(entries) do
-        ids[#ids + 1] = string.format("%q", entry.id)
-    end
-    return string.format("(select(math.floor(%s)+1,%s))",
-        choice_control, table.concat(ids, ","))
-end
-
-local function resolved_expression(catalog, template_control)
-    if catalog == nil then error("color catalog is unavailable") end
-    local replacements = {
-        { "root", string.format("(string.gsub(%s.Value,\"/+$\",\"\"))", CONTROL.root) },
-        { "show", CONTROL.show .. ".Value" },
-        { "episode", CONTROL.episode .. ".Value" },
-        { "shot", CONTROL.shot .. ".Value" },
-        { "version", CONTROL.version .. ".Value" },
-        { "workingWidth", string.format("(\"\"..math.floor(%s.X+0.5))",
-            CONTROL.working_resolution) },
-        { "workingHeight", string.format("(\"\"..math.floor(%s.Y+0.5))",
-            CONTROL.working_resolution) },
-        { "cropX", "(\"\".." .. CONTROL.crop_ratio .. ")" },
-        { "cropY", '"1"' },
-        { "reviewWidth", string.format("(\"\"..math.floor(%s.X+0.5))",
-            CONTROL.review_resolution) },
-        { "reviewHeight", string.format("(\"\"..math.floor(%s.Y+0.5))",
-            CONTROL.review_resolution) },
-        { "sourceColorSpace", expression_id_select(catalog.colorSpaces,
-            CONTROL.source_color_space_choice) },
-        { "sourceGamma", expression_id_select(catalog.gammas,
-            CONTROL.source_gamma_choice) },
-        { "workingColorSpace", expression_id_select(catalog.colorSpaces,
-            CONTROL.working_color_space_choice) },
-        { "workingGamma", expression_id_select(catalog.gammas,
-            CONTROL.working_gamma_choice) },
-        { "embeddedAlpha", string.format("iif(%s==1,\"true\",\"false\")",
-            CONTROL.embedded_alpha) },
-    }
-    local expression = template_control .. ".Value"
-    for _, replacement in ipairs(replacements) do
-        expression = string.format("string.gsub(%s,%q,%s)", expression,
-            "{" .. replacement[1] .. "}", replacement[2])
-    end
-    return ": return " .. expression
-end
-
-local function set_expression(tool, control, expression)
-    local input = find_input(tool, control)
-    if input == nil then error("new ShotConfig is missing control '" .. control .. "'") end
-    local ok, result = pcall(function() return input:SetExpression(expression) end)
-    if not ok or result == false then
-        error("unable to set expression on control '" .. control .. "'")
-    end
-end
-
 local function write_value(tool, name, value, time)
     local input = find_input(tool, name)
     if input == nil then
@@ -533,14 +489,9 @@ function M.run(comp_override)
             joined_ids(catalog.gammas))
         new_config:SetData("ShotConfig.ColorCatalogFusionVersion",
             catalog.fusionVersion)
-        for _, kind in ipairs({ "Loader", "Saver" }) do
-            for index = 1, apply.TARGET_SLOT_COUNT do
-                local _, template_control, resolved_control =
-                    apply.target_controls(kind, index)
-                set_expression(new_config, resolved_control,
-                    resolved_expression(catalog, template_control))
-            end
-        end
+        local preview = dofile(LIVE_PREVIEW_PATH)
+        local refreshed, refresh_error = preview.run(new_config)
+        if not refreshed then error(refresh_error) end
         set_flow_position(active_comp, new_config, x, y)
         active_comp:SetActiveTool(new_config)
     end)

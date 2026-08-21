@@ -138,6 +138,9 @@ set_shot_target("Saver", 1, "S_FOQN_E06_0010_WIP",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov")
 set_shot_target("Saver", 2, "S_FOQN_E06_0010_Clean",
     "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov")
+local refresh_previews = dofile(SCRIPT_DIR .. "shot_config/refresh_resolved_paths.lua")
+local previews_ok, preview_error = refresh_previews.run(shot_config)
+if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end
 local shot_ok, shot_apply_error = shot_apply.run(model)
 if not shot_ok then error(shot_apply_error or "ShotConfig could not apply the FOQN model") end
 

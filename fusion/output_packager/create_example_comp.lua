@@ -122,6 +122,9 @@ saver_node, saver_template = shot_apply.target_controls("Saver", 2)
 set(shot_config, saver_node, "Saver_CleanReview")
 set(shot_config, saver_template,
     "{root}/{show}_{episode}/REVIEW/{show}_{episode}_{shot}_CLEAN_{version}.mov")
+local refresh_previews = dofile(SCRIPT_DIR .. "../shot_config/refresh_resolved_paths.lua")
+local previews_ok, preview_error = refresh_previews.run(shot_config)
+if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end
 local shot_ok, shot_apply_error = shot_apply.run(example)
 if not shot_ok then error(shot_apply_error or "ShotConfig example apply failed") end
 
