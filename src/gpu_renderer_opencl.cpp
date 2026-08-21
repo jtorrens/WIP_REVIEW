@@ -337,6 +337,7 @@ struct OpenCLApi {
   decltype(&::clSetKernelArg) setKernelArg = nullptr;
   decltype(&::clCreateBuffer) createBuffer = nullptr;
   decltype(&::clEnqueueNDRangeKernel) enqueueKernel = nullptr;
+  decltype(&::clFinish) finish = nullptr;
   decltype(&::clReleaseMemObject) releaseMem = nullptr;
   decltype(&::clReleaseKernel) releaseKernel = nullptr;
   decltype(&::clReleaseProgram) releaseProgram = nullptr;
@@ -360,6 +361,7 @@ OpenCLApi &api() {
     WIP_LOAD(setKernelArg, "clSetKernelArg");
     WIP_LOAD(createBuffer, "clCreateBuffer");
     WIP_LOAD(enqueueKernel, "clEnqueueNDRangeKernel");
+    WIP_LOAD(finish, "clFinish");
     WIP_LOAD(releaseMem, "clReleaseMemObject");
     WIP_LOAD(releaseKernel, "clReleaseKernel");
     WIP_LOAD(releaseProgram, "clReleaseProgram");
@@ -371,7 +373,8 @@ OpenCLApi &api() {
 bool apiReady(const OpenCLApi &a) {
   return a.module && a.getQueueInfo && a.createProgram && a.buildProgram &&
          a.getBuildInfo && a.createKernel && a.setKernelArg && a.createBuffer &&
-         a.enqueueKernel && a.releaseMem && a.releaseKernel && a.releaseProgram;
+         a.enqueueKernel && a.finish && a.releaseMem && a.releaseKernel &&
+         a.releaseProgram;
 }
 
 std::mutex gProgramMutex;
@@ -580,6 +583,7 @@ RenderStatus renderOpenCL(const RenderRequest &request,
     if (status == CL_SUCCESS)
       status = a.enqueueKernel(queue, kernel, 2, nullptr, outputWork, nullptr,
                                0, nullptr, nullptr);
+    if (status == CL_SUCCESS) status = a.finish(queue);
     a.releaseKernel(kernel);
     releaseConstants();
     if (status != CL_SUCCESS) {
@@ -627,6 +631,7 @@ RenderStatus renderOpenCL(const RenderRequest &request,
   if (status == CL_SUCCESS)
     status = a.enqueueKernel(queue, resample, 2, nullptr, outputWork, nullptr,
                              0, nullptr, nullptr);
+  if (status == CL_SUCCESS) status = a.finish(queue);
   a.releaseKernel(decode);
   a.releaseKernel(resample);
   a.releaseMem(decoded);
