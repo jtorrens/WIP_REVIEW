@@ -49,6 +49,6 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: |
             ${{ matrix.build_dir }}/WIPReviewProbe.ofx.bundle
-            ${{ matrix.build_dir }}/*.zip
+            WIPReviewProbe-*.zip
           if-no-files-found: error
           retention-days: 14
