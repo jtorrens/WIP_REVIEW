@@ -2,7 +2,7 @@ Composition {
 	CurrentTime = 0,
 	RenderRange = { 0, 1000 },
 	GlobalRange = { 0, 1000 },
-	CurrentID = 194,
+	CurrentID = 404,
 	HiQ = true,
 	PlaybackUpdateMode = 0,
 	StereoMode = false,
@@ -15,8 +15,10 @@ Composition {
 	AutoRenderRange = true,
 	Resumable = true,
 	OutputClips = {
+		"_FOQN:/FOQN_E06/GFX/FOQN_E06_0010_GFX_v001.mov",
 		"_FOQN:/FOQN_E06/WIP/FOQN_E06_0010_WIP_v001.mov",
-		"_FOQN:/FOQN_E06/RENDERS/FOQN_E06_0010_GFX_v001.mov"
+		"_FOQN:/FOQN_E06/COMP/FOQN_E06_0010_COMP_v001.mov",
+		"_FOQN:/FOQN_E06/FINAL/FOQN_E06_0010_FINAL_v001.mov"
 	},
 	Tools = {
 		L_FOQN_E06_0010_Plate = Loader {
@@ -51,7 +53,84 @@ Composition {
 			},
 			ViewInfo = OperatorInfo { Pos = { -605, 16.197 } },
 		},
-		S_OutputPackager_FOQN_E06_0010_WIP = GroupOperator {
+		Custom_LegalClamp_2LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_2LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_2LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_2LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		S_FOQN_E06_0010_GFX = Saver {
+			CustomData = {
+				FOQNPipeline = {
+					Managed = true,
+					Role = "Saver",
+					SchemaVersion = 1
+				}
+			},
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "_FOQN:/FOQN_E06/GFX/FOQN_E06_0010_GFX_v001.mov",
+						FormatID = "QuickTimeMovies",
+						Length = 0,
+						Saving = true,
+						AspectMode = 0,
+						Depth = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = -2000000000
+					},
+				},
+				OutputFormat = Input { Value = FuID { "QuickTimeMovies" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "PipeRouter_GroupOutput_2",
+					Source = "Output",
+				},
+				["OpenEXRFormat.ZipCompressionLevel"] = Input { Value = 4, },
+				["QuickTimeMovies.Compression"] = Input { Value = FuID { "H.264_avc1" }, }
+			},
+			ViewInfo = OperatorInfo { Pos = { 385, 49.197 } },
+		},
+		S_Final = GroupOperator {
 			CustomData = {
 				OutputPackager = {
 					Role = "OutputPackager",
@@ -61,247 +140,247 @@ Composition {
 					Managed = true,
 					Role = "OutputPackager",
 					SchemaVersion = 1
-				},
+				}
 			},
 			Inputs = ordered() {
 				OP_Status = Input { Value = "Review: 1920 x 1080  |  Crop: 2  |  WIP: off", },
 				MainInput1 = InstanceInput {
-					SourceOp = "PipeRouter_Input_1",
+					SourceOp = "PipeRouter_Input_4",
 					Source = "Input",
 				},
 				OP_OutputColorSpace = InstanceInput {
-					SourceOp = "Custom_OutputMetadata",
+					SourceOp = "Custom_OutputMetadata_3",
 					Source = "OutputColorSpace",
 					Page = "Output Metadata",
 				},
 				OP_OutputGamma = InstanceInput {
-					SourceOp = "Custom_OutputMetadata",
+					SourceOp = "Custom_OutputMetadata_3",
 					Source = "OutputGamma",
 					Page = "Output Metadata",
 				},
 				OP_OutputFormat = InstanceInput {
-					SourceOp = "Custom_OutputMetadata",
+					SourceOp = "Custom_OutputMetadata_3",
 					Source = "OutputFormat",
 					Page = "Output Metadata",
 				},
 				OP_Compression = InstanceInput {
-					SourceOp = "Custom_OutputMetadata",
+					SourceOp = "Custom_OutputMetadata_3",
 					Source = "Compression",
 					Page = "Output Metadata",
 				},
 				OP_EnableReviewRaster = InstanceInput {
-					SourceOp = "Switch_ReviewRaster",
+					SourceOp = "Switch_ReviewRaster_3",
 					Source = "Source",
 					Page = "Output",
 					Name = "Review Raster",
 					Default = 1,
 				},
 				OP_EnableWIP = InstanceInput {
-					SourceOp = "Switch_WIP",
+					SourceOp = "Switch_WIP_3",
 					Source = "Source",
 					Page = "Output",
 					Name = "WIP Review",
 					Default = 0,
 				},
 				OP_BlankingEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "blankingEnabled",
 					Page = "WIP",
 					Name = "Blanking",
 				},
 				OP_BlankingOpacity = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "blankingOpacity",
 					Page = "WIP",
 				},
 				OP_FontFamily = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "fontFamily",
 					Page = "WIP",
 				},
 				OP_FontSize = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "fontSize",
 					Page = "WIP",
 				},
 				OP_TextOpacity = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "textOpacity",
 					Page = "WIP",
 				},
 				OP_OutlineEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "outlineEnabled",
 					Page = "WIP",
 					Name = "Outline",
 				},
 				OP_OutlineWidth = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "outlineWidth",
 					Page = "WIP",
 				},
 				OP_ShadowEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "shadowEnabled",
 					Page = "WIP",
 					Name = "Shadow",
 				},
 				OP_ShadowOffsetX = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "shadowOffsetX",
 					Page = "WIP",
 				},
 				OP_ShadowOffsetY = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "shadowOffsetY",
 					Page = "WIP",
 				},
 				OP_ShadowSoftness = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "shadowSoftness",
 					Page = "WIP",
 				},
 				OP_ShadowOpacity = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "shadowOpacity",
 					Page = "WIP",
 				},
 				OP_TLEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tlEnabled",
 					Page = "WIP",
 					Name = "Top Left",
 				},
 				OP_TLText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tlPrefix",
 					Page = "WIP",
 					Name = "Top Left Text",
 				},
 				OP_TLCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tlCalculatedField",
 					Page = "WIP",
 					Name = "Top Left Calculated Field",
 				},
 				OP_TCEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tcEnabled",
 					Page = "WIP",
 					Name = "Top Center",
 				},
 				OP_TCText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tcPrefix",
 					Page = "WIP",
 					Name = "Top Center Text",
 				},
 				OP_TCCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "tcCalculatedField",
 					Page = "WIP",
 					Name = "Top Center Calculated Field",
 				},
 				OP_TREnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "trEnabled",
 					Page = "WIP",
 					Name = "Top Right",
 				},
 				OP_TRText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "trPrefix",
 					Page = "WIP",
 					Name = "Top Right Text",
 				},
 				OP_TRCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "trCalculatedField",
 					Page = "WIP",
 					Name = "Top Right Calculated Field",
 				},
 				OP_BLEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "blEnabled",
 					Page = "WIP",
 					Name = "Bottom Left",
 				},
 				OP_BLText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "blPrefix",
 					Page = "WIP",
 					Name = "Bottom Left Text",
 				},
 				OP_BLCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "blCalculatedField",
 					Page = "WIP",
 					Name = "Bottom Left Calculated Field",
 				},
 				OP_BCEnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "bcEnabled",
 					Page = "WIP",
 					Name = "Bottom Center",
 				},
 				OP_BCText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "bcPrefix",
 					Page = "WIP",
 					Name = "Bottom Center Text",
 				},
 				OP_BCCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "bcCalculatedField",
 					Page = "WIP",
 					Name = "Bottom Center Calculated Field",
 				},
 				OP_BREnabled = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "brEnabled",
 					Page = "WIP",
 					Name = "Bottom Right",
 				},
 				OP_BRText = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "brPrefix",
 					Page = "WIP",
 					Name = "Bottom Right Text",
 				},
 				OP_BRCalculatedField = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "brCalculatedField",
 					Page = "WIP",
 					Name = "Bottom Right Calculated Field",
 				},
 				OP_FrameRelativeBase = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "frameRelativeBase",
 					Page = "WIP",
 				},
 				OP_FrameStart = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "frameStart",
 					Page = "WIP",
 				},
 				OP_FPSMode = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "fpsMode",
 					Page = "WIP",
 				},
 				OP_FPSOverride = InstanceInput {
 					Disabled = true,
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "fpsOverride",
 					Page = "WIP",
 				},
 				OP_TimecodeStart = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "timecodeStart",
 					Page = "WIP",
 				},
@@ -310,32 +389,32 @@ Composition {
 					Page = "WIP",
 				},
 				OP_ColorSpaceMode = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "colorSpaceMode",
 					Page = "WIP",
 				},
 				OP_ManualColorSpace = InstanceInput {
-					SourceOp = "WIPReviewProbe_WIP",
+					SourceOp = "WIPReviewProbe_WIP_3",
 					Source = "manualColorSpace",
 					Page = "WIP",
 					Name = "Manual Color Space",
 				},
 				OP_ReviewWidth = InstanceInput {
-					SourceOp = "Background_ReviewCanvas",
+					SourceOp = "Background_ReviewCanvas_3",
 					Source = "Width",
 					Page = "Applied",
 					Name = "Review Width",
 					Default = 1920,
 				},
 				OP_ReviewHeight = InstanceInput {
-					SourceOp = "Background_ReviewCanvas",
+					SourceOp = "Background_ReviewCanvas_3",
 					Source = "Height",
 					Page = "Applied",
 					Name = "Review Height",
 					Default = 1080,
 				},
 				OP_CropRatio = InstanceInput {
-					SourceOp = "Custom_AppliedData",
+					SourceOp = "Custom_AppliedData_3",
 					Source = "NumberIn1",
 					Page = "Applied",
 					Name = "Crop Ratio",
@@ -344,12 +423,12 @@ Composition {
 			},
 			Outputs = {
 				MainOutput1 = InstanceOutput {
-					SourceOp = "PipeRouter_GroupOutput",
+					SourceOp = "PipeRouter_GroupOutput_3",
 					Source = "Output",
 				}
 			},
 			ViewInfo = GroupInfo {
-				Pos = { 55, -49.803 },
+				Pos = { 55, 115.197 },
 				Flags = {
 					AllowPan = false,
 					AutoSnap = true,
@@ -362,7 +441,7 @@ Composition {
 				Offset = { 0, 0 }
 			},
 			Tools = ordered() {
-				PipeRouter_Input_1 = PipeRouter {
+				PipeRouter_Input_4 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
@@ -373,23 +452,23 @@ Composition {
 					},
 					ViewInfo = PipeRouterInfo { Pos = { -247.5, 151.758 } },
 				},
-				BetterResize_ReviewRaster = BetterResize {
+				BetterResize_ReviewRaster_3 = BetterResize {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
-						Width = Input { Expression = "Background_ReviewCanvas.Width", },
-						Height = Input { Expression = "Background_ReviewCanvas.Height", },
+						Width = Input { Expression = "Background_ReviewCanvas_3.Width", },
+						Height = Input { Expression = "Background_ReviewCanvas_3.Height", },
 						KeepAspect = Input { Value = 1, },
 						PixelAspect = Input { Value = { 1, 1 }, },
 						FilterMethod = Input { Value = 3, },
 						Input = Input {
-							SourceOp = "PipeRouter_Input_1",
+							SourceOp = "PipeRouter_Input_4",
 							Source = "Output",
 						}
 					},
 					ViewInfo = OperatorInfo { Pos = { -82.5, 151.758 } },
 				},
-				Background_ReviewCanvas = Background {
+				Background_ReviewCanvas_3 = Background {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
@@ -398,83 +477,83 @@ Composition {
 					},
 					ViewInfo = OperatorInfo { Pos = { 82.5, 223.758 } },
 				},
-				Merge_ReviewRaster = Merge {
+				Merge_ReviewRaster_3 = Merge {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Background = Input {
-							SourceOp = "Background_ReviewCanvas",
+							SourceOp = "Background_ReviewCanvas_3",
 							Source = "Output",
 						},
 						Foreground = Input {
-							SourceOp = "BetterResize_ReviewRaster",
+							SourceOp = "BetterResize_ReviewRaster_3",
 							Source = "Output",
 						},
 						PerformDepthMerge = Input { Value = 0, }
 					},
 					ViewInfo = OperatorInfo { Pos = { -82.5, 223.758 } },
 				},
-				Switch_ReviewRaster = Switch {
+				Switch_ReviewRaster_3 = Switch {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Source = Input { Value = 1, },
 						Name0 = Input { Value = "Source Raster", },
 						Input0 = Input {
-							SourceOp = "PipeRouter_SourceBypass",
+							SourceOp = "PipeRouter_SourceBypass_3",
 							Source = "Output",
 						},
 						Name1 = Input { Value = "Review Raster", },
 						Input1 = Input {
-							SourceOp = "Merge_ReviewRaster",
+							SourceOp = "Merge_ReviewRaster_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = OperatorInfo { Pos = { -82.5, 295.758 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
-				Custom_AppliedData = Custom {
+				Custom_AppliedData_3 = Custom {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						NumberIn1 = Input { Value = 2, },
 						LUTIn1 = Input {
-							SourceOp = "Custom_AppliedDataLUTIn1",
+							SourceOp = "Custom_AppliedData_3LUTIn1",
 							Source = "Value",
 						},
 						LUTIn2 = Input {
-							SourceOp = "Custom_AppliedDataLUTIn2",
+							SourceOp = "Custom_AppliedData_3LUTIn2",
 							Source = "Value",
 						},
 						LUTIn3 = Input {
-							SourceOp = "Custom_AppliedDataLUTIn3",
+							SourceOp = "Custom_AppliedData_3LUTIn3",
 							Source = "Value",
 						},
 						LUTIn4 = Input {
-							SourceOp = "Custom_AppliedDataLUTIn4",
+							SourceOp = "Custom_AppliedData_3LUTIn4",
 							Source = "Value",
 						}
 					},
 					ViewInfo = OperatorInfo { Pos = { -137.5, 79.7576 } },
 				},
-				Custom_OutputMetadata = Custom {
+				Custom_OutputMetadata_3 = Custom {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						LUTIn1 = Input {
-							SourceOp = "Custom_OutputMetadataLUTIn1",
+							SourceOp = "Custom_OutputMetadata_3LUTIn1",
 							Source = "Value",
 						},
 						LUTIn2 = Input {
-							SourceOp = "Custom_OutputMetadataLUTIn2",
+							SourceOp = "Custom_OutputMetadata_3LUTIn2",
 							Source = "Value",
 						},
 						LUTIn3 = Input {
-							SourceOp = "Custom_OutputMetadataLUTIn3",
+							SourceOp = "Custom_OutputMetadata_3LUTIn3",
 							Source = "Value",
 						},
 						LUTIn4 = Input {
-							SourceOp = "Custom_OutputMetadataLUTIn4",
+							SourceOp = "Custom_OutputMetadata_3LUTIn4",
 							Source = "Value",
 						},
 						OutputColorSpace = Input { Value = "REC709_COLORSPACE", },
@@ -486,40 +565,40 @@ Composition {
 					UserControls = ordered() {
 						OutputColorSpace = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Color Space",
 						},
 						OutputGamma = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Gamma",
 						},
 						OutputFormat = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Format",
 						},
 						Compression = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Compression",
 						}
 					}
 				},
-				WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
+				WIPReviewProbe_WIP_3 = ofx.com.jtorrens.WIPReviewProbe {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Source = Input {
-							SourceOp = "PipeRouter_WIPSource",
+							SourceOp = "PipeRouter_WIPSource_3",
 							Source = "Output",
 						},
 						processingGroup = Input { Value = 0, },
@@ -857,43 +936,42 @@ Composition {
 					},
 					ViewInfo = OperatorInfo { Pos = { 137.5, 367.758 } },
 				},
-				Switch_WIP = Switch {
+				Switch_WIP_3 = Switch {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
-						Source = Input { Value = 1, },
 						Name0 = Input { Value = "Clean", },
 						Input0 = Input {
-							SourceOp = "Switch_ReviewRaster",
+							SourceOp = "Switch_ReviewRaster_3",
 							Source = "Output",
 						},
 						Name1 = Input { Value = "WIP Review", },
 						Input1 = Input {
-							SourceOp = "WIPReviewProbe_WIP",
+							SourceOp = "WIPReviewProbe_WIP_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = OperatorInfo { Pos = { -27.5, 367.758 } },
 					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
 				},
-				Custom_LegalClamp = Custom {
+				Custom_LegalClamp_3 = Custom {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						LUTIn1 = Input {
-							SourceOp = "Custom_LegalClampLUTIn1",
+							SourceOp = "Custom_LegalClamp_3LUTIn1",
 							Source = "Value",
 						},
 						LUTIn2 = Input {
-							SourceOp = "Custom_LegalClampLUTIn2",
+							SourceOp = "Custom_LegalClamp_3LUTIn2",
 							Source = "Value",
 						},
 						LUTIn3 = Input {
-							SourceOp = "Custom_LegalClampLUTIn3",
+							SourceOp = "Custom_LegalClamp_3LUTIn3",
 							Source = "Value",
 						},
 						LUTIn4 = Input {
-							SourceOp = "Custom_LegalClampLUTIn4",
+							SourceOp = "Custom_LegalClamp_3LUTIn4",
 							Source = "Value",
 						},
 						RedExpression = Input { Value = "max(r1, 0)", },
@@ -901,62 +979,62 @@ Composition {
 						BlueExpression = Input { Value = "max(b1, 0)", },
 						AlphaExpression = Input { Value = "min(max(a1, 0), 1)", },
 						Image1 = Input {
-							SourceOp = "Switch_WIP",
+							SourceOp = "Switch_WIP_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = OperatorInfo { Pos = { -27.5, 439.758 } },
 				},
-				PipeRouter_Output = PipeRouter {
+				PipeRouter_Output_3 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "Custom_LegalClamp",
+							SourceOp = "Custom_LegalClamp_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = PipeRouterInfo { Pos = { -27.5, 511.758 } },
 				},
-				PipeRouter_WIPSource = PipeRouter {
+				PipeRouter_WIPSource_3 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "Switch_ReviewRaster",
+							SourceOp = "Switch_ReviewRaster_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = PipeRouterInfo { Pos = { 137.5, 295.758 } },
 				},
-				PipeRouter_GroupOutput = PipeRouter {
+				PipeRouter_GroupOutput_3 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "PipeRouter_OutputReturn",
+							SourceOp = "PipeRouter_OutputReturn_3",
 							Source = "Output",
 						}
 					},
 					ViewInfo = PipeRouterInfo { Pos = { 247.5, 79.7576 } },
 				},
-				PipeRouter_SourceBypass = PipeRouter {
+				PipeRouter_SourceBypass_3 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "PipeRouter_Input_1",
+							SourceOp = "PipeRouter_Input_4",
 							Source = "Output",
 						}
 					},
 					ViewInfo = PipeRouterInfo { Pos = { -247.5, 295.758 } },
 				},
-				PipeRouter_OutputReturn = PipeRouter {
+				PipeRouter_OutputReturn_3 = PipeRouter {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
 						Input = Input {
-							SourceOp = "PipeRouter_Output",
+							SourceOp = "PipeRouter_Output_3",
 							Source = "Output",
 						}
 					},
@@ -967,13 +1045,97 @@ Composition {
 				OP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
 					ICS_ControlPage = "Output",
+					INPID_InputControl = "TextEditControl",
+					LINKID_DataType = "Text",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
+		},
+		Custom_LegalClamp_1LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_1LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_1LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_1LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		S_FOQN_E06_0010_WIP = Saver {
+			CustomData = {
+				FOQNPipeline = {
+					Managed = true,
+					Role = "Saver",
+					SchemaVersion = 1
+				}
+			},
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "_FOQN:/FOQN_E06/WIP/FOQN_E06_0010_WIP_v001.mov",
+						FormatID = "QuickTimeMovies",
+						Length = 72,
+						Multiframe = true,
+						Saving = true,
+						TrimIn = 0,
+						TrimOut = 71,
+						ExtendFirst = 0,
+						ExtendLast = 0,
+						Loop = 1,
+						AspectMode = 0,
+						Depth = 0,
+						TimeCode = 0,
+						GlobalStart = 0,
+						GlobalEnd = 71
+					},
+				},
+				OutputFormat = Input { Value = FuID { "QuickTimeMovies" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "PipeRouter_GroupOutput_1",
+					Source = "Output",
+				},
+				["OpenEXRFormat.ZipCompressionLevel"] = Input { Value = 4, },
+				["QuickTimeMovies.Compression"] = Input { Value = FuID { "H.264_avc1" }, }
+			},
+			ViewInfo = OperatorInfo { Pos = { 385, -16.803 } },
 		},
 		Custom_LegalClampLUTIn1 = LUTBezier {
 			KeyColorSplines = {
@@ -1019,7 +1181,7 @@ Composition {
 			CtrlWZoom = false,
 			NameSet = true,
 		},
-		S_FOQN_E06_0010_WIP = Saver {
+		S_FOQN_E06_0010_Comp = Saver {
 			CustomData = {
 				FOQNPipeline = {
 					Managed = true,
@@ -1031,21 +1193,14 @@ Composition {
 				ProcessWhenBlendIs00 = Input { Value = 0, },
 				Clip = Input {
 					Value = Clip {
-						Filename = "_FOQN:/FOQN_E06/WIP/FOQN_E06_0010_WIP_v001.mov",
+						Filename = "_FOQN:/FOQN_E06/COMP/FOQN_E06_0010_COMP_v001.mov",
 						FormatID = "QuickTimeMovies",
-						Length = 72,
-						Multiframe = true,
+						Length = 0,
 						Saving = true,
-						TrimIn = 0,
-						TrimOut = 71,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
 						AspectMode = 0,
 						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = 0,
-						GlobalEnd = 71
+						GlobalStart = -2000000000,
+						GlobalEnd = -2000000000
 					},
 				},
 				OutputFormat = Input { Value = FuID { "QuickTimeMovies" }, },
@@ -1057,9 +1212,438 @@ Composition {
 				["OpenEXRFormat.ZipCompressionLevel"] = Input { Value = 4, },
 				["QuickTimeMovies.Compression"] = Input { Value = FuID { "H.264_avc1" }, }
 			},
-			ViewInfo = OperatorInfo { Pos = { 385, -49.803 } },
+			ViewInfo = OperatorInfo { Pos = { 385, -82.803 } },
 		},
-		S_OutputPackager_FOQN_E06_0010_Clean = GroupOperator {
+		Custom_OutputMetadata_2LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_2LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_2LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_2LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_2LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_2LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_2LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_2LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadataLUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadataLUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadataLUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadataLUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedDataLUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedDataLUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedDataLUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedDataLUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_1LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_1LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_1LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_1LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_1LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_1LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_1LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_1LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_3LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_3LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_3LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_AppliedData_3LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_3LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_3LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_3LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_OutputMetadata_3LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_3LUTIn1 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_3LUTIn2 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_3LUTIn3 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		Custom_LegalClamp_3LUTIn4 = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
+					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		},
+		S_FOQN_E06_0010_Final = Saver {
+			CustomData = {
+				FOQNPipeline = {
+					Managed = true,
+					Role = "Saver",
+					SchemaVersion = 1
+				}
+			},
+			Inputs = {
+				ProcessWhenBlendIs00 = Input { Value = 0, },
+				Clip = Input {
+					Value = Clip {
+						Filename = "_FOQN:/FOQN_E06/FINAL/FOQN_E06_0010_FINAL_v001.mov",
+						FormatID = "QuickTimeMovies",
+						Length = 0,
+						Saving = true,
+						AspectMode = 0,
+						Depth = 0,
+						GlobalStart = -2000000000,
+						GlobalEnd = -2000000000
+					},
+				},
+				OutputFormat = Input { Value = FuID { "QuickTimeMovies" }, },
+				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+				Input = Input {
+					SourceOp = "PipeRouter_GroupOutput_3",
+					Source = "Output",
+				},
+				["OpenEXRFormat.ZipCompressionLevel"] = Input { Value = 4, },
+				["QuickTimeMovies.Compression"] = Input { Value = FuID { "H.264_avc1" }, }
+			},
+			ViewInfo = OperatorInfo { Pos = { 385, 115.197 } },
+		},
+		S_GFX = GroupOperator {
 			CustomData = {
 				OutputPackager = {
 					Role = "OutputPackager",
@@ -1069,7 +1653,930 @@ Composition {
 					Managed = true,
 					Role = "OutputPackager",
 					SchemaVersion = 1
+				}
+			},
+			Inputs = ordered() {
+				OP_Status = Input { Value = "Review: 1920 x 1080  |  Crop: 2  |  WIP: off", },
+				MainInput1 = InstanceInput {
+					SourceOp = "PipeRouter_Input_3",
+					Source = "Input",
 				},
+				OP_OutputColorSpace = InstanceInput {
+					SourceOp = "Custom_OutputMetadata_2",
+					Source = "OutputColorSpace",
+					Page = "Output Metadata",
+				},
+				OP_OutputGamma = InstanceInput {
+					SourceOp = "Custom_OutputMetadata_2",
+					Source = "OutputGamma",
+					Page = "Output Metadata",
+				},
+				OP_OutputFormat = InstanceInput {
+					SourceOp = "Custom_OutputMetadata_2",
+					Source = "OutputFormat",
+					Page = "Output Metadata",
+				},
+				OP_Compression = InstanceInput {
+					SourceOp = "Custom_OutputMetadata_2",
+					Source = "Compression",
+					Page = "Output Metadata",
+				},
+				OP_EnableReviewRaster = InstanceInput {
+					SourceOp = "Switch_ReviewRaster_2",
+					Source = "Source",
+					Page = "Output",
+					Name = "Review Raster",
+					Default = 1,
+				},
+				OP_EnableWIP = InstanceInput {
+					SourceOp = "Switch_WIP_2",
+					Source = "Source",
+					Page = "Output",
+					Name = "WIP Review",
+					Default = 0,
+				},
+				OP_BlankingEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "blankingEnabled",
+					Page = "WIP",
+					Name = "Blanking",
+				},
+				OP_BlankingOpacity = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "blankingOpacity",
+					Page = "WIP",
+				},
+				OP_FontFamily = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "fontFamily",
+					Page = "WIP",
+				},
+				OP_FontSize = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "fontSize",
+					Page = "WIP",
+				},
+				OP_TextOpacity = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "textOpacity",
+					Page = "WIP",
+				},
+				OP_OutlineEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "outlineEnabled",
+					Page = "WIP",
+					Name = "Outline",
+				},
+				OP_OutlineWidth = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "outlineWidth",
+					Page = "WIP",
+				},
+				OP_ShadowEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "shadowEnabled",
+					Page = "WIP",
+					Name = "Shadow",
+				},
+				OP_ShadowOffsetX = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "shadowOffsetX",
+					Page = "WIP",
+				},
+				OP_ShadowOffsetY = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "shadowOffsetY",
+					Page = "WIP",
+				},
+				OP_ShadowSoftness = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "shadowSoftness",
+					Page = "WIP",
+				},
+				OP_ShadowOpacity = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "shadowOpacity",
+					Page = "WIP",
+				},
+				OP_TLEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tlEnabled",
+					Page = "WIP",
+					Name = "Top Left",
+				},
+				OP_TLText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tlPrefix",
+					Page = "WIP",
+					Name = "Top Left Text",
+				},
+				OP_TLCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tlCalculatedField",
+					Page = "WIP",
+					Name = "Top Left Calculated Field",
+				},
+				OP_TCEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tcEnabled",
+					Page = "WIP",
+					Name = "Top Center",
+				},
+				OP_TCText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tcPrefix",
+					Page = "WIP",
+					Name = "Top Center Text",
+				},
+				OP_TCCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "tcCalculatedField",
+					Page = "WIP",
+					Name = "Top Center Calculated Field",
+				},
+				OP_TREnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "trEnabled",
+					Page = "WIP",
+					Name = "Top Right",
+				},
+				OP_TRText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "trPrefix",
+					Page = "WIP",
+					Name = "Top Right Text",
+				},
+				OP_TRCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "trCalculatedField",
+					Page = "WIP",
+					Name = "Top Right Calculated Field",
+				},
+				OP_BLEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "blEnabled",
+					Page = "WIP",
+					Name = "Bottom Left",
+				},
+				OP_BLText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "blPrefix",
+					Page = "WIP",
+					Name = "Bottom Left Text",
+				},
+				OP_BLCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "blCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Left Calculated Field",
+				},
+				OP_BCEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "bcEnabled",
+					Page = "WIP",
+					Name = "Bottom Center",
+				},
+				OP_BCText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "bcPrefix",
+					Page = "WIP",
+					Name = "Bottom Center Text",
+				},
+				OP_BCCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "bcCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Center Calculated Field",
+				},
+				OP_BREnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "brEnabled",
+					Page = "WIP",
+					Name = "Bottom Right",
+				},
+				OP_BRText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "brPrefix",
+					Page = "WIP",
+					Name = "Bottom Right Text",
+				},
+				OP_BRCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "brCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Right Calculated Field",
+				},
+				OP_FrameRelativeBase = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "frameRelativeBase",
+					Page = "WIP",
+				},
+				OP_FrameStart = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "frameStart",
+					Page = "WIP",
+				},
+				OP_FPSMode = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "fpsMode",
+					Page = "WIP",
+				},
+				OP_FPSOverride = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "fpsOverride",
+					Page = "WIP",
+				},
+				OP_TimecodeStart = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "timecodeStart",
+					Page = "WIP",
+				},
+				OP_DropFrameMode = Input {
+					Value = 0,
+					Page = "WIP",
+				},
+				OP_ColorSpaceMode = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "colorSpaceMode",
+					Page = "WIP",
+				},
+				OP_ManualColorSpace = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP_2",
+					Source = "manualColorSpace",
+					Page = "WIP",
+					Name = "Manual Color Space",
+				},
+				OP_ReviewWidth = InstanceInput {
+					SourceOp = "Background_ReviewCanvas_2",
+					Source = "Width",
+					Page = "Applied",
+					Name = "Review Width",
+					Default = 1920,
+				},
+				OP_ReviewHeight = InstanceInput {
+					SourceOp = "Background_ReviewCanvas_2",
+					Source = "Height",
+					Page = "Applied",
+					Name = "Review Height",
+					Default = 1080,
+				},
+				OP_CropRatio = InstanceInput {
+					SourceOp = "Custom_AppliedData_2",
+					Source = "NumberIn1",
+					Page = "Applied",
+					Name = "Crop Ratio",
+					Default = 2,
+				}
+			},
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "PipeRouter_GroupOutput_2",
+					Source = "Output",
+				}
+			},
+			ViewInfo = GroupInfo {
+				Pos = { 55, 49.197 },
+				Flags = {
+					AllowPan = false,
+					AutoSnap = true,
+					RemoveRouters = true
+				},
+				Size = { 550, 569.151, 275, 24.2424 },
+				Direction = "Horizontal",
+				PipeStyle = "Direct",
+				Scale = 1,
+				Offset = { 0, 0 }
+			},
+			Tools = ordered() {
+				PipeRouter_Input_3 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Switch_Alpha",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -247.5, 151.758 } },
+				},
+				BetterResize_ReviewRaster_2 = BetterResize {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Expression = "Background_ReviewCanvas_2.Width", },
+						Height = Input { Expression = "Background_ReviewCanvas_2.Height", },
+						KeepAspect = Input { Value = 1, },
+						PixelAspect = Input { Value = { 1, 1 }, },
+						FilterMethod = Input { Value = 3, },
+						Input = Input {
+							SourceOp = "PipeRouter_Input_3",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 151.758 } },
+				},
+				Background_ReviewCanvas_2 = Background {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 82.5, 223.758 } },
+				},
+				Merge_ReviewRaster_2 = Merge {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Background_ReviewCanvas_2",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "BetterResize_ReviewRaster_2",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, }
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 223.758 } },
+				},
+				Switch_ReviewRaster_2 = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Source Raster", },
+						Input0 = Input {
+							SourceOp = "PipeRouter_SourceBypass_2",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Review Raster", },
+						Input1 = Input {
+							SourceOp = "Merge_ReviewRaster_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 295.758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				Custom_AppliedData_2 = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						NumberIn1 = Input { Value = 2, },
+						LUTIn1 = Input {
+							SourceOp = "Custom_AppliedData_2LUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_AppliedData_2LUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_AppliedData_2LUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_AppliedData_2LUTIn4",
+							Source = "Value",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -137.5, 79.7576 } },
+				},
+				Custom_OutputMetadata_2 = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						LUTIn1 = Input {
+							SourceOp = "Custom_OutputMetadata_2LUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_OutputMetadata_2LUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_OutputMetadata_2LUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_OutputMetadata_2LUTIn4",
+							Source = "Value",
+						},
+						OutputColorSpace = Input { Value = "REC709_COLORSPACE", },
+						OutputGamma = Input { Value = "LINEAR_GAMMA", },
+						OutputFormat = Input { Value = "Movie", },
+						Compression = Input { Value = "ProRes 422 HQ", }
+					},
+					ViewInfo = OperatorInfo { Pos = { -137.5, 7.75757 } },
+					UserControls = ordered() {
+						OutputColorSpace = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Color Space",
+						},
+						OutputGamma = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Gamma",
+						},
+						OutputFormat = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Format",
+						},
+						Compression = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Compression",
+						}
+					}
+				},
+				WIPReviewProbe_WIP_2 = ofx.com.jtorrens.WIPReviewProbe {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input {
+							SourceOp = "PipeRouter_WIPSource_2",
+							Source = "Output",
+						},
+						processingGroup = Input { Value = 0, },
+						gpuCapabilityStatus = Input {
+							Value = "Metal \"true\"; CUDA <ErrUnknown>; OpenCL <ErrUnknown>",
+							Disabled = true,
+						},
+						canvasGroup = Input { Value = 1, },
+						rasterCapabilityStatus = Input {
+							Value = "Fusion — Requested Review Raster available",
+							Disabled = true,
+						},
+						canvasMode = Input { Value = 0, },
+						reviewRasterPreset = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						requestedWidth = Input {
+							Value = 1920,
+							Disabled = true,
+						},
+						requestedHeight = Input {
+							Value = 1080,
+							Disabled = true,
+						},
+						placementMode = Input { Value = 0, },
+						resampleFilter = Input { Value = 2, },
+						canvasColourRed = Input { Value = 0, },
+						canvasColourGreen = Input { Value = 0, },
+						canvasColourBlue = Input { Value = 0, },
+						canvasColourAlpha = Input { Value = 1, },
+						blankingGroup = Input { Value = 1, },
+						blankingEnabled = Input { Value = 0, },
+						blankingAspectPreset = Input {
+							Value = 4,
+							Disabled = true,
+						},
+						blankingAspectCustom = Input {
+							Disabled = true,
+							Expression = "Custom_AppliedData.NumberIn1",
+						},
+						blankingColorRed = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorGreen = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorBlue = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blankingOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						textGlobalGroup = Input { Value = 1, },
+						fontFamily = Input { Value = "System Default", },
+						fontStyle = Input { Value = 0, },
+						fontSize = Input { Value = 0.028, },
+						textColorRed = Input { Value = 1, },
+						textColorGreen = Input { Value = 1, },
+						textColorBlue = Input { Value = 1, },
+						textColorAlpha = Input { Value = 1, },
+						textOpacity = Input { Value = 1, },
+						paddingLeft = Input { Value = 0.015, },
+						paddingRight = Input { Value = 0.015, },
+						paddingTop = Input { Value = 0.02, },
+						paddingBottom = Input { Value = 0.02, },
+						outlineGroup = Input { Value = 0, },
+						outlineEnabled = Input { Value = 1, },
+						outlineWidth = Input { Value = 0.001, },
+						outlineColorRed = Input { Value = 0, },
+						outlineColorGreen = Input { Value = 0, },
+						outlineColorBlue = Input { Value = 0, },
+						outlineColorAlpha = Input { Value = 1, },
+						outlineOpacity = Input { Value = 1, },
+						shadowGroup = Input { Value = 0, },
+						shadowEnabled = Input { Value = 0, },
+						shadowOffsetX = Input {
+							Value = 0.0015,
+							Disabled = true,
+						},
+						shadowOffsetY = Input {
+							Value = 0.002,
+							Disabled = true,
+						},
+						shadowSoftness = Input {
+							Value = 0.002,
+							Disabled = true,
+						},
+						shadowColorRed = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorGreen = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorBlue = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						shadowOpacity = Input {
+							Value = 0.6,
+							Disabled = true,
+						},
+						zonesGroup = Input { Value = 0, },
+						tlZone = Input { Value = 0, },
+						tlEnabled = Input { Value = 0, },
+						tlPrefix = Input { Value = "", },
+						tlCalculatedField = Input { Value = 0, },
+						tlOffsetX = Input { Value = 0, },
+						tlOffsetY = Input { Value = 0, },
+						tlUseSizeOverride = Input { Value = 0, },
+						tlSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						tlUseColorOverride = Input { Value = 0, },
+						tlColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlUseOpacityOverride = Input { Value = 0, },
+						tlOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcZone = Input { Value = 0, },
+						tcEnabled = Input { Value = 0, },
+						tcPrefix = Input { Value = "", },
+						tcCalculatedField = Input { Value = 0, },
+						tcOffsetX = Input { Value = 0, },
+						tcOffsetY = Input { Value = 0, },
+						tcUseSizeOverride = Input { Value = 0, },
+						tcSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						tcUseColorOverride = Input { Value = 0, },
+						tcColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcUseOpacityOverride = Input { Value = 0, },
+						tcOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trZone = Input { Value = 0, },
+						trEnabled = Input { Value = 0, },
+						trPrefix = Input { Value = "", },
+						trCalculatedField = Input { Value = 0, },
+						trOffsetX = Input { Value = 0, },
+						trOffsetY = Input { Value = 0, },
+						trUseSizeOverride = Input { Value = 0, },
+						trSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						trUseColorOverride = Input { Value = 0, },
+						trColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trUseOpacityOverride = Input { Value = 0, },
+						trOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blZone = Input { Value = 0, },
+						blEnabled = Input { Value = 0, },
+						blPrefix = Input { Value = "", },
+						blCalculatedField = Input { Value = 0, },
+						blOffsetX = Input { Value = 0, },
+						blOffsetY = Input { Value = 0, },
+						blUseSizeOverride = Input { Value = 0, },
+						blSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						blUseColorOverride = Input { Value = 0, },
+						blColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blUseOpacityOverride = Input { Value = 0, },
+						blOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcZone = Input { Value = 0, },
+						bcEnabled = Input { Value = 0, },
+						bcPrefix = Input { Value = "", },
+						bcCalculatedField = Input { Value = 0, },
+						bcOffsetX = Input { Value = 0, },
+						bcOffsetY = Input { Value = 0, },
+						bcUseSizeOverride = Input { Value = 0, },
+						bcSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						bcUseColorOverride = Input { Value = 0, },
+						bcColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcUseOpacityOverride = Input { Value = 0, },
+						bcOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brZone = Input { Value = 0, },
+						brEnabled = Input { Value = 0, },
+						brPrefix = Input { Value = "", },
+						brCalculatedField = Input { Value = 0, },
+						brOffsetX = Input { Value = 0, },
+						brOffsetY = Input { Value = 0, },
+						brUseSizeOverride = Input { Value = 0, },
+						brSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						brUseColorOverride = Input { Value = 0, },
+						brColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brUseOpacityOverride = Input { Value = 0, },
+						brOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						calculatedFieldsGroup = Input { Value = 0, },
+						frameRelativeBase = Input { Value = 1, },
+						frameStart = Input { Value = 1001, },
+						reviewDate = Input { Value = "2026-08-21", },
+						fpsMode = Input { Value = 0, },
+						fpsOverride = Input {
+							Value = 24,
+							Disabled = true,
+						},
+						timecodeStart = Input { Value = "00:00:00:00", },
+						managedColorGroup = Input { Value = 0, },
+						colorSpaceMode = Input { Value = 0, },
+						manualColorSpace = Input { Value = 0, },
+						graphicsWhiteMode = Input { Value = 0, },
+						graphicsWhiteNits = Input {
+							Value = 203,
+							Disabled = true,
+						},
+						hlgPeakNits = Input { Value = 1000, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 137.5, 367.758 } },
+				},
+				Switch_WIP_2 = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Name0 = Input { Value = "Clean", },
+						Input0 = Input {
+							SourceOp = "Switch_ReviewRaster_2",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "WIP Review", },
+						Input1 = Input {
+							SourceOp = "WIPReviewProbe_WIP_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -27.5, 367.758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				Custom_LegalClamp_2 = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						LUTIn1 = Input {
+							SourceOp = "Custom_LegalClamp_2LUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_LegalClamp_2LUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_LegalClamp_2LUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_LegalClamp_2LUTIn4",
+							Source = "Value",
+						},
+						RedExpression = Input { Value = "max(r1, 0)", },
+						GreenExpression = Input { Value = "max(g1, 0)", },
+						BlueExpression = Input { Value = "max(b1, 0)", },
+						AlphaExpression = Input { Value = "min(max(a1, 0), 1)", },
+						Image1 = Input {
+							SourceOp = "Switch_WIP_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -27.5, 439.758 } },
+				},
+				PipeRouter_Output_2 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Custom_LegalClamp_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -27.5, 511.758 } },
+				},
+				PipeRouter_WIPSource_2 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Switch_ReviewRaster_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 137.5, 295.758 } },
+				},
+				PipeRouter_GroupOutput_2 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_OutputReturn_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 247.5, 79.7576 } },
+				},
+				PipeRouter_SourceBypass_2 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_Input_3",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -247.5, 295.758 } },
+				},
+				PipeRouter_OutputReturn_2 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_Output_2",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 247.5, 439.758 } },
+				}
+			},
+			UserControls = ordered() {
+				OP_Status = {
+					INP_ReadOnly = true,
+					INP_External = false,
+					INP_ForceNotify = false,
+					ICS_ControlPage = "Output",
+					INPID_InputControl = "TextEditControl",
+					LINKID_DataType = "Text",
+					LINKS_Name = "Applied Configuration",
+				}
+			}
+		},
+		S_WIP = GroupOperator {
+			CustomData = {
+				OutputPackager = {
+					Role = "OutputPackager",
+					SchemaVersion = 1
+				},
+				FOQNPipeline = {
+					Managed = true,
+					Role = "OutputPackager",
+					SchemaVersion = 1
+				}
 			},
 			Inputs = ordered() {
 				OP_Status = Input { Value = "Review: 1920 x 1080  |  Crop: 2  |  WIP: off", },
@@ -1357,7 +2864,7 @@ Composition {
 				}
 			},
 			ViewInfo = GroupInfo {
-				Pos = { 55, 82.197 },
+				Pos = { 55, -16.803 },
 				Flags = {
 					AllowPan = false,
 					AutoSnap = true,
@@ -1494,30 +3001,30 @@ Composition {
 					UserControls = ordered() {
 						OutputColorSpace = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Color Space",
 						},
 						OutputGamma = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Gamma",
 						},
 						OutputFormat = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Output Format",
 						},
 						Compression = {
 							TEC_ReadOnly = true,
-							LINKID_DataType = "Text",
 							INPID_InputControl = "TextEditControl",
 							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
 							LINKS_Name = "Compression",
 						}
 					}
@@ -1869,6 +3376,7 @@ Composition {
 					CtrlWShown = false,
 					NameSet = true,
 					Inputs = {
+						Source = Input { Value = 1, },
 						Name0 = Input { Value = "Clean", },
 						Input0 = Input {
 							SourceOp = "Switch_ReviewRaster_1",
@@ -1974,273 +3482,936 @@ Composition {
 				OP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
 					ICS_ControlPage = "Output",
+					INPID_InputControl = "TextEditControl",
+					LINKID_DataType = "Text",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
 		},
-		Custom_OutputMetadataLUTIn1 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadataLUTIn2 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadataLUTIn3 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadataLUTIn4 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedDataLUTIn1 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedDataLUTIn2 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedDataLUTIn3 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedDataLUTIn4 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedData_1LUTIn1 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedData_1LUTIn2 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedData_1LUTIn3 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_AppliedData_1LUTIn4 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadata_1LUTIn1 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadata_1LUTIn2 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadata_1LUTIn3 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_OutputMetadata_1LUTIn4 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_LegalClamp_1LUTIn1 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_LegalClamp_1LUTIn2 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_LegalClamp_1LUTIn3 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		Custom_LegalClamp_1LUTIn4 = LUTBezier {
-			KeyColorSplines = {
-				[0] = {
-					[0] = { 0, RH = { 0.333333333333333, 0.333333333333333 }, Flags = { Linear = true } },
-					[1] = { 1, LH = { 0.666666666666667, 0.666666666666667 }, Flags = { Linear = true } }
-				}
-			},
-			SplineColor = { Red = 0, Green = 0, Blue = 0 },
-			CtrlWZoom = false,
-			NameSet = true,
-		},
-		S_FOQN_E06_0010_Clean = Saver {
+		S_Comp = GroupOperator {
 			CustomData = {
+				OutputPackager = {
+					Role = "OutputPackager",
+					SchemaVersion = 1
+				},
 				FOQNPipeline = {
 					Managed = true,
-					Role = "Saver",
+					Role = "OutputPackager",
 					SchemaVersion = 1
 				}
 			},
-			Inputs = {
-				ProcessWhenBlendIs00 = Input { Value = 0, },
-				Clip = Input {
-					Value = Clip {
-						Filename = "_FOQN:/FOQN_E06/RENDERS/FOQN_E06_0010_GFX_v001.mov",
-						FormatID = "QuickTimeMovies",
-						Length = 36,
-						Multiframe = true,
-						Saving = true,
-						TrimIn = 0,
-						TrimOut = 35,
-						ExtendFirst = 0,
-						ExtendLast = 0,
-						Loop = 1,
-						AspectMode = 0,
-						Depth = 0,
-						TimeCode = 0,
-						GlobalStart = 0,
-						GlobalEnd = 35
-					},
+			Inputs = ordered() {
+				OP_Status = Input { Value = "Review: 1920 x 1080  |  Crop: 2  |  WIP: off", },
+				MainInput1 = InstanceInput {
+					SourceOp = "PipeRouter_Input_1",
+					Source = "Input",
 				},
-				OutputFormat = Input { Value = FuID { "QuickTimeMovies" }, },
-				["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
-				Input = Input {
-					SourceOp = "PipeRouter_GroupOutput_1",
-					Source = "Output",
+				OP_OutputColorSpace = InstanceInput {
+					SourceOp = "Custom_OutputMetadata",
+					Source = "OutputColorSpace",
+					Page = "Output Metadata",
 				},
-				["OpenEXRFormat.ZipCompressionLevel"] = Input { Value = 4, },
-				["QuickTimeMovies.Compression"] = Input { Value = FuID { "H.264_avc1" }, }
+				OP_OutputGamma = InstanceInput {
+					SourceOp = "Custom_OutputMetadata",
+					Source = "OutputGamma",
+					Page = "Output Metadata",
+				},
+				OP_OutputFormat = InstanceInput {
+					SourceOp = "Custom_OutputMetadata",
+					Source = "OutputFormat",
+					Page = "Output Metadata",
+				},
+				OP_Compression = InstanceInput {
+					SourceOp = "Custom_OutputMetadata",
+					Source = "Compression",
+					Page = "Output Metadata",
+				},
+				OP_EnableReviewRaster = InstanceInput {
+					SourceOp = "Switch_ReviewRaster",
+					Source = "Source",
+					Page = "Output",
+					Name = "Review Raster",
+					Default = 1,
+				},
+				OP_EnableWIP = InstanceInput {
+					SourceOp = "Switch_WIP",
+					Source = "Source",
+					Page = "Output",
+					Name = "WIP Review",
+					Default = 0,
+				},
+				OP_BlankingEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "blankingEnabled",
+					Page = "WIP",
+					Name = "Blanking",
+				},
+				OP_BlankingOpacity = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "blankingOpacity",
+					Page = "WIP",
+				},
+				OP_FontFamily = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "fontFamily",
+					Page = "WIP",
+				},
+				OP_FontSize = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "fontSize",
+					Page = "WIP",
+				},
+				OP_TextOpacity = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "textOpacity",
+					Page = "WIP",
+				},
+				OP_OutlineEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "outlineEnabled",
+					Page = "WIP",
+					Name = "Outline",
+				},
+				OP_OutlineWidth = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "outlineWidth",
+					Page = "WIP",
+				},
+				OP_ShadowEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "shadowEnabled",
+					Page = "WIP",
+					Name = "Shadow",
+				},
+				OP_ShadowOffsetX = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "shadowOffsetX",
+					Page = "WIP",
+				},
+				OP_ShadowOffsetY = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "shadowOffsetY",
+					Page = "WIP",
+				},
+				OP_ShadowSoftness = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "shadowSoftness",
+					Page = "WIP",
+				},
+				OP_ShadowOpacity = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "shadowOpacity",
+					Page = "WIP",
+				},
+				OP_TLEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tlEnabled",
+					Page = "WIP",
+					Name = "Top Left",
+				},
+				OP_TLText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tlPrefix",
+					Page = "WIP",
+					Name = "Top Left Text",
+				},
+				OP_TLCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tlCalculatedField",
+					Page = "WIP",
+					Name = "Top Left Calculated Field",
+				},
+				OP_TCEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tcEnabled",
+					Page = "WIP",
+					Name = "Top Center",
+				},
+				OP_TCText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tcPrefix",
+					Page = "WIP",
+					Name = "Top Center Text",
+				},
+				OP_TCCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "tcCalculatedField",
+					Page = "WIP",
+					Name = "Top Center Calculated Field",
+				},
+				OP_TREnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "trEnabled",
+					Page = "WIP",
+					Name = "Top Right",
+				},
+				OP_TRText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "trPrefix",
+					Page = "WIP",
+					Name = "Top Right Text",
+				},
+				OP_TRCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "trCalculatedField",
+					Page = "WIP",
+					Name = "Top Right Calculated Field",
+				},
+				OP_BLEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "blEnabled",
+					Page = "WIP",
+					Name = "Bottom Left",
+				},
+				OP_BLText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "blPrefix",
+					Page = "WIP",
+					Name = "Bottom Left Text",
+				},
+				OP_BLCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "blCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Left Calculated Field",
+				},
+				OP_BCEnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "bcEnabled",
+					Page = "WIP",
+					Name = "Bottom Center",
+				},
+				OP_BCText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "bcPrefix",
+					Page = "WIP",
+					Name = "Bottom Center Text",
+				},
+				OP_BCCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "bcCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Center Calculated Field",
+				},
+				OP_BREnabled = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "brEnabled",
+					Page = "WIP",
+					Name = "Bottom Right",
+				},
+				OP_BRText = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "brPrefix",
+					Page = "WIP",
+					Name = "Bottom Right Text",
+				},
+				OP_BRCalculatedField = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "brCalculatedField",
+					Page = "WIP",
+					Name = "Bottom Right Calculated Field",
+				},
+				OP_FrameRelativeBase = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "frameRelativeBase",
+					Page = "WIP",
+				},
+				OP_FrameStart = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "frameStart",
+					Page = "WIP",
+				},
+				OP_FPSMode = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "fpsMode",
+					Page = "WIP",
+				},
+				OP_FPSOverride = InstanceInput {
+					Disabled = true,
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "fpsOverride",
+					Page = "WIP",
+				},
+				OP_TimecodeStart = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "timecodeStart",
+					Page = "WIP",
+				},
+				OP_DropFrameMode = Input {
+					Value = 0,
+					Page = "WIP",
+				},
+				OP_ColorSpaceMode = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "colorSpaceMode",
+					Page = "WIP",
+				},
+				OP_ManualColorSpace = InstanceInput {
+					SourceOp = "WIPReviewProbe_WIP",
+					Source = "manualColorSpace",
+					Page = "WIP",
+					Name = "Manual Color Space",
+				},
+				OP_ReviewWidth = InstanceInput {
+					SourceOp = "Background_ReviewCanvas",
+					Source = "Width",
+					Page = "Applied",
+					Name = "Review Width",
+					Default = 1920,
+				},
+				OP_ReviewHeight = InstanceInput {
+					SourceOp = "Background_ReviewCanvas",
+					Source = "Height",
+					Page = "Applied",
+					Name = "Review Height",
+					Default = 1080,
+				},
+				OP_CropRatio = InstanceInput {
+					SourceOp = "Custom_AppliedData",
+					Source = "NumberIn1",
+					Page = "Applied",
+					Name = "Crop Ratio",
+					Default = 2,
+				}
 			},
-			ViewInfo = OperatorInfo { Pos = { 385, 82.197 } },
+			Outputs = {
+				MainOutput1 = InstanceOutput {
+					SourceOp = "PipeRouter_GroupOutput",
+					Source = "Output",
+				}
+			},
+			ViewInfo = GroupInfo {
+				Pos = { 55, -82.803 },
+				Flags = {
+					AllowPan = false,
+					AutoSnap = true,
+					RemoveRouters = true
+				},
+				Size = { 550, 569.151, 275, 24.2424 },
+				Direction = "Horizontal",
+				PipeStyle = "Direct",
+				Scale = 1,
+				Offset = { 0, 0 }
+			},
+			Tools = ordered() {
+				PipeRouter_Input_1 = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Switch_Alpha",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -247.5, 151.758 } },
+				},
+				BetterResize_ReviewRaster = BetterResize {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Expression = "Background_ReviewCanvas.Width", },
+						Height = Input { Expression = "Background_ReviewCanvas.Height", },
+						KeepAspect = Input { Value = 1, },
+						PixelAspect = Input { Value = { 1, 1 }, },
+						FilterMethod = Input { Value = 3, },
+						Input = Input {
+							SourceOp = "PipeRouter_Input_1",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 151.758 } },
+				},
+				Background_ReviewCanvas = Background {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Width = Input { Value = 1920, },
+						Height = Input { Value = 1080, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 82.5, 223.758 } },
+				},
+				Merge_ReviewRaster = Merge {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Background = Input {
+							SourceOp = "Background_ReviewCanvas",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "BetterResize_ReviewRaster",
+							Source = "Output",
+						},
+						PerformDepthMerge = Input { Value = 0, }
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 223.758 } },
+				},
+				Switch_ReviewRaster = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input { Value = 1, },
+						Name0 = Input { Value = "Source Raster", },
+						Input0 = Input {
+							SourceOp = "PipeRouter_SourceBypass",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "Review Raster", },
+						Input1 = Input {
+							SourceOp = "Merge_ReviewRaster",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -82.5, 295.758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				Custom_AppliedData = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						NumberIn1 = Input { Value = 2, },
+						LUTIn1 = Input {
+							SourceOp = "Custom_AppliedDataLUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_AppliedDataLUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_AppliedDataLUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_AppliedDataLUTIn4",
+							Source = "Value",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -137.5, 79.7576 } },
+				},
+				Custom_OutputMetadata = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						LUTIn1 = Input {
+							SourceOp = "Custom_OutputMetadataLUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_OutputMetadataLUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_OutputMetadataLUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_OutputMetadataLUTIn4",
+							Source = "Value",
+						},
+						OutputColorSpace = Input { Value = "REC709_COLORSPACE", },
+						OutputGamma = Input { Value = "LINEAR_GAMMA", },
+						OutputFormat = Input { Value = "Movie", },
+						Compression = Input { Value = "ProRes 422 HQ", }
+					},
+					ViewInfo = OperatorInfo { Pos = { -137.5, 7.75757 } },
+					UserControls = ordered() {
+						OutputColorSpace = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Color Space",
+						},
+						OutputGamma = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Gamma",
+						},
+						OutputFormat = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Output Format",
+						},
+						Compression = {
+							TEC_ReadOnly = true,
+							INPID_InputControl = "TextEditControl",
+							ICS_ControlPage = "Output Metadata",
+							LINKID_DataType = "Text",
+							LINKS_Name = "Compression",
+						}
+					}
+				},
+				WIPReviewProbe_WIP = ofx.com.jtorrens.WIPReviewProbe {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Source = Input {
+							SourceOp = "PipeRouter_WIPSource",
+							Source = "Output",
+						},
+						processingGroup = Input { Value = 0, },
+						gpuCapabilityStatus = Input {
+							Value = "Metal \"true\"; CUDA <ErrUnknown>; OpenCL <ErrUnknown>",
+							Disabled = true,
+						},
+						canvasGroup = Input { Value = 1, },
+						rasterCapabilityStatus = Input {
+							Value = "Fusion — Requested Review Raster available",
+							Disabled = true,
+						},
+						canvasMode = Input { Value = 0, },
+						reviewRasterPreset = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						requestedWidth = Input {
+							Value = 1920,
+							Disabled = true,
+						},
+						requestedHeight = Input {
+							Value = 1080,
+							Disabled = true,
+						},
+						placementMode = Input { Value = 0, },
+						resampleFilter = Input { Value = 2, },
+						canvasColourRed = Input { Value = 0, },
+						canvasColourGreen = Input { Value = 0, },
+						canvasColourBlue = Input { Value = 0, },
+						canvasColourAlpha = Input { Value = 1, },
+						blankingGroup = Input { Value = 1, },
+						blankingEnabled = Input { Value = 0, },
+						blankingAspectPreset = Input {
+							Value = 4,
+							Disabled = true,
+						},
+						blankingAspectCustom = Input {
+							Disabled = true,
+							Expression = "Custom_AppliedData.NumberIn1",
+						},
+						blankingColorRed = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorGreen = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorBlue = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						blankingColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blankingOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						textGlobalGroup = Input { Value = 1, },
+						fontFamily = Input { Value = "System Default", },
+						fontStyle = Input { Value = 0, },
+						fontSize = Input { Value = 0.028, },
+						textColorRed = Input { Value = 1, },
+						textColorGreen = Input { Value = 1, },
+						textColorBlue = Input { Value = 1, },
+						textColorAlpha = Input { Value = 1, },
+						textOpacity = Input { Value = 1, },
+						paddingLeft = Input { Value = 0.015, },
+						paddingRight = Input { Value = 0.015, },
+						paddingTop = Input { Value = 0.02, },
+						paddingBottom = Input { Value = 0.02, },
+						outlineGroup = Input { Value = 0, },
+						outlineEnabled = Input { Value = 1, },
+						outlineWidth = Input { Value = 0.001, },
+						outlineColorRed = Input { Value = 0, },
+						outlineColorGreen = Input { Value = 0, },
+						outlineColorBlue = Input { Value = 0, },
+						outlineColorAlpha = Input { Value = 1, },
+						outlineOpacity = Input { Value = 1, },
+						shadowGroup = Input { Value = 0, },
+						shadowEnabled = Input { Value = 0, },
+						shadowOffsetX = Input {
+							Value = 0.0015,
+							Disabled = true,
+						},
+						shadowOffsetY = Input {
+							Value = 0.002,
+							Disabled = true,
+						},
+						shadowSoftness = Input {
+							Value = 0.002,
+							Disabled = true,
+						},
+						shadowColorRed = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorGreen = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorBlue = Input {
+							Value = 0,
+							Disabled = true,
+						},
+						shadowColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						shadowOpacity = Input {
+							Value = 0.6,
+							Disabled = true,
+						},
+						zonesGroup = Input { Value = 0, },
+						tlZone = Input { Value = 0, },
+						tlEnabled = Input { Value = 0, },
+						tlPrefix = Input { Value = "", },
+						tlCalculatedField = Input { Value = 0, },
+						tlOffsetX = Input { Value = 0, },
+						tlOffsetY = Input { Value = 0, },
+						tlUseSizeOverride = Input { Value = 0, },
+						tlSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						tlUseColorOverride = Input { Value = 0, },
+						tlColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tlUseOpacityOverride = Input { Value = 0, },
+						tlOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcZone = Input { Value = 0, },
+						tcEnabled = Input { Value = 0, },
+						tcPrefix = Input { Value = "", },
+						tcCalculatedField = Input { Value = 0, },
+						tcOffsetX = Input { Value = 0, },
+						tcOffsetY = Input { Value = 0, },
+						tcUseSizeOverride = Input { Value = 0, },
+						tcSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						tcUseColorOverride = Input { Value = 0, },
+						tcColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						tcUseOpacityOverride = Input { Value = 0, },
+						tcOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trZone = Input { Value = 0, },
+						trEnabled = Input { Value = 0, },
+						trPrefix = Input { Value = "", },
+						trCalculatedField = Input { Value = 0, },
+						trOffsetX = Input { Value = 0, },
+						trOffsetY = Input { Value = 0, },
+						trUseSizeOverride = Input { Value = 0, },
+						trSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						trUseColorOverride = Input { Value = 0, },
+						trColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						trUseOpacityOverride = Input { Value = 0, },
+						trOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blZone = Input { Value = 0, },
+						blEnabled = Input { Value = 0, },
+						blPrefix = Input { Value = "", },
+						blCalculatedField = Input { Value = 0, },
+						blOffsetX = Input { Value = 0, },
+						blOffsetY = Input { Value = 0, },
+						blUseSizeOverride = Input { Value = 0, },
+						blSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						blUseColorOverride = Input { Value = 0, },
+						blColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						blUseOpacityOverride = Input { Value = 0, },
+						blOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcZone = Input { Value = 0, },
+						bcEnabled = Input { Value = 0, },
+						bcPrefix = Input { Value = "", },
+						bcCalculatedField = Input { Value = 0, },
+						bcOffsetX = Input { Value = 0, },
+						bcOffsetY = Input { Value = 0, },
+						bcUseSizeOverride = Input { Value = 0, },
+						bcSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						bcUseColorOverride = Input { Value = 0, },
+						bcColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						bcUseOpacityOverride = Input { Value = 0, },
+						bcOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brZone = Input { Value = 0, },
+						brEnabled = Input { Value = 0, },
+						brPrefix = Input { Value = "", },
+						brCalculatedField = Input { Value = 0, },
+						brOffsetX = Input { Value = 0, },
+						brOffsetY = Input { Value = 0, },
+						brUseSizeOverride = Input { Value = 0, },
+						brSize = Input {
+							Value = 0.028,
+							Disabled = true,
+						},
+						brUseColorOverride = Input { Value = 0, },
+						brColorRed = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorGreen = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorBlue = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brColorAlpha = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						brUseOpacityOverride = Input { Value = 0, },
+						brOpacity = Input {
+							Value = 1,
+							Disabled = true,
+						},
+						calculatedFieldsGroup = Input { Value = 0, },
+						frameRelativeBase = Input { Value = 1, },
+						frameStart = Input { Value = 1001, },
+						reviewDate = Input { Value = "2026-08-21", },
+						fpsMode = Input { Value = 0, },
+						fpsOverride = Input {
+							Value = 24,
+							Disabled = true,
+						},
+						timecodeStart = Input { Value = "00:00:00:00", },
+						managedColorGroup = Input { Value = 0, },
+						colorSpaceMode = Input { Value = 0, },
+						manualColorSpace = Input { Value = 0, },
+						graphicsWhiteMode = Input { Value = 0, },
+						graphicsWhiteNits = Input {
+							Value = 203,
+							Disabled = true,
+						},
+						hlgPeakNits = Input { Value = 1000, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 137.5, 367.758 } },
+				},
+				Switch_WIP = Switch {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Name0 = Input { Value = "Clean", },
+						Input0 = Input {
+							SourceOp = "Switch_ReviewRaster",
+							Source = "Output",
+						},
+						Name1 = Input { Value = "WIP Review", },
+						Input1 = Input {
+							SourceOp = "WIPReviewProbe_WIP",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -27.5, 367.758 } },
+					Colors = { TileColor = { R = 0.572549019607843, G = 0.572549019607843, B = 0.572549019607843 }, }
+				},
+				Custom_LegalClamp = Custom {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						LUTIn1 = Input {
+							SourceOp = "Custom_LegalClampLUTIn1",
+							Source = "Value",
+						},
+						LUTIn2 = Input {
+							SourceOp = "Custom_LegalClampLUTIn2",
+							Source = "Value",
+						},
+						LUTIn3 = Input {
+							SourceOp = "Custom_LegalClampLUTIn3",
+							Source = "Value",
+						},
+						LUTIn4 = Input {
+							SourceOp = "Custom_LegalClampLUTIn4",
+							Source = "Value",
+						},
+						RedExpression = Input { Value = "max(r1, 0)", },
+						GreenExpression = Input { Value = "max(g1, 0)", },
+						BlueExpression = Input { Value = "max(b1, 0)", },
+						AlphaExpression = Input { Value = "min(max(a1, 0), 1)", },
+						Image1 = Input {
+							SourceOp = "Switch_WIP",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { -27.5, 439.758 } },
+				},
+				PipeRouter_Output = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Custom_LegalClamp",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -27.5, 511.758 } },
+				},
+				PipeRouter_WIPSource = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "Switch_ReviewRaster",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 137.5, 295.758 } },
+				},
+				PipeRouter_GroupOutput = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_OutputReturn",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 247.5, 79.7576 } },
+				},
+				PipeRouter_SourceBypass = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_Input_1",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { -247.5, 295.758 } },
+				},
+				PipeRouter_OutputReturn = PipeRouter {
+					CtrlWShown = false,
+					NameSet = true,
+					Inputs = {
+						Input = Input {
+							SourceOp = "PipeRouter_Output",
+							Source = "Output",
+						}
+					},
+					ViewInfo = PipeRouterInfo { Pos = { 247.5, 439.758 } },
+				}
+			},
+			UserControls = ordered() {
+				OP_Status = {
+					INP_ReadOnly = true,
+					INP_External = false,
+					INP_ForceNotify = false,
+					ICS_ControlPage = "Output",
+					INPID_InputControl = "TextEditControl",
+					LINKID_DataType = "Text",
+					LINKS_Name = "Applied Configuration",
+				}
+			}
 		},
 		L_InputPrep_FOQN_E06_0010 = GroupOperator {
 			CustomData = {
@@ -2252,7 +4423,7 @@ Composition {
 					Managed = true,
 					Role = "InputPrep",
 					SchemaVersion = 1
-				},
+				}
 			},
 			Inputs = ordered() {
 				IP_Status = Input { Value = "1920 x 1080  ->  1920 x 1080  |  Depth: 3  |  REC709_COLORSPACE / TWOPOINTFOUR_GAMMA  ->  REC709_COLORSPACE / LINEAR_GAMMA", },
@@ -2613,10 +4784,10 @@ Composition {
 				IP_Status = {
 					INP_ReadOnly = true,
 					INP_External = false,
-					LINKID_DataType = "Text",
-					INPID_InputControl = "TextEditControl",
 					INP_ForceNotify = false,
 					ICS_ControlPage = "InputPrep",
+					INPID_InputControl = "TextEditControl",
+					LINKID_DataType = "Text",
 					LINKS_Name = "Applied Configuration",
 				}
 			}
@@ -2640,7 +4811,7 @@ Composition {
 				SC_WorkingResolution = Input { Value = { 1920, 1080 }, },
 				SC_CropRatio = Input { Value = 1.77777777777778, },
 				SC_RootPathMap = Input { Value = "_FOQN:", },
-				SC_Status = Input { Value = "OK: Updated 3 targets", },
+				SC_Status = Input { Value = "OK: Updated 5 targets", },
 				SC_LoaderTarget1Node = Input { Value = "L_FOQN_E06_0010_Plate", },
 				SC_LoaderTarget1Template = Input { Value = "{root}/{show}_{episode}/BRUTOS/H264/{show}_{episode}_{shot}.mov", },
 				SC_LoaderTarget1Resolved = Input { Value = "_FOQN:/FOQN_E06/BRUTOS/H264/FOQN_E06_0010.mov", },
@@ -2649,15 +4820,21 @@ Composition {
 				SC_LoaderTarget3SourceGamma = Input { Value = 0, },
 				SC_LoaderTarget4SourceGamma = Input { Value = 0, },
 				SC_LoaderTarget5SourceGamma = Input { Value = 0, },
-				SC_SaverTarget1Node = Input { Value = "S_FOQN_E06_0010_WIP", },
-				SC_SaverTarget1Template = Input { Value = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov", },
-				SC_SaverTarget1Resolved = Input { Value = "_FOQN:/FOQN_E06/WIP/FOQN_E06_0010_WIP_v001.mov", },
+				SC_SaverTarget1Node = Input { Value = "S_FOQN_E06_0010_Comp", },
+				SC_SaverTarget1Template = Input { Value = "{root}/{show}_{episode}/COMP/{show}_{episode}_{shot}_COMP_{version}.mov", },
+				SC_SaverTarget1Resolved = Input { Value = "_FOQN:/FOQN_E06/COMP/FOQN_E06_0010_COMP_v001.mov", },
 				SC_SaverTarget1Compression = Input { Value = "ProRes 422 HQ", },
-				SC_SaverTarget2Node = Input { Value = "S_FOQN_E06_0010_Clean", },
-				SC_SaverTarget2Template = Input { Value = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov", },
-				SC_SaverTarget2Resolved = Input { Value = "_FOQN:/FOQN_E06/RENDERS/FOQN_E06_0010_GFX_v001.mov", },
+				SC_SaverTarget2Node = Input { Value = "S_FOQN_E06_0010_WIP", },
+				SC_SaverTarget2Template = Input { Value = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov", },
+				SC_SaverTarget2Resolved = Input { Value = "_FOQN:/FOQN_E06/WIP/FOQN_E06_0010_WIP_v001.mov", },
 				SC_SaverTarget2Compression = Input { Value = "ProRes 422 HQ", },
+				SC_SaverTarget3Node = Input { Value = "S_FOQN_E06_0010_GFX", },
+				SC_SaverTarget3Template = Input { Value = "{root}/{show}_{episode}/GFX/{show}_{episode}_{shot}_GFX_{version}.mov", },
+				SC_SaverTarget3Resolved = Input { Value = "_FOQN:/FOQN_E06/GFX/FOQN_E06_0010_GFX_v001.mov", },
 				SC_SaverTarget3Compression = Input { Value = "ProRes 422 HQ", },
+				SC_SaverTarget4Node = Input { Value = "S_FOQN_E06_0010_Final", },
+				SC_SaverTarget4Template = Input { Value = "{root}/{show}_{episode}/FINAL/{show}_{episode}_{shot}_FINAL_{version}.mov", },
+				SC_SaverTarget4Resolved = Input { Value = "_FOQN:/FOQN_E06/FINAL/FOQN_E06_0010_FINAL_v001.mov", },
 				SC_SaverTarget4Compression = Input { Value = "ProRes 422 HQ", },
 				SC_SaverTarget5Compression = Input { Value = "ProRes 422 HQ", }
 			},
@@ -2677,102 +4854,102 @@ Composition {
 			UserControls = ordered() {
 				SC_IdentitySection = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Identity",
 				},
 				SC_Show = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "FOQN",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Show",
 				},
 				SC_Episode = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "E01",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Episode",
 				},
 				SC_Shot = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "0010",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Shot",
 				},
 				SC_Version = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "v001",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Version",
 				},
 				SC_FormatSection = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Format",
 				},
 				SC_WorkingResolution = {
 					INP_DefaultX = 3840,
 					INPID_PreviewControl = "",
 					INP_DefaultY = 2160,
-					ICS_ControlPage = "Shot",
-					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
-					LINKID_DataType = "Point",
 					INPID_InputControl = "OffsetControl",
+					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
+					LINKID_DataType = "Point",
 					LINKS_Name = "Working Resolution",
 				},
 				SC_CropRatio = {
 					INP_MaxAllowed = 10,
-					ICS_ControlPage = "Shot",
+					INPID_InputControl = "SliderControl",
 					INP_MaxScale = 10,
 					INP_Default = 2,
 					INP_MinScale = 0.1,
 					INP_MinAllowed = 0.1,
 					LINKID_DataType = "Number",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
-					INPID_InputControl = "SliderControl",
+					ICS_ControlPage = "Shot",
 					LINKS_Name = "Crop Ratio"
 				},
 				SC_ReviewResolution = {
 					INP_DefaultX = 1920,
 					INPID_PreviewControl = "",
 					INP_DefaultY = 1080,
-					ICS_ControlPage = "Shot",
-					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
-					LINKID_DataType = "Point",
 					INPID_InputControl = "OffsetControl",
+					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Shot",
+					LINKID_DataType = "Point",
 					LINKS_Name = "Review Resolution",
 				},
 				SC_FormatHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Shot",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Shot",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Stored only; not applied to image nodes in v0.1.",
 				},
 				SC_SourceColorSpaceChoice = {
@@ -3046,130 +5223,130 @@ Composition {
 				},
 				SC_ColorHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Color",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Color",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Stored only; not applied to CST nodes in v0.1.",
 				},
 				SC_PathMapSection = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Path Map",
 				},
 				SC_RootPathMap = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "_FOQN:",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "Root Path Map",
 				},
 				SC_PathMapHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "Portable Path Map, for example _FOQN:",
 				},
 				SC_Apply = {
-					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run(comp)",
-					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run(comp)",
+					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Number",
 					LINKS_Name = "Apply / Update",
 				},
 				SC_UpdateSaverVersions = {
-					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run_savers(comp)",
-					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/apply_shot_config.lua\"); m.run_savers(comp)",
+					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Number",
 					LINKS_Name = "Update Saver Versions",
 				},
 				SC_RebuildPipeline = {
-					ICS_ControlPage = "Targets",
-					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/rebuild_managed_pipeline.lua\"); m.run(comp)",
-					LINKID_DataType = "Number",
 					INPID_InputControl = "ButtonControl",
+					BTNCS_Execute = "local m = dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/rebuild_managed_pipeline.lua\"); m.run(comp)",
+					ICS_ControlPage = "Targets",
+					LINKID_DataType = "Number",
 					LINKS_Name = "Rebuild Managed Pipeline",
 				},
 				SC_Status = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Status",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "Ready",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Status",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_TargetHelp = {
 					INP_External = false,
-					ICS_ControlPage = "Targets",
-					LINKID_DataType = "Text",
-					INP_Passive = true,
 					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
+					INP_Passive = true,
+					LINKID_DataType = "Text",
 					LINKS_Name = "F2 copies the node name. Empty slots are ignored.",
 				},
 				SC_LoaderGroup = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 30,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "Loaders",
 				},
 				SC_LoaderTarget1Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 5,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "1 · Loader",
 				},
 				SC_LoaderTarget1Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "1 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "1 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget1Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "1 · Path Template",
 				},
 				SC_LoaderTarget1Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "1 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "1 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget1SourceColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -3221,8 +5398,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Color Space",
 				},
@@ -3293,52 +5470,52 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 3,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Gamma",
 				},
 				SC_LoaderTarget2Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 5,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "2 · Loader",
 				},
 				SC_LoaderTarget2Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "2 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "2 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget2Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "2 · Path Template",
 				},
 				SC_LoaderTarget2Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "2 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "2 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget2SourceColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -3390,8 +5567,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Color Space",
 				},
@@ -3462,52 +5639,52 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 3,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Gamma",
 				},
 				SC_LoaderTarget3Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 5,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "3 · Loader",
 				},
 				SC_LoaderTarget3Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "3 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "3 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget3Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "3 · Path Template",
 				},
 				SC_LoaderTarget3Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "3 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "3 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget3SourceColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -3559,8 +5736,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Color Space",
 				},
@@ -3631,52 +5808,52 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 3,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Gamma",
 				},
 				SC_LoaderTarget4Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 5,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "4 · Loader",
 				},
 				SC_LoaderTarget4Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "4 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "4 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget4Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "4 · Path Template",
 				},
 				SC_LoaderTarget4Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "4 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "4 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget4SourceColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -3728,8 +5905,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Color Space",
 				},
@@ -3800,52 +5977,52 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 3,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Gamma",
 				},
 				SC_LoaderTarget5Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 5,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "5 · Loader",
 				},
 				SC_LoaderTarget5Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "5 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "5 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget5Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/BRUTOS/{show}_{episode}_{shot}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "5 · Path Template",
 				},
 				SC_LoaderTarget5Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "5 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "5 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_LoaderTarget5SourceColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -3897,8 +6074,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Color Space",
 				},
@@ -3969,63 +6146,63 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 3,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Source Gamma",
 				},
 				SC_SaverGroup = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 40,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "Savers",
 				},
 				SC_SaverTarget1Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 7,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "1 · Saver",
 				},
 				SC_SaverTarget1Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "1 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "Comp",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "1 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget1Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/COMP/{show}_{episode}_{shot}_COMP_{version}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "1 · Path Template",
 				},
 				SC_SaverTarget1Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "1 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "1 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget1OutputColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -4077,8 +6254,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Color Space",
 				},
@@ -4149,8 +6326,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Gamma",
 				},
@@ -4161,62 +6338,62 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Format",
 				},
 				SC_SaverTarget1Compression = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Compression",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "ProRes 422 HQ",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Compression",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 7,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "2 · Saver",
 				},
 				SC_SaverTarget2Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "2 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "WIP",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "2 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "2 · Path Template",
 				},
 				SC_SaverTarget2Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "2 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "2 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget2OutputColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -4268,8 +6445,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Color Space",
 				},
@@ -4340,8 +6517,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Gamma",
 				},
@@ -4352,62 +6529,62 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Format",
 				},
 				SC_SaverTarget2Compression = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Compression",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "ProRes 422 HQ",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Compression",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 7,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "3 · Saver",
 				},
 				SC_SaverTarget3Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "3 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "GFX",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "3 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/GFX/{show}_{episode}_{shot}_GFX_{version}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "3 · Path Template",
 				},
 				SC_SaverTarget3Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "3 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "3 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget3OutputColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -4459,8 +6636,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Color Space",
 				},
@@ -4531,8 +6708,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Gamma",
 				},
@@ -4543,62 +6720,62 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Format",
 				},
 				SC_SaverTarget3Compression = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Compression",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "ProRes 422 HQ",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Compression",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 7,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "4 · Saver",
 				},
 				SC_SaverTarget4Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "4 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "Final",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "4 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/FINAL/{show}_{episode}_{shot}_FINAL_{version}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "4 · Path Template",
 				},
 				SC_SaverTarget4Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "4 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "4 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget4OutputColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -4650,8 +6827,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Color Space",
 				},
@@ -4722,8 +6899,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Gamma",
 				},
@@ -4734,62 +6911,62 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Format",
 				},
 				SC_SaverTarget4Compression = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Compression",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "ProRes 422 HQ",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Compression",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5Group = {
 					INP_Integer = true,
 					LBLC_DropDownButton = true,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "LabelControl",
 					LBLC_NumInputs = 7,
 					INP_Default = 0,
 					INP_External = false,
 					LINKID_DataType = "Number",
-					INPID_InputControl = "LabelControl",
+					ICS_ControlPage = "Targets",
 					LINKS_Name = "5 · Saver",
 				},
 				SC_SaverTarget5Node = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "5 · Node Name",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "5 · Node Name",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5Template = {
 					TEC_ReadOnly = false,
-					ICS_ControlPage = "Targets",
+					INPID_InputControl = "TextEditControl",
 					TEC_Lines = 1,
 					INP_Default = "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_{version}.mov",
 					LINKID_DataType = "Text",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
+					ICS_ControlPage = "Targets",
 					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
 					LINKS_Name = "5 · Path Template",
 				},
 				SC_SaverTarget5Resolved = {
 					TEC_ReadOnly = true,
-					LINKID_DataType = "Text",
-					LINKS_Name = "5 · Resolved Path",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "5 · Resolved Path",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				},
 				SC_SaverTarget5OutputColorSpace = {
 					{ CCS_AddString = "Rec.709" },
@@ -4841,8 +7018,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Color Space",
 				},
@@ -4913,8 +7090,8 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Gamma",
 				},
@@ -4925,20 +7102,20 @@ Composition {
 					INP_Integer = true,
 					INP_MinAllowed = 0,
 					INPID_InputControl = "ComboControl",
-					LINKID_DataType = "Number",
 					INP_Default = 0,
+					LINKID_DataType = "Number",
 					ICS_ControlPage = "Targets",
 					LINKS_Name = "Output Format",
 				},
 				SC_SaverTarget5Compression = {
 					TEC_ReadOnly = false,
-					LINKID_DataType = "Text",
-					LINKS_Name = "Compression",
 					ICS_ControlPage = "Targets",
-					TEC_Wrap = false,
-					INPID_InputControl = "TextEditControl",
-					TEC_Lines = 1,
 					INP_Default = "ProRes 422 HQ",
+					INPID_InputControl = "TextEditControl",
+					LINKS_Name = "Compression",
+					LINKID_DataType = "Text",
+					TEC_Lines = 1,
+					TEC_Wrap = false,
 				}
 			},
 		}
@@ -4954,14 +7131,14 @@ Composition {
 			Width = 3840,
 			Height = 2057,
 			ZoneInfo = {
-				["!Right"] = {
-				},
+				AuxRight = { Expanded = true },
 				["!Left"] = {
 				},
 				AuxLeft = { Expanded = true },
 				Right = { Expanded = true, },
 				Left = { Expanded = false, },
-				AuxRight = { Expanded = true }
+				["!Right"] = {
+				}
 			},
 			ViewInfo = {
 				Viewer1 = { Show = true, RatioY = 0.01, RatioX = 1, },
@@ -4985,15 +7162,15 @@ Composition {
 				Keyframes = { Show = false, },
 				LayoutStrip = { Show = true, RatioX = 100, },
 				Inspector = { Show = true, RatioY = 1, RatioX = 100, },
-				ActionStrip = { Show = true, RatioX = 100, },
 				InnerRight = {
 				},
+				MediaPool = { Show = false, },
 				OuterColumns = {
 					RatioX = 100,
 					RatioY = 1,
 				},
 				Effects = { Show = false, },
-				Clips = { Show = false, },
+				ActionStrip = { Show = true, RatioX = 100, },
 				Metadata = { Show = false, },
 				OuterLeft = {
 				},
@@ -5003,10 +7180,10 @@ Composition {
 				},
 				Nodes = { Show = true, RatioY = 100, RatioX = 1, },
 				OuterRight = {
-					RatioY = 100,
 					PixelX = 420,
+					RatioY = 100,
 				},
-				MediaPool = { Show = false, },
+				Clips = { Show = false, },
 				Spline = { Show = false, }
 			},
 			Views = ordered() {
@@ -5031,7 +7208,7 @@ Composition {
 						Direction = "Horizontal",
 						PipeStyle = "Direct",
 						RootScale = 1,
-						RootOffset = { 1011.33, 121.727 }
+						RootOffset = { 650.663, 121.727 }
 					}
 				},
 				Keyframes = MultiView {
@@ -5200,7 +7377,7 @@ Composition {
 				},
 				LeftView = {
 					Viewer = {
-						Layer = ":Default",
+						Layer = ":Default"
 					},
 				},
 				View1 = {
@@ -5235,8 +7412,8 @@ Composition {
 										ACESTransform = ViewOperator {
 											NameSet = true,
 											Inputs = {
-												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
 												OutputTransform200 = Input { Value = FuID { "ODT_REC709_100" } },
+												AcesVersion = Input { Value = FuID { "ACES_VERSION_2_0_0" } },
 												InputTransform200 = Input { Value = FuID { "IDT_ACESCG" } }
 											},
 											CtrlWZoom = false
@@ -5244,7 +7421,6 @@ Composition {
 									}
 								},
 								SelectedName = "Color Space Transform",
-								SelectedPlugin = "ColorSpaceTransformViewLUT",
 								GamutViewLUT = {
 									Tools = ordered() {
 										GamutViewLUT = ViewOperator {
@@ -5256,7 +7432,8 @@ Composition {
 											CtrlWZoom = false
 										}
 									}
-								}
+								},
+								SelectedPlugin = "ColorSpaceTransformViewLUT"
 							}
 						},
 						PickH = 1,
@@ -5266,10 +7443,10 @@ Composition {
 							Layer = ":Default",
 							NearZ = 0,
 							LUTPlugin = "ColorSpaceTransformViewLUT",
-							FitMarginX = 0,
+							FitMarginY = 0,
 							FitMarginType = 0,
 							FarZ = -1000,
-							FitMarginY = 0
+							FitMarginX = 0
 						},
 						RulersShow = true,
 						SideB = {
@@ -5304,7 +7481,7 @@ Composition {
 				Language = "auto"
 			},
 			QuickTime = {
-			},
+			}
 		}
 	},
 }

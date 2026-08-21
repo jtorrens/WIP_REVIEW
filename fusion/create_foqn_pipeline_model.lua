@@ -69,10 +69,17 @@ model:Lock()
 local plate = add_tool("Loader", "L_FOQN_E06_0010_Plate", -6, 0)
 mark_managed(plate, "Loader")
 plate.Clip[model.CurrentTime or 0] = PLATE_PATH
-local wip_saver = add_tool("Saver", "S_FOQN_E06_0010_WIP", 3, -2)
-local clean_saver = add_tool("Saver", "S_FOQN_E06_0010_Clean", 3, 2)
-mark_managed(wip_saver, "Saver")
-mark_managed(clean_saver, "Saver")
+local saver_specs = {
+    { name = "Comp", y = -3, wip = false },
+    { name = "WIP", y = -1, wip = true },
+    { name = "GFX", y = 1, wip = false },
+    { name = "Final", y = 3, wip = false },
+}
+local savers = {}
+for index, spec in ipairs(saver_specs) do
+    savers[index] = add_tool("Saver", "S_FOQN_E06_0010_" .. spec.name, 3, spec.y)
+    mark_managed(savers[index], "Saver")
+end
 model:Unlock()
 
 -- Input processing: the only transform path in the model.
@@ -93,23 +100,20 @@ input_prep:SetAttrs({ TOOLS_Name = "L_InputPrep_FOQN_E06_0010" })
 mark_managed(input_prep, "InputPrep")
 input_prep.MainInput1 = plate.Output
 
--- Output processing: one WIP delivery and one clean delivery from the same prepared image.
+-- Output processing: four deliverables from the same prepared image.
 local output_builder = dofile(SCRIPT_DIR .. "output_packager/build_output_packager.lua")
-local wip_packager = output_builder.last_group
-local clean_packager = output_builder.run(model)
-if wip_packager == nil or clean_packager == nil then error("OutputPackager was not created") end
-wip_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_WIP" })
-clean_packager:SetAttrs({ TOOLS_Name = "S_OutputPackager_FOQN_E06_0010_Clean" })
-mark_managed(wip_packager, "OutputPackager")
-mark_managed(clean_packager, "OutputPackager")
-wip_packager.MainInput1 = first_output(input_prep)
-clean_packager.MainInput1 = first_output(input_prep)
-wip_saver.Input:ConnectTo(first_output(wip_packager))
-clean_saver.Input:ConnectTo(first_output(clean_packager))
-set(wip_packager, "OP_EnableReviewRaster", 1)
-set(wip_packager, "OP_EnableWIP", 1)
-set(clean_packager, "OP_EnableReviewRaster", 1)
-set(clean_packager, "OP_EnableWIP", 0)
+local packagers = { output_builder.last_group }
+for index = 2, #saver_specs do packagers[index] = output_builder.run(model) end
+for index, spec in ipairs(saver_specs) do
+    local packager = packagers[index]
+    if packager == nil then error("OutputPackager was not created") end
+    packager:SetAttrs({ TOOLS_Name = "S_" .. spec.name })
+    mark_managed(packager, "OutputPackager")
+    packager.MainInput1 = first_output(input_prep)
+    savers[index].Input:ConnectTo(first_output(packager))
+    set(packager, "OP_EnableReviewRaster", 1)
+    set(packager, "OP_EnableWIP", spec.wip and 1 or 0)
+end
 
 -- Shared shot metadata resolves the real FOQN source and output paths.
 dofile(SCRIPT_DIR .. "shot_config/build_shot_config.lua")
@@ -140,12 +144,16 @@ end
 
 set_shot_target("Loader", 1, "L_FOQN_E06_0010_Plate",
     "{root}/{show}_{episode}/BRUTOS/H264/{show}_{episode}_{shot}.mov")
-set_shot_target("Saver", 1, "S_FOQN_E06_0010_WIP",
+set_shot_target("Saver", 1, "S_FOQN_E06_0010_Comp",
+    "{root}/{show}_{episode}/COMP/{show}_{episode}_{shot}_COMP_{version}.mov")
+set_shot_target("Saver", 2, "S_FOQN_E06_0010_WIP",
     "{root}/{show}_{episode}/WIP/{show}_{episode}_{shot}_WIP_{version}.mov")
-set_shot_target("Saver", 2, "S_FOQN_E06_0010_Clean",
-    "{root}/{show}_{episode}/RENDERS/{show}_{episode}_{shot}_GFX_{version}.mov")
+set_shot_target("Saver", 3, "S_FOQN_E06_0010_GFX",
+    "{root}/{show}_{episode}/GFX/{show}_{episode}_{shot}_GFX_{version}.mov")
+set_shot_target("Saver", 4, "S_FOQN_E06_0010_Final",
+    "{root}/{show}_{episode}/FINAL/{show}_{episode}_{shot}_FINAL_{version}.mov")
 clear_shot_targets("Loader", 2)
-clear_shot_targets("Saver", 3)
+clear_shot_targets("Saver", 5)
 local refresh_previews = dofile(SCRIPT_DIR .. "shot_config/refresh_resolved_paths.lua")
 local previews_ok, preview_error = refresh_previews.run(shot_config)
 if not previews_ok then error(preview_error or "ShotConfig previews could not refresh") end
@@ -156,10 +164,10 @@ local flow = model.CurrentFrame and model.CurrentFrame.FlowView
 if flow ~= nil then
     pcall(function() flow:SetPos(plate, -6, 0) end)
     pcall(function() flow:SetPos(input_prep, -3, 0) end)
-    pcall(function() flow:SetPos(wip_packager, 0, -2) end)
-    pcall(function() flow:SetPos(clean_packager, 0, 2) end)
-    pcall(function() flow:SetPos(wip_saver, 3, -2) end)
-    pcall(function() flow:SetPos(clean_saver, 3, 2) end)
+    for index, spec in ipairs(saver_specs) do
+        pcall(function() flow:SetPos(packagers[index], 0, spec.y) end)
+        pcall(function() flow:SetPos(savers[index], 3, spec.y) end)
+    end
     pcall(function() flow:SetPos(shot_config, -6, 5) end)
 end
 
