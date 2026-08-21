@@ -494,6 +494,8 @@ void testSystemTextRasterizerUTF8() {
   const auto filenamePrefix = wipreview::text::rasterizeUTF8(
       "The-Fields-Original.", "System Default",
       wipreview::text::FontStyle::Regular, 60.48);
+  const auto filenameSuffix = wipreview::text::rasterizeUTF8(
+      "braw", "System Default", wipreview::text::FontStyle::Regular, 60.48);
   const auto rightmostInk = [](const wipreview::text::GlyphRaster& glyph) {
     int result = -1;
     for (int y = 0; y < glyph.height; ++y) {
@@ -506,6 +508,7 @@ void testSystemTextRasterizerUTF8() {
     return result;
   };
   assert(!filename.fillPixels.empty());
+  assert(filename.width >= filenamePrefix.width + filenameSuffix.width - 8);
   assert(rightmostInk(filename) > rightmostInk(filenamePrefix) + 32);
 
   const auto fallback = wipreview::text::rasterizeUTF8(

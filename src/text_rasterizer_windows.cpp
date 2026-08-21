@@ -236,6 +236,7 @@ GlyphRaster rasterizeUTF8(const std::string& text,
               static_cast<UINT32>(height), target.put()))) {
         return result;
       }
+      if (FAILED(target->SetPixelsPerDip(1.0F))) return result;
       PatBlt(target->GetMemoryDC(), 0, 0, width, height, BLACKNESS);
       auto* renderer = new BitmapTextRenderer(target.get(), renderingParams.get());
       const HRESULT drawStatus = layout->Draw(
