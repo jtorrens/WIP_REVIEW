@@ -123,25 +123,25 @@ local ok, failure = pcall(function()
 
     set(config, apply.CONTROL.settings_name, "codex_shotconfig_acceptance")
     set(config, apply.CONTROL.show, "SAVED_SHOW")
-    set(config, apply.CONTROL.crop_numerator, 2.39)
-    set(config, apply.CONTROL.crop_denominator, 1)
+    set(config, apply.CONTROL.crop_aspect_width, 2.39)
+    set(config, apply.CONTROL.crop_aspect_height, 1)
     local saved, settings_path = show_settings.save(config, comp)
     assert_true(saved, "saves named show settings")
     set(config, apply.CONTROL.show, "CHANGED_SHOW")
-    set(config, apply.CONTROL.crop_numerator, 16)
-    set(config, apply.CONTROL.crop_denominator, 9)
+    set(config, apply.CONTROL.crop_aspect_width, 16)
+    set(config, apply.CONTROL.crop_aspect_height, 9)
     local loaded, load_path = show_settings.load(config, comp, settings_path)
     assert_true(loaded, "loads named show settings")
     assert_equal(load_path, settings_path, "loads the saved definition")
     assert_equal(get(config, apply.CONTROL.show), "SAVED_SHOW", "restored show setting")
-    assert_equal(tonumber(get(config, apply.CONTROL.crop_numerator)), 2.39,
-        "restored crop numerator")
-    assert_equal(tonumber(get(config, apply.CONTROL.crop_denominator)), 1,
-        "restored crop denominator")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_aspect_width)), 2.39,
+        "restored crop aspect width")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_aspect_height)), 1,
+        "restored crop aspect height")
     os.remove(settings_path)
     set(config, apply.CONTROL.show, "SHOW")
-    set(config, apply.CONTROL.crop_numerator, 2)
-    set(config, apply.CONTROL.crop_denominator, 1)
+    set(config, apply.CONTROL.crop_aspect_width, 2)
+    set(config, apply.CONTROL.crop_aspect_height, 1)
     assert_true(refresh.run(config, comp.CurrentTime), "restores default previews")
     assert_equal(initial_values.sourceGamma, "TWOPOINTFOUR_GAMMA",
         "default source gamma ID")
@@ -187,15 +187,15 @@ local ok, failure = pcall(function()
         "Saver targets rollout default")
     assert_true(config.SC_CropRatio == nil,
         "legacy Crop Ratio control must not be visible")
-    assert_equal(tonumber(get(config, apply.CONTROL.crop_numerator)), 2,
-        "default crop numerator")
-    assert_equal(tonumber(get(config, apply.CONTROL.crop_denominator)), 1,
-        "default crop denominator")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_aspect_width)), 2,
+        "default crop aspect width")
+    assert_equal(tonumber(get(config, apply.CONTROL.crop_aspect_height)), 1,
+        "default crop aspect height")
 
     local _, optional_template, optional_resolved =
         apply.target_controls("Loader", 3)
-    set(config, apply.CONTROL.crop_numerator, 16)
-    set(config, apply.CONTROL.crop_denominator, 9)
+    set(config, apply.CONTROL.crop_aspect_width, 16)
+    set(config, apply.CONTROL.crop_aspect_height, 9)
     set(config, optional_template,
         "{workingWidth}x{workingHeight}|{cropX}|{cropY}|" ..
         "{reviewWidth}x{reviewHeight}|{sourceColorSpace}|{sourceGamma}|" ..

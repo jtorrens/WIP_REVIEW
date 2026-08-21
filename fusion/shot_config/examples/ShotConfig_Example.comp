@@ -244,7 +244,7 @@ Composition {
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Crop Aspect Ratio",
 				},
-				SC_CropNumerator = {
+				SC_CropAspectWidth = {
 					INP_MaxAllowed = 100,
 					INPID_InputControl = "SliderControl",
 					INP_MaxScale = 100,
@@ -254,9 +254,9 @@ Composition {
 					LINKID_DataType = "Number",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
 					ICS_ControlPage = "Shot",
-					LINKS_Name = "Numerator"
+					LINKS_Name = "Width"
 				},
-				SC_CropDenominator = {
+				SC_CropAspectHeight = {
 					INP_MaxAllowed = 100,
 					INPID_InputControl = "SliderControl",
 					INP_MaxScale = 100,
@@ -266,7 +266,7 @@ Composition {
 					LINKID_DataType = "Number",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
 					ICS_ControlPage = "Shot",
-					LINKS_Name = "Denominator"
+					LINKS_Name = "Height"
 				},
 				SC_ReviewResolution = {
 					INP_DefaultX = 1920,

@@ -32,8 +32,8 @@ local DEFAULTS = {
     [CONTROL.version] = "v001",
     [CONTROL.root] = "_SHOW:",
     [CONTROL.working_resolution] = { 3840, 2160 },
-    [CONTROL.crop_numerator] = 2.0,
-    [CONTROL.crop_denominator] = 1.0,
+    [CONTROL.crop_aspect_width] = 2.0,
+    [CONTROL.crop_aspect_height] = 1.0,
     [CONTROL.review_resolution] = { 1920, 1080 },
     [CONTROL.embedded_alpha] = 0,
     [CONTROL.settings_name] = "SHOW",
@@ -59,8 +59,8 @@ local PRESERVED_CONTROLS = {
     CONTROL.version,
     CONTROL.root,
     CONTROL.working_resolution,
-    CONTROL.crop_numerator,
-    CONTROL.crop_denominator,
+    CONTROL.crop_aspect_width,
+    CONTROL.crop_aspect_height,
     CONTROL.review_resolution,
     CONTROL.embedded_alpha,
     CONTROL.settings_name,
@@ -238,9 +238,9 @@ local function serialized_controls(catalog, selections)
     add(point_control(CONTROL.working_resolution, "Working Resolution",
         DEFAULTS[CONTROL.working_resolution][1], DEFAULTS[CONTROL.working_resolution][2], "Shot", refresh_preview))
     add(label_control("SC_CropAspectSection", "Crop Aspect Ratio", "Shot"))
-    add(number_control(CONTROL.crop_numerator, "Numerator", DEFAULTS[CONTROL.crop_numerator],
+    add(number_control(CONTROL.crop_aspect_width, "Width", DEFAULTS[CONTROL.crop_aspect_width],
         0.01, 100.0, "Shot", refresh_preview))
-    add(number_control(CONTROL.crop_denominator, "Denominator", DEFAULTS[CONTROL.crop_denominator],
+    add(number_control(CONTROL.crop_aspect_height, "Height", DEFAULTS[CONTROL.crop_aspect_height],
         0.01, 100.0, "Shot", refresh_preview))
     add(point_control(CONTROL.review_resolution, "Review Resolution",
         DEFAULTS[CONTROL.review_resolution][1], DEFAULTS[CONTROL.review_resolution][2], "Shot", refresh_preview))

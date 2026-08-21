@@ -77,7 +77,7 @@ Valores iniciales:
 | Identity | Version | `v001` |
 | Targets / Path Map | Root Path Map | `_SHOW:` |
 | Format | Working Resolution | `3840 × 2160` |
-| Format | Crop Aspect Ratio | `2:1` (Numerator `2`, Denominator `1`) |
+| Format | Crop Aspect Ratio | `2:1` (Width `2`, Height `1`) |
 | Format | Review Resolution | `1920 × 1080` |
 | Color | Source Color Space | `Rec.709` / `REC709_COLORSPACE` |
 | Color | Source Gamma | `Gamma 2.4` / `TWOPOINTFOUR_GAMMA` |

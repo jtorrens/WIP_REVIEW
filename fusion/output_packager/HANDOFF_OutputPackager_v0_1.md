@@ -110,7 +110,7 @@ Página `Applied`, sólo lectura:
 | ID | Origen |
 | --- | --- |
 | `OP_ReviewResolution` | `ShotConfig.SC_ReviewResolution` |
-| `OP_CropRatio` | Aspect ratio calculado desde `ShotConfig.SC_CropNumerator` / `SC_CropDenominator` para blanking custom |
+| `OP_CropRatio` | Aspect ratio calculado desde `ShotConfig.SC_CropAspectWidth` / `SC_CropAspectHeight` para blanking custom |
 
 El GroupOperator puede usar expresiones internas para que la UI de WIP se vea
 en tiempo real. Los valores de `Applied` se escriben mediante Apply y no se

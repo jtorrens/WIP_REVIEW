@@ -537,8 +537,8 @@ Composition {
 					LINKS_Name = "Working Resolution",
 				},
 				SC_CropAspectSection = { INP_External = false, ICS_ControlPage = "Shot", LINKID_DataType = "Text", INP_Passive = true, INPID_InputControl = "LabelControl", LINKS_Name = "Crop Aspect Ratio", },
-				SC_CropNumerator = { INP_MaxAllowed = 100, INPID_InputControl = "SliderControl", INP_MaxScale = 100, INP_Default = 2, INP_MinScale = 0.01, INP_MinAllowed = 0.01, LINKID_DataType = "Number", INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/refresh_resolved_paths.lua\").run(tool)", ICS_ControlPage = "Shot", LINKS_Name = "Numerator" },
-				SC_CropDenominator = { INP_MaxAllowed = 100, INPID_InputControl = "SliderControl", INP_MaxScale = 100, INP_Default = 1, INP_MinScale = 0.01, INP_MinAllowed = 0.01, LINKID_DataType = "Number", INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/refresh_resolved_paths.lua\").run(tool)", ICS_ControlPage = "Shot", LINKS_Name = "Denominator" },
+				SC_CropAspectWidth = { INP_MaxAllowed = 100, INPID_InputControl = "SliderControl", INP_MaxScale = 100, INP_Default = 2, INP_MinScale = 0.01, INP_MinAllowed = 0.01, LINKID_DataType = "Number", INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/refresh_resolved_paths.lua\").run(tool)", ICS_ControlPage = "Shot", LINKS_Name = "Width" },
+				SC_CropAspectHeight = { INP_MaxAllowed = 100, INPID_InputControl = "SliderControl", INP_MaxScale = 100, INP_Default = 1, INP_MinScale = 0.01, INP_MinAllowed = 0.01, LINKID_DataType = "Number", INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/input_prep/../shot_config/refresh_resolved_paths.lua\").run(tool)", ICS_ControlPage = "Shot", LINKS_Name = "Height" },
 				SC_ReviewResolution = {
 					INP_DefaultX = 1920,
 					INPID_PreviewControl = "",

@@ -4809,8 +4809,8 @@ Composition {
 				SC_Shot = Input { Value = "0010", },
 				SC_Version = Input { Value = "v001", },
 				SC_WorkingResolution = Input { Value = { 1920, 1080 }, },
-				SC_CropNumerator = Input { Value = 16, },
-				SC_CropDenominator = Input { Value = 9, },
+				SC_CropAspectWidth = Input { Value = 16, },
+				SC_CropAspectHeight = Input { Value = 9, },
 				SC_RootPathMap = Input { Value = "_FOQN:", },
 				SC_SettingsName = Input { Value = "SHOW", },
 				SC_Status = Input { Value = "OK: Updated 5 targets", },
@@ -4939,7 +4939,7 @@ Composition {
 					INPID_InputControl = "LabelControl",
 					LINKS_Name = "Crop Aspect Ratio",
 				},
-				SC_CropNumerator = {
+				SC_CropAspectWidth = {
 					INP_MaxAllowed = 100,
 					ICS_ControlPage = "Shot",
 					INP_MaxScale = 100,
@@ -4949,9 +4949,9 @@ Composition {
 					LINKID_DataType = "Number",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
 					INPID_InputControl = "SliderControl",
-					LINKS_Name = "Numerator"
+					LINKS_Name = "Width"
 				},
-				SC_CropDenominator = {
+				SC_CropAspectHeight = {
 					INP_MaxAllowed = 100,
 					ICS_ControlPage = "Shot",
 					INP_MaxScale = 100,
@@ -4961,7 +4961,7 @@ Composition {
 					LINKID_DataType = "Number",
 					INPS_ExecuteOnChange = "dofile(\"/Volumes/SD_02/PROYECTOS/WIP_REVIEW-output-packager/fusion/shot_config/refresh_resolved_paths.lua\").run(tool)",
 					INPID_InputControl = "SliderControl",
-					LINKS_Name = "Denominator"
+					LINKS_Name = "Height"
 				},
 				SC_ReviewResolution = {
 					INP_DefaultX = 1920,
