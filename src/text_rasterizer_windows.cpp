@@ -204,24 +204,13 @@ GlyphRaster rasterizeUTF8(const std::string& text,
     }
     DWRITE_TEXT_METRICS metrics{};
     if (FAILED(layout->GetMetrics(&metrics))) return result;
-    constexpr int padding = 4;
-    const int width = static_cast<int>(std::ceil(
-        std::max(metrics.width, metrics.widthIncludingTrailingWhitespace))) +
-        padding * 2;
-    const int height = static_cast<int>(std::ceil(metrics.height)) + padding * 2;
-    if (width <= 0 || height <= 0 || width > 65536 || height > 8192) {
-      return result;
-    }
+    constexpr int initialPadding = 4;
+    const int contentWidth = static_cast<int>(std::ceil(
+        std::max(metrics.width, metrics.widthIncludingTrailingWhitespace)));
+    const int contentHeight = static_cast<int>(std::ceil(metrics.height));
 
     ComPtr<IDWriteGdiInterop> interop;
     if (FAILED(factory->GetGdiInterop(interop.put()))) return result;
-    ComPtr<IDWriteBitmapRenderTarget> target;
-    if (FAILED(interop->CreateBitmapRenderTarget(
-            nullptr, static_cast<UINT32>(width),
-            static_cast<UINT32>(height), target.put()))) {
-      return result;
-    }
-    PatBlt(target->GetMemoryDC(), 0, 0, width, height, BLACKNESS);
 
     ComPtr<IDWriteRenderingParams> renderingParams;
     if (FAILED(factory->CreateCustomRenderingParams(
@@ -230,62 +219,89 @@ GlyphRaster rasterizeUTF8(const std::string& text,
             renderingParams.put()))) {
       return result;
     }
-    auto* renderer = new BitmapTextRenderer(target.get(), renderingParams.get());
-    const HRESULT drawStatus = layout->Draw(
-        nullptr, renderer, static_cast<FLOAT>(padding),
-        static_cast<FLOAT>(padding));
-    renderer->Release();
-    if (FAILED(drawStatus)) return result;
+    constexpr int maxAllocationAttempts = 4;
+    for (int attempt = 0; attempt < maxAllocationAttempts; ++attempt) {
+      const int padding = initialPadding << attempt;
+      const int width = contentWidth + padding * 2;
+      const int height = contentHeight + padding * 2;
+      if (width <= 0 || height <= 0 || width > 65536 || height > 8192 ||
+          static_cast<std::size_t>(width) >
+              256U * 1024U * 1024U / static_cast<std::size_t>(height) / 4U) {
+        return result;
+      }
 
-    BITMAPINFO info{};
-    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    info.bmiHeader.biWidth = width;
-    info.bmiHeader.biHeight = -height;
-    info.bmiHeader.biPlanes = 1;
-    info.bmiHeader.biBitCount = 32;
-    info.bmiHeader.biCompression = BI_RGB;
-    std::vector<std::uint8_t> bgra(
-        static_cast<std::size_t>(width) * height * 4U);
-    const HBITMAP bitmap = static_cast<HBITMAP>(GetCurrentObject(
-        target->GetMemoryDC(), OBJ_BITMAP));
-    if (!bitmap || GetDIBits(
-            target->GetMemoryDC(), bitmap, 0, static_cast<UINT>(height),
-            bgra.data(), &info, DIB_RGB_COLORS) == 0) {
+      ComPtr<IDWriteBitmapRenderTarget> target;
+      if (FAILED(interop->CreateBitmapRenderTarget(
+              nullptr, static_cast<UINT32>(width),
+              static_cast<UINT32>(height), target.put()))) {
+        return result;
+      }
+      if (FAILED(target->SetPixelsPerDip(1.0F))) return result;
+      PatBlt(target->GetMemoryDC(), 0, 0, width, height, BLACKNESS);
+      auto* renderer = new BitmapTextRenderer(target.get(), renderingParams.get());
+      const HRESULT drawStatus = layout->Draw(
+          nullptr, renderer, static_cast<FLOAT>(padding),
+          static_cast<FLOAT>(padding));
+      renderer->Release();
+      if (FAILED(drawStatus)) return result;
+
+      BITMAPINFO info{};
+      info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+      info.bmiHeader.biWidth = width;
+      info.bmiHeader.biHeight = -height;
+      info.bmiHeader.biPlanes = 1;
+      info.bmiHeader.biBitCount = 32;
+      info.bmiHeader.biCompression = BI_RGB;
+      std::vector<std::uint8_t> bgra(
+          static_cast<std::size_t>(width) * height * 4U);
+      const HBITMAP bitmap = static_cast<HBITMAP>(GetCurrentObject(
+          target->GetMemoryDC(), OBJ_BITMAP));
+      if (!bitmap || GetDIBits(
+              target->GetMemoryDC(), bitmap, 0, static_cast<UINT>(height),
+              bgra.data(), &info, DIB_RGB_COLORS) == 0) {
+        return result;
+      }
+
+      int cropX1 = width;
+      int cropY1 = height;
+      int cropX2 = 0;
+      int cropY2 = 0;
+      auto coverageAt = [&](int x, int y) {
+        const std::size_t offset =
+            (static_cast<std::size_t>(y) * width + x) * 4U;
+        return std::max({bgra[offset], bgra[offset + 1], bgra[offset + 2]});
+      };
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          if (coverageAt(x, y) == 0) continue;
+          cropX1 = std::min(cropX1, x);
+          cropY1 = std::min(cropY1, y);
+          cropX2 = std::max(cropX2, x + 1);
+          cropY2 = std::max(cropY2, y + 1);
+        }
+      }
+      if (cropX1 >= cropX2 || cropY1 >= cropY2) return {};
+      const bool reachesAllocationEdge =
+          cropX1 == 0 || cropY1 == 0 || cropX2 == width || cropY2 == height;
+      if (reachesAllocationEdge && attempt + 1 < maxAllocationAttempts) {
+        continue;
+      }
+
+      result.width = cropX2 - cropX1;
+      result.height = cropY2 - cropY1;
+      result.fillPixels.resize(
+          static_cast<std::size_t>(result.width) * result.height);
+      for (int y = 0; y < result.height; ++y) {
+        const int sourceY = cropY2 - 1 - y;
+        for (int x = 0; x < result.width; ++x) {
+          result.fillPixels[static_cast<std::size_t>(y) * result.width + x] =
+              coverageAt(cropX1 + x, sourceY);
+        }
+      }
+      result.resolvedFont = fontFamily.empty() || fontFamily == "System Default"
+          ? "Segoe UI" : fontFamily;
       return result;
     }
-
-    int cropX1 = width;
-    int cropY1 = height;
-    int cropX2 = 0;
-    int cropY2 = 0;
-    auto coverageAt = [&](int x, int y) {
-      const std::size_t offset =
-          (static_cast<std::size_t>(y) * width + x) * 4U;
-      return std::max({bgra[offset], bgra[offset + 1], bgra[offset + 2]});
-    };
-    for (int y = 0; y < height; ++y) {
-      for (int x = 0; x < width; ++x) {
-        if (coverageAt(x, y) == 0) continue;
-        cropX1 = std::min(cropX1, x);
-        cropY1 = std::min(cropY1, y);
-        cropX2 = std::max(cropX2, x + 1);
-        cropY2 = std::max(cropY2, y + 1);
-      }
-    }
-    if (cropX1 >= cropX2 || cropY1 >= cropY2) return {};
-    result.width = cropX2 - cropX1;
-    result.height = cropY2 - cropY1;
-    result.fillPixels.resize(
-        static_cast<std::size_t>(result.width) * result.height);
-    for (int y = 0; y < result.height; ++y) {
-      const int sourceY = cropY2 - 1 - y;
-      for (int x = 0; x < result.width; ++x) {
-        result.fillPixels[static_cast<std::size_t>(y) * result.width + x] =
-            coverageAt(cropX1 + x, sourceY);
-      }
-    }
-    result.resolvedFont = fontFamily.empty() || fontFamily == "System Default"
-        ? "Segoe UI" : fontFamily;
     return result;
   } catch (...) {
     return {};

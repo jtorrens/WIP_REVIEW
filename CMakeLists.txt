@@ -13,6 +13,7 @@ include(FetchContent)
 option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative formatter tests" ON)
 option(WIPREVIEW_BUILD_BENCHMARKS "Build the opt-in CPU performance benchmark" OFF)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
+option(WIPREVIEW_ENABLE_CUDA "Build the optional Windows CUDA backend" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
 
@@ -112,6 +113,16 @@ elseif(WIN32)
     opencl_headers_interface
   )
   target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
+  if(WIPREVIEW_ENABLE_CUDA)
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    target_sources(wipreview_gpu_renderer PRIVATE src/gpu_renderer_cuda.cu)
+    target_link_libraries(wipreview_gpu_renderer PUBLIC CUDA::cudart)
+    set_target_properties(wipreview_gpu_renderer PROPERTIES
+      CUDA_STANDARD 17
+      CUDA_STANDARD_REQUIRED YES
+    )
+  endif()
 else()
   message(FATAL_ERROR "WIP Review currently supports macOS and Windows")
 endif()
@@ -134,6 +145,9 @@ endif()
 target_compile_definitions(WIPReviewProbe PRIVATE
   WIPREVIEW_PROBE_VERSION="${PROJECT_VERSION}"
 )
+if(WIN32 AND WIPREVIEW_ENABLE_CUDA)
+  target_compile_definitions(WIPReviewProbe PRIVATE WIPREVIEW_HAS_CUDA=1)
+endif()
 set_target_properties(WIPReviewProbe PROPERTIES
   PREFIX ""
   SUFFIX ".ofx"
@@ -176,6 +190,14 @@ elseif(WIN32)
   set_target_properties(WIPReviewProbe PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${WIPREVIEW_BUNDLE_BINARY_DIR}"
     RUNTIME_OUTPUT_DIRECTORY "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${WIPREVIEW_BUNDLE_BINARY_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${WIPREVIEW_BUNDLE_BINARY_DIR}"
   )
   install(DIRECTORY "${WIPREVIEW_BUNDLE_DIR}"
           DESTINATION "."
@@ -212,6 +234,21 @@ if(WIPREVIEW_BUILD_TESTS)
     )
     target_compile_options(wipreview_gpu_renderer_tests PRIVATE -fobjc-arc)
     add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
+  elseif(WIN32)
+    add_executable(wipreview_gpu_renderer_tests
+      tests/gpu_renderer_opencl_tests.cpp)
+    target_link_libraries(wipreview_gpu_renderer_tests PRIVATE
+      wipreview_gpu_renderer
+    )
+    add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
+    if(WIPREVIEW_ENABLE_CUDA)
+      add_executable(wipreview_cuda_renderer_tests
+        tests/gpu_renderer_cuda_tests.cpp)
+      target_link_libraries(wipreview_cuda_renderer_tests PRIVATE
+        wipreview_gpu_renderer
+      )
+      add_test(NAME wipreview_cuda_renderer COMMAND wipreview_cuda_renderer_tests)
+    endif()
   endif()
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)

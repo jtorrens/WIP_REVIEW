@@ -488,6 +488,29 @@ void testSystemTextRasterizerUTF8() {
   }
   assert(topInk > bottomInk);  // Mask rows use OFX's bottom-up coordinates.
 
+  const auto filename = wipreview::text::rasterizeUTF8(
+      "The-Fields-Original.braw", "System Default",
+      wipreview::text::FontStyle::Regular, 60.48);
+  const auto filenamePrefix = wipreview::text::rasterizeUTF8(
+      "The-Fields-Original.", "System Default",
+      wipreview::text::FontStyle::Regular, 60.48);
+  const auto filenameSuffix = wipreview::text::rasterizeUTF8(
+      "braw", "System Default", wipreview::text::FontStyle::Regular, 60.48);
+  const auto rightmostInk = [](const wipreview::text::GlyphRaster& glyph) {
+    int result = -1;
+    for (int y = 0; y < glyph.height; ++y) {
+      for (int x = 0; x < glyph.width; ++x) {
+        if (glyph.fillPixels[static_cast<std::size_t>(y) * glyph.width + x] != 0) {
+          result = std::max(result, x);
+        }
+      }
+    }
+    return result;
+  };
+  assert(!filename.fillPixels.empty());
+  assert(filename.width >= filenamePrefix.width + filenameSuffix.width - 8);
+  assert(rightmostInk(filename) > rightmostInk(filenamePrefix) + 32);
+
   const auto fallback = wipreview::text::rasterizeUTF8(
       "FALLBACK", "WIPReview Font That Does Not Exist 7F3A",
       wipreview::text::FontStyle::Regular, 32.0);

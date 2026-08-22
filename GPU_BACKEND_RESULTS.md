@@ -9,12 +9,12 @@ El plugin publica la aceleración nativa de cada plataforma y el host decide el
 tipo de buffer antes de llamar a Render:
 
 - macOS: Metal buffers;
-- Windows: OpenCL 1.1 buffers;
+- Windows: CUDA streams y buffers OpenCL 1.1;
 - CPU: memoria convencional cuando el host no activa GPU.
 
 Render comprueba `MetalEnabled`, `CudaEnabled` y `OpenCLEnabled` antes de
 interpretar `kOfxImagePropData`. No se interpreta nunca un handle GPU como un
-puntero CPU. CUDA no se anuncia porque no existe una implementación CUDA.
+puntero CPU. Cada binario anuncia únicamente los backends que implementa.
 
 No se expone un selector CPU por nodo. Fusion 21 entrega buffers Metal privados
 cuando selecciona Metal, y no reevalúa de forma fiable la capacidad GPU por
@@ -45,25 +45,29 @@ En Resolve Studio 21.0.4, el clip real usado durante el desarrollo mantiene
 configuración se reproducía aproximadamente a 6 fps. La comprobación visual y
 de reproducción fue aprobada por el usuario el 20 de agosto de 2026.
 
-## Windows / OpenCL
+## Windows / CUDA y OpenCL
 
-El backend OpenCL usa buffers OFX 1.5 y el mismo contrato visual que Metal. Los
-kernels se limitan a OpenCL C 1.1. `OpenCL.dll` se carga dinámicamente, por lo
-que el bundle no distribuye ni sustituye el ICD del fabricante de la GPU.
+El backend CUDA usa el stream OFX entregado por el host y se compila de forma
+explícita con `-DWIPREVIEW_ENABLE_CUDA=ON`. El bundle genérico Win64 se
+construye con esa opción desactivada y usa CPU u OpenCL según negocie el host.
+Ambos implementan el mismo contrato visual que Metal. Los kernels OpenCL se
+limitan a OpenCL C 1.1. `OpenCL.dll` se carga dinámicamente, por lo que el
+bundle no distribuye ni sustituye el ICD del fabricante de la GPU.
 OpenCL-Headers está aislado y fijado al commit
 `4ea6df132107e3b4b9407f903204b5522fdffcd6`.
 
-El kernel OpenCL pasa compilación sintáctica offline. La compilación MSVC y la
-ejecución dentro de Resolve/Fusion para Windows siguen pendientes: GitHub no
-inició el runner de la workflow porque la cuenta informó pagos fallidos o un
-límite de gasto insuficiente. Esto no constituye una validación Win64.
+La CI pública valida MSVC, CTest, CPack y carga del bundle Win64 genérico. La
+validación CUDA se realizó en una RTX 4080 Laptop GPU con CUDA Toolkit 13.3:
+Resolve negoció `cuda_enabled=1`, registró `GPU_RENDER backend=cuda status=0`
+y mantuvo 25 fps en un clip UHD. La validación Fusion Windows sigue pendiente.
 
 ## Matriz observada
 
 | Host | Metal | CUDA | OpenCL buffers | OpenCL images |
 |---|---:|---:|---:|---:|
 | Fusion Studio 21.0.4, macOS | Sí | No publicado | No publicado | No publicado |
-| Resolve/Fusion, Windows | Pendiente | Pendiente | Pendiente | Pendiente |
+| Resolve, Windows RTX 4080 | No | Sí | No negociado | No negociado |
+| Fusion, Windows | Pendiente | Pendiente | Pendiente | Pendiente |
 
 ## Empaquetado
 
