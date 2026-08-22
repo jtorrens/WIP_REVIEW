@@ -2747,7 +2747,6 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
 #if defined(WIPREVIEW_HAS_CUDA)
         }
 #endif
-        }
 #endif
         request.sourceFormat = sourceView;
         request.outputFormat = outputView;
