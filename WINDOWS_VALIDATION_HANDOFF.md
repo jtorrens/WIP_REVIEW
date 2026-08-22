@@ -64,17 +64,15 @@ Reglas Git:
 Windows debe usar:
 
 - OFX CPU cuando el host entrega punteros de memoria convencional;
+- CUDA cuando el bundle fue compilado con `WIPREVIEW_ENABLE_CUDA=ON` y el host
+  entrega un stream CUDA;
 - OpenCL 1.1 cuando el host entrega buffers OpenCL;
 - DirectWrite/GDI para rasterizar texto;
 - bundle x64 en `Contents\Win64`.
 
 No existe selector CPU por nodo. El host elige el tipo de buffer antes de
-Render. El plugin no anuncia CUDA y no debe interpretar handles CUDA/OpenCL
-como punteros CPU.
-
-Si Resolve/Fusion publica CUDA pero no OpenCL buffers, no añadir un alias, una
-emulación ni un fallback CUDA. Registrar las capacidades exactas y devolver el
-caso como bloqueo para decidir si se implementa un backend CUDA real.
+Render. Cada bundle anuncia únicamente los backends que contiene y no
+interpreta handles CUDA/OpenCL como punteros CPU.
 
 ## Fase 1 — build limpio, sin hosts abiertos
 
@@ -93,7 +91,8 @@ Set-Location C:\Codex\WIP_REVIEW-Windows
 cmake -S . -B build-win -A x64 `
   -DCMAKE_BUILD_TYPE=Release `
   -DWIPREVIEW_BUILD_TESTS=ON `
-  -DWIPREVIEW_BUILD_BENCHMARKS=OFF
+  -DWIPREVIEW_BUILD_BENCHMARKS=OFF `
+  -DWIPREVIEW_ENABLE_CUDA=OFF
 cmake --build build-win --config Release --parallel
 ctest --test-dir build-win -C Release --output-on-failure
 cmake --build build-win --config Release --target package
@@ -158,10 +157,9 @@ Output, renderWindow, renderScale y backend negociado.
 El log debe indicar, para la ruta GPU:
 
 ```text
-HOST_GPU_CAPABILITIES ... opencl_buffers="true"
-RENDER_BACKEND ... opencl_enabled=1
-GPU_RENDER ... backend=opencl status=0
-MANAGED_COLOR ... backend=opencl
+HOST_GPU_CAPABILITIES ... cuda="true" opencl_buffers="true"
+RENDER_BACKEND ... cuda_enabled=1 opencl_enabled=0
+GPU_RENDER ... backend=cuda status=0
 ```
 
 No aceptar `RENDER_ERROR`, `kOfxStatGPURenderFailed`, imagen negra, crop
@@ -189,8 +187,9 @@ dependa de rutas particulares del equipo.
 
 Solo si puede hacerse sin alterar otros proyectos, desactivar temporalmente la
 aceleración GPU desde la configuración global del host, reiniciar y verificar
-una renderización CPU. El registro esperado es `opencl_enabled=0` y no debe
-aparecer `GPU_RENDER`. Restaurar después la configuración original.
+una renderización CPU. El registro esperado es `cuda_enabled=0` y
+`opencl_enabled=0`, sin `GPU_RENDER`. Restaurar después la configuración
+original.
 
 No crear un checkbox CPU dentro del OFX.
 
