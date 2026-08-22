@@ -13,6 +13,7 @@ include(FetchContent)
 option(WIPREVIEW_BUILD_TESTS "Build the host-independent cumulative formatter tests" ON)
 option(WIPREVIEW_BUILD_BENCHMARKS "Build the opt-in CPU performance benchmark" OFF)
 option(WIPREVIEW_ADHOC_SIGN "Ad-hoc sign the macOS OFX bundle after building" ON)
+option(WIPREVIEW_ENABLE_CUDA "Build the optional Windows CUDA backend" ON)
 set(WIPREVIEW_OPENFX_SDK_ROOT "" CACHE PATH
     "Existing OpenFX SDK checkout (optional; avoids fetching the pinned SDK)")
 
@@ -86,8 +87,6 @@ if(APPLE)
   target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
   target_compile_options(wipreview_gpu_renderer PRIVATE -fobjc-arc)
 elseif(WIN32)
-  enable_language(CUDA)
-  find_package(CUDAToolkit REQUIRED)
   FetchContent_Declare(
     opencl_headers
     GIT_REPOSITORY https://github.com/KhronosGroup/OpenCL-Headers.git
@@ -108,20 +107,22 @@ elseif(WIN32)
     dwrite
     gdi32
   )
-  add_library(wipreview_gpu_renderer STATIC
-    src/gpu_renderer_opencl.cpp
-    src/gpu_renderer_cuda.cu
-  )
+  add_library(wipreview_gpu_renderer STATIC src/gpu_renderer_opencl.cpp)
   target_link_libraries(wipreview_gpu_renderer PUBLIC
     wipreview_probe_core
     opencl_headers_interface
-    CUDA::cudart
   )
   target_compile_features(wipreview_gpu_renderer PUBLIC cxx_std_17)
-  set_target_properties(wipreview_gpu_renderer PROPERTIES
-    CUDA_STANDARD 17
-    CUDA_STANDARD_REQUIRED YES
-  )
+  if(WIPREVIEW_ENABLE_CUDA)
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    target_sources(wipreview_gpu_renderer PRIVATE src/gpu_renderer_cuda.cu)
+    target_link_libraries(wipreview_gpu_renderer PUBLIC CUDA::cudart)
+    set_target_properties(wipreview_gpu_renderer PROPERTIES
+      CUDA_STANDARD 17
+      CUDA_STANDARD_REQUIRED YES
+    )
+  endif()
 else()
   message(FATAL_ERROR "WIP Review currently supports macOS and Windows")
 endif()
@@ -144,6 +145,9 @@ endif()
 target_compile_definitions(WIPReviewProbe PRIVATE
   WIPREVIEW_PROBE_VERSION="${PROJECT_VERSION}"
 )
+if(WIN32 AND WIPREVIEW_ENABLE_CUDA)
+  target_compile_definitions(WIPReviewProbe PRIVATE WIPREVIEW_HAS_CUDA=1)
+endif()
 set_target_properties(WIPReviewProbe PROPERTIES
   PREFIX ""
   SUFFIX ".ofx"
@@ -237,12 +241,14 @@ if(WIPREVIEW_BUILD_TESTS)
       wipreview_gpu_renderer
     )
     add_test(NAME wipreview_gpu_renderer COMMAND wipreview_gpu_renderer_tests)
-    add_executable(wipreview_cuda_renderer_tests
-      tests/gpu_renderer_cuda_tests.cpp)
-    target_link_libraries(wipreview_cuda_renderer_tests PRIVATE
-      wipreview_gpu_renderer
-    )
-    add_test(NAME wipreview_cuda_renderer COMMAND wipreview_cuda_renderer_tests)
+    if(WIPREVIEW_ENABLE_CUDA)
+      add_executable(wipreview_cuda_renderer_tests
+        tests/gpu_renderer_cuda_tests.cpp)
+      target_link_libraries(wipreview_cuda_renderer_tests PRIVATE
+        wipreview_gpu_renderer
+      )
+      add_test(NAME wipreview_cuda_renderer COMMAND wipreview_cuda_renderer_tests)
+    endif()
   endif()
 
   add_executable(wipreview_bundle_smoke tests/bundle_smoke.cpp)

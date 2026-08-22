@@ -1361,10 +1361,12 @@ OfxStatus describe(OfxImageEffectHandle effect) {
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropMetalRenderSupported, 0, "true");
 #elif defined(_WIN32)
+#if defined(WIPREVIEW_HAS_CUDA)
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropCudaRenderSupported, 0, "true");
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropCudaStreamSupported, 0, "true");
+#endif
   gPropertySuite->propSetString(
       properties, kOfxImageEffectPropOpenCLRenderSupported, 0, "true");
 #endif
@@ -2490,7 +2492,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
 #if defined(__APPLE__)
   const bool supportedGpuRender = metalEnabled != 0;
 #elif defined(_WIN32)
-  const bool supportedGpuRender = cudaEnabled != 0 || openclEnabled != 0;
+  const bool supportedGpuRender = openclEnabled != 0
+#if defined(WIPREVIEW_HAS_CUDA)
+      || cudaEnabled != 0
+#endif
+      ;
 #else
   const bool supportedGpuRender = false;
 #endif
@@ -2557,8 +2563,11 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     const std::size_t displayLinearPixelCount =
         static_cast<std::size_t>(outputWidth) *
         static_cast<std::size_t>(outputHeight) * 4U;
-    const bool acceleratedRender = metalEnabled != 0 || cudaEnabled != 0 ||
-        openclEnabled != 0;
+    const bool acceleratedRender = metalEnabled != 0 || openclEnabled != 0
+#if defined(WIPREVIEW_HAS_CUDA)
+        || cudaEnabled != 0
+#endif
+        ;
     std::unique_ptr<float[]> displayLinearPixels;
     if (!acceleratedRender) {
       displayLinearPixels.reset(new float[displayLinearPixelCount]);
@@ -2725,14 +2734,19 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
             inArgs, kOfxImageEffectPropMetalCommandQueue, 0,
             &request.commandQueue);
 #else
+#if defined(WIPREVIEW_HAS_CUDA)
         if (cudaEnabled != 0) {
           gPropertySuite->propGetPointer(
               inArgs, kOfxImageEffectPropCudaStream, 0,
               &request.commandQueue);
         } else {
+#endif
         gPropertySuite->propGetPointer(
             inArgs, kOfxImageEffectPropOpenCLCommandQueue, 0,
             &request.commandQueue);
+#if defined(WIPREVIEW_HAS_CUDA)
+        }
+#endif
         }
 #endif
         request.sourceFormat = sourceView;
@@ -2785,10 +2799,13 @@ OfxStatus render(OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
         gpuBackend = "metal";
         const auto gpuStatus = wipreview::gpu::renderMetal(request, gpuError);
 #else
-        gpuBackend = cudaEnabled != 0 ? "cuda" : "opencl";
-        const auto gpuStatus = cudaEnabled != 0
-            ? wipreview::gpu::renderCUDA(request, gpuError)
-            : wipreview::gpu::renderOpenCL(request, gpuError);
+        const auto gpuStatus =
+#if defined(WIPREVIEW_HAS_CUDA)
+            cudaEnabled != 0
+                ? (gpuBackend = "cuda", wipreview::gpu::renderCUDA(request, gpuError))
+                :
+#endif
+                  (gpuBackend = "opencl", wipreview::gpu::renderOpenCL(request, gpuError));
 #endif
         gpuRendered = gpuStatus == wipreview::gpu::RenderStatus::Rendered;
         Logger::instance().write(
