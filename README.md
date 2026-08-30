@@ -98,8 +98,9 @@ solapes o salidas del frame mediante contenido, tamaño y offsets. Detalles:
 Cada zona ofrece **Text** como prefijo literal y, a continuación,
 **Calculated Field** con None, Frame Relative, Frame, Timecode o Date. Resolve
 añade Source Frame y Source Filename cuando carga el plugin; Fusion conserva
-solo el conjunto portable. Frame Start, Timecode Start, Review Date y los
-ajustes de FPS son globales. Véase
+solo el conjunto portable. Frame Start, Timecode Start y los ajustes de FPS
+son globales. Date se obtiene dinámicamente de la fecha local del sistema.
+Véase
 [P3_CALCULATED_FIELDS_RESULTS.md](P3_CALCULATED_FIELDS_RESULTS.md).
 
 ## Color gestionado

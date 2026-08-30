@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <ctime>
 #include <limits>
 
 namespace wipreview::fields {
@@ -30,6 +31,21 @@ std::int64_t roundedFrame(double time) noexcept {
 
 int nominalRate(double fps) noexcept {
   return std::clamp(static_cast<int>(std::lround(fps)), 1, 240);
+}
+
+std::string currentLocalDate() {
+  const std::time_t now = std::time(nullptr);
+  std::tm local{};
+#if defined(_WIN32)
+  if (localtime_s(&local, &now) != 0) return {};
+#else
+  if (!localtime_r(&now, &local)) return {};
+#endif
+  std::array<char, 11> date{};
+  if (std::strftime(date.data(), date.size(), "%Y-%m-%d", &local) == 0) {
+    return {};
+  }
+  return date.data();
 }
 
 std::int64_t positiveModulo(std::int64_t value, std::int64_t modulus) noexcept {
@@ -119,7 +135,7 @@ Resolution resolve(const std::string& prefix, CalculatedField field,
         result.text += result.timecode;
         break;
       case CalculatedField::Date:
-        result.text += settings.reviewDate;
+        result.text += currentLocalDate();
         break;
       case CalculatedField::SourceFrame:
         result.text += settings.sourceFrame;

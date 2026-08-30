@@ -22,8 +22,8 @@ No se interpretan expresiones entre llaves dentro de **Text**. Por ejemplo,
 
 - `Frame Relative Base`: primer número de Frame Relative; default `1`.
 - `Frame Start`: frame absoluto en el primer frame del efecto; default `1001`.
-- `Review Date`: fecha estable `YYYY-MM-DD`, inicializada al crear el efecto y
-  editable por el usuario.
+- `Date`: fecha local actual del sistema, calculada dinámicamente al renderizar
+  en formato `YYYY-MM-DD`.
 - `FPS Mode`: `AutoFromHost` u `Override`.
 - `FPS Override`: default `24.0`.
 - `Timecode Start`: timecode global `HH:MM:SS:FF` del primer frame del efecto.

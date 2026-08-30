@@ -8,6 +8,7 @@
 #undef NDEBUG
 #endif
 #include <cassert>
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
@@ -638,12 +639,15 @@ void testCalculatedFieldsAndTimecode() {
       "Literal {frame}", CalculatedField::None, 0.0, settings);
   assert(result.text == "Literal {frame}" && !result.containsCalculatedField);
 
-  settings.reviewDate = "2026-08-20";
   settings.sourceFrame = "42";
   settings.sourceFilename = "A001.mov";
-  assert(wipreview::fields::resolve(
-             "DATE: ", CalculatedField::Date, 0.0, settings).text ==
-         "DATE: 2026-08-20");
+  const auto date = wipreview::fields::resolve(
+      "DATE: ", CalculatedField::Date, 0.0, settings).text;
+  assert(date.size() == 16 && date.substr(0, 6) == "DATE: " &&
+         date[10] == '-' && date[13] == '-' &&
+         std::all_of(date.begin() + 6, date.end(), [](const char value) {
+           return value == '-' || std::isdigit(static_cast<unsigned char>(value));
+         }));
   assert(wipreview::fields::resolve(
              "SRC: ", CalculatedField::SourceFrame, 0.0, settings).text ==
          "SRC: 42");

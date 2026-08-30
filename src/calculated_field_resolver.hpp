@@ -20,7 +20,6 @@ struct Settings {
   std::int64_t frameStart = 1001;
   double fps = 24.0;
   std::string timecodeStart = "00:00:00:00";
-  std::string reviewDate;
   std::string sourceFrame;
   std::string sourceFilename;
 };
